@@ -10,6 +10,13 @@ export interface Event {
   day: "Freitag" | "Samstag" | "Sonntag";
   type: "performance" | "dj" | "workshop" | "live" | "interaktiv";
   description?: string;
+  links?: {
+    youtube?: string;
+    instagram?: string;
+    spotify?: string;
+    soundcloud?: string;
+    bandcamp?: string;
+  };
 }
 
 interface EventCardProps {

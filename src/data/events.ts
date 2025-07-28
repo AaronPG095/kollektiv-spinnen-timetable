@@ -47,6 +47,18 @@ export const events: Event[] = [
     type: "interaktiv",
     description: "Sing your heart out with friends in our cozy karaoke lounge"
   },
+  {
+    id: "f6",
+    title: "Doku / Gespräch - Machland",
+    time: "23:00 - 01:00",
+    venue: "oben",
+    day: "Freitag",
+    type: "workshop",
+    description: "Documentary screening and discussion about the four dimensions of sustainability",
+    links: {
+      youtube: "https://www.youtube.com/watch?v=qH-R6CL3gfQ&ab_channel=Machland"
+    }
+  },
 
   // Saturday Events
   {
