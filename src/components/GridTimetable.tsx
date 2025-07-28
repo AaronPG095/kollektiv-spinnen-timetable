@@ -98,7 +98,7 @@ export const GridTimetable = ({
           {venues.map(venue => (
             <div key={venue.id} className="grid grid-cols-[200px_repeat(24,100px)] border-b border-border/30 min-h-[80px]">
               {/* Venue label */}
-              <div className="p-4 bg-secondary/30 border-r border-border/30 flex items-center justify-center">
+              <div className={`p-4 bg-${venue.color}/20 border-r border-border/30 flex items-center justify-center`}>
                 <span className="font-bold text-sm text-center writing-mode-vertical-rl transform rotate-180">
                   {venue.label}
                 </span>
@@ -123,8 +123,9 @@ export const GridTimetable = ({
                       >
                         <div
                           className={`
-                            absolute inset-1 rounded-md cursor-pointer transition-smooth
-                            ${typeColors[mainEvent.type]}
+                            absolute inset-1 rounded-md cursor-pointer transition-smooth border-2
+                            bg-${mainEvent.type === 'performance' ? 'type-performance' : mainEvent.type === 'dj' ? 'type-dj' : mainEvent.type === 'workshop' ? 'type-workshop' : mainEvent.type === 'live' ? 'type-live' : 'type-interaktiv'}/20 
+                            border-${mainEvent.type === 'performance' ? 'type-performance' : mainEvent.type === 'dj' ? 'type-dj' : mainEvent.type === 'workshop' ? 'type-workshop' : mainEvent.type === 'live' ? 'type-live' : 'type-interaktiv'}
                             hover:scale-105 hover:shadow-glow hover:z-10
                             flex items-center justify-center p-2
                           `}

@@ -50,7 +50,7 @@ export const EventCard = ({ event, onClick }: EventCardProps) => {
 
   return (
     <Card 
-      className="p-4 cursor-pointer transition-smooth hover:shadow-glow hover:scale-105 bg-card/50 backdrop-blur-sm border-border/50"
+      className={`p-4 cursor-pointer transition-smooth hover:shadow-glow hover:scale-105 backdrop-blur-sm border-2 bg-${type.color}/10 border-${type.color}/40`}
       onClick={() => onClick(event)}
     >
       <div className="space-y-3">
