@@ -63,11 +63,11 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				festival: {
-					purple: 'hsl(var(--festival-purple))',
-					pink: 'hsl(var(--festival-pink))',
-					blue: 'hsl(var(--festival-blue))',
-					green: 'hsl(var(--festival-green))',
-					orange: 'hsl(var(--festival-orange))'
+					light: 'hsl(var(--festival-light))',
+					medium: 'hsl(var(--festival-medium))',
+					deep: 'hsl(var(--festival-deep))',
+					dark: 'hsl(var(--festival-dark))',
+					darkest: 'hsl(var(--festival-darkest))'
 				},
 				venue: {
 					draussen: 'hsl(var(--venue-draussen))',
@@ -77,7 +77,8 @@ export default {
 			},
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
-				'gradient-secondary': 'var(--gradient-secondary)'
+				'gradient-secondary': 'var(--gradient-secondary)',
+				'gradient-hero': 'var(--gradient-hero)'
 			},
 			boxShadow: {
 				'glow': 'var(--shadow-glow)',

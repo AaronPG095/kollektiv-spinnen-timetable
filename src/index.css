@@ -17,41 +17,42 @@ All colors MUST be HSL.
     --popover: 240 5% 6%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 282 83% 51%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 280 100% 85%;
+    --primary-foreground: 240 10% 3.9%;
 
-    --secondary: 240 4% 16%;
+    --secondary: 270 50% 25%;
     --secondary-foreground: 0 0% 98%;
 
     --muted: 240 5% 6%;
     --muted-foreground: 240 5% 65%;
 
-    --accent: 282 83% 51%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 290 100% 75%;
+    --accent-foreground: 240 10% 3.9%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 240 6% 20%;
     --input: 240 6% 20%;
-    --ring: 282 83% 51%;
+    --ring: 280 100% 85%;
 
     --radius: 0.75rem;
 
-    --festival-purple: 282 83% 51%;
-    --festival-pink: 333 71% 51%;
-    --festival-blue: 220 91% 51%;
-    --festival-green: 142 69% 58%;
-    --festival-orange: 31 81% 56%;
+    --festival-light: 280 100% 85%;
+    --festival-medium: 270 80% 70%;
+    --festival-deep: 260 70% 55%;
+    --festival-dark: 250 60% 40%;
+    --festival-darkest: 240 50% 25%;
     
-    --venue-draussen: 142 69% 58%;
-    --venue-oben: 220 91% 51%;
-    --venue-unten: 333 71% 51%;
+    --venue-draussen: 280 100% 85%;
+    --venue-oben: 270 80% 70%;
+    --venue-unten: 260 70% 55%;
     
-    --gradient-primary: linear-gradient(135deg, hsl(var(--festival-purple)), hsl(var(--festival-pink)));
-    --gradient-secondary: linear-gradient(135deg, hsl(var(--festival-blue)), hsl(var(--festival-green)));
+    --gradient-primary: linear-gradient(135deg, hsl(var(--festival-light)), hsl(var(--festival-deep)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--festival-medium)), hsl(var(--festival-darkest)));
+    --gradient-hero: linear-gradient(90deg, hsl(var(--festival-light)), hsl(var(--festival-medium)), hsl(var(--festival-deep)), hsl(var(--festival-darkest)));
     
-    --shadow-glow: 0 0 30px hsl(var(--festival-purple) / 0.3);
+    --shadow-glow: 0 0 30px hsl(var(--festival-medium) / 0.3);
     --shadow-card: 0 10px 25px -5px hsl(240 10% 3.9% / 0.4);
 
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
