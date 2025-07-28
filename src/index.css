@@ -52,7 +52,7 @@ All colors MUST be HSL.
     --type-live: 220 95% 50%;
     --type-performance: 200 90% 55%;
     --type-workshop: 180 85% 50%;
-    --type-interaktiv: 175 80% 45%;
+    --type-interaktiv: 180 100% 65%;
     
     --gradient-primary: linear-gradient(135deg, hsl(var(--festival-light)), hsl(var(--festival-deep)));
     --gradient-secondary: linear-gradient(135deg, hsl(var(--festival-medium)), hsl(var(--festival-darkest)));
