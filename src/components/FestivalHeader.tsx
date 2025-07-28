@@ -39,7 +39,7 @@ export const FestivalHeader = ({
           {/* Header */}
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
-              Festival Timetable
+              Kollektiv Spinnen
             </h1>
             <p className="text-muted-foreground text-lg">
               Discover amazing performances across all venues

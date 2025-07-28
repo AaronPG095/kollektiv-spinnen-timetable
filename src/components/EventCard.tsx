@@ -36,10 +36,11 @@ const venueConfig = {
 };
 
 const typeConfig = {
-  performance: { label: "Performance", variant: "secondary" as const },
-  dj: { label: "DJ", variant: "outline" as const },
-  workshop: { label: "Workshop", variant: "default" as const },
-  live: { label: "Live", variant: "destructive" as const }
+  performance: { label: "Performance", color: "type-performance" },
+  dj: { label: "DJ", color: "type-dj" },
+  workshop: { label: "Workshop", color: "type-workshop" },
+  live: { label: "Live-Konzert", color: "type-live" },
+  interaktiv: { label: "Interaktiv", color: "type-interaktiv" }
 };
 
 export const EventCard = ({ event, onClick }: EventCardProps) => {
@@ -58,9 +59,11 @@ export const EventCard = ({ event, onClick }: EventCardProps) => {
           <h3 className="font-semibold text-foreground leading-tight flex-1">
             {event.title}
           </h3>
-          <Badge variant={type.variant} className="text-xs">
+          <div 
+            className={`px-2 py-1 rounded text-xs font-medium bg-${type.color}/20 text-${type.color} border border-${type.color}/30`}
+          >
             {type.label}
-          </Badge>
+          </div>
         </div>
 
         {/* Time */}

@@ -73,6 +73,13 @@ export default {
 					draussen: 'hsl(var(--venue-draussen))',
 					oben: 'hsl(var(--venue-oben))',
 					unten: 'hsl(var(--venue-unten))'
+				},
+				type: {
+					dj: 'hsl(var(--type-dj))',
+					live: 'hsl(var(--type-live))',
+					performance: 'hsl(var(--type-performance))',
+					workshop: 'hsl(var(--type-workshop))',
+					interaktiv: 'hsl(var(--type-interaktiv))'
 				}
 			},
 			backgroundImage: {

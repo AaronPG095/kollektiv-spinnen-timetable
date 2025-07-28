@@ -13,7 +13,7 @@ export const events: Event[] = [
   },
   {
     id: "f2",
-    title: "Washkar Sound (Live-Konzert)",
+    title: "Washkar Sound",
     time: "20:00 - 21:00",
     venue: "draussen",
     day: "Freitag",
@@ -22,8 +22,8 @@ export const events: Event[] = [
   },
   {
     id: "f3",
-    title: "22:30 Fireshow (Performance)",
-    time: "21:00 - 00:00",
+    title: "Fireshow",
+    time: "22:30 - 00:00",
     venue: "draussen",
     day: "Freitag",
     type: "performance",
@@ -31,8 +31,8 @@ export const events: Event[] = [
   },
   {
     id: "f4",
-    title: "22-22:30 Sound Journey (Live-Konzert)",
-    time: "21:00 - 00:00",
+    title: "Sound Journey",
+    time: "22:00 - 22:30",
     venue: "oben",
     day: "Freitag",
     type: "live",
@@ -51,7 +51,7 @@ export const events: Event[] = [
   // Saturday Events
   {
     id: "s1",
-    title: "Julian Falk (DJ)",
+    title: "Julian Falk",
     time: "00:00 - 02:00",
     venue: "unten",
     day: "Samstag",
@@ -60,7 +60,7 @@ export const events: Event[] = [
   },
   {
     id: "s2",
-    title: "André? (DJ)",
+    title: "André?",
     time: "02:00 - 04:00",
     venue: "unten",
     day: "Samstag",
@@ -69,7 +69,7 @@ export const events: Event[] = [
   },
   {
     id: "s3",
-    title: "Somatic Vinyasa Yoga Flow (Workshop)",
+    title: "Somatic Vinyasa Yoga Flow",
     time: "11:00 - 14:00",
     venue: "draussen",
     day: "Samstag",
@@ -78,7 +78,7 @@ export const events: Event[] = [
   },
   {
     id: "s4",
-    title: "ANTONI (Live-Konzert) (30 min) (Umbau)",
+    title: "ANTONI",
     time: "13:00 - 14:30",
     venue: "draussen",
     day: "Samstag",
@@ -87,7 +87,7 @@ export const events: Event[] = [
   },
   {
     id: "s5",
-    title: "Teeya Lamee (Live-Konzert) (45 min)",
+    title: "Teeya Lamee",
     time: "13:00 - 14:30",
     venue: "draussen",
     day: "Samstag",
@@ -96,7 +96,7 @@ export const events: Event[] = [
   },
   {
     id: "s6",
-    title: "Ricky Shark (Live-Konzert)",
+    title: "Ricky Shark",
     time: "14:45 - 15:30",
     venue: "draussen",
     day: "Samstag",
@@ -105,7 +105,7 @@ export const events: Event[] = [
   },
   {
     id: "s7",
-    title: "Aerobic Dance Therapy (Performance)",
+    title: "Aerobic Dance Therapy",
     time: "15:40 - 16:00",
     venue: "draussen",
     day: "Samstag",
@@ -114,7 +114,7 @@ export const events: Event[] = [
   },
   {
     id: "s8",
-    title: "Chloe Bechamel (DJ)",
+    title: "Chloe Bechamel",
     time: "16:00 - 18:00",
     venue: "draussen",
     day: "Samstag",
@@ -123,7 +123,7 @@ export const events: Event[] = [
   },
   {
     id: "s9",
-    title: "Ænigma (DJ)",
+    title: "Ænigma",
     time: "18:00 - 20:00",
     venue: "draussen",
     day: "Samstag",
@@ -132,8 +132,8 @@ export const events: Event[] = [
   },
   {
     id: "s10",
-    title: "20:00-20:30 Queen Justmean / VLTN (Drag-Performance)",
-    time: "20:00 - 22:00",
+    title: "Queen Justmean / VLTN",
+    time: "20:00 - 20:30",
     venue: "draussen",
     day: "Samstag",
     type: "performance",
@@ -141,8 +141,8 @@ export const events: Event[] = [
   },
   {
     id: "s11",
-    title: "20:30 - 22:15 LottaLove (DJ)",
-    time: "20:00 - 22:00",
+    title: "LottaLove",
+    time: "20:30 - 22:15",
     venue: "oben",
     day: "Samstag",
     type: "dj",
@@ -150,7 +150,7 @@ export const events: Event[] = [
   },
   {
     id: "s12",
-    title: "Tamara Tischtennisball (DJ)",
+    title: "Tamara Tischtennisball",
     time: "20:00 - 22:00",
     venue: "unten",
     day: "Samstag",
@@ -159,8 +159,8 @@ export const events: Event[] = [
   },
   {
     id: "s13",
-    title: "22:15 - 00:00 isl& (DJ)",
-    time: "22:00 - 00:00",
+    title: "isl&",
+    time: "22:15 - 00:00",
     venue: "oben",
     day: "Samstag",
     type: "dj",
@@ -168,7 +168,7 @@ export const events: Event[] = [
   },
   {
     id: "s14",
-    title: "1 Boy No Club (DJ)",
+    title: "1 Boy No Club",
     time: "22:00 - 00:00",
     venue: "unten",
     day: "Samstag",
@@ -179,7 +179,7 @@ export const events: Event[] = [
   // Sunday Events
   {
     id: "su1",
-    title: "Takt & Taumel (DJ)",
+    title: "Takt & Taumel",
     time: "00:00 - 02:00",
     venue: "oben",
     day: "Sonntag",
@@ -188,7 +188,7 @@ export const events: Event[] = [
   },
   {
     id: "su2",
-    title: "Felix Blume (DJ)",
+    title: "Felix Blume",
     time: "00:00 - 02:00",
     venue: "unten",
     day: "Sonntag",
@@ -197,7 +197,7 @@ export const events: Event[] = [
   },
   {
     id: "su3",
-    title: "ra.ul (DJ)",
+    title: "ra.ul",
     time: "02:00 - 04:00",
     venue: "oben",
     day: "Sonntag",
@@ -206,7 +206,7 @@ export const events: Event[] = [
   },
   {
     id: "su4",
-    title: "ondule (DJ)",
+    title: "ondule",
     time: "02:00 - 04:00",
     venue: "unten",
     day: "Sonntag",
@@ -215,7 +215,7 @@ export const events: Event[] = [
   },
   {
     id: "su5",
-    title: "Kaddi Kippenberger (DJ)",
+    title: "Kaddi Kippenberger",
     time: "04:00 - 06:00",
     venue: "oben",
     day: "Sonntag",
@@ -224,7 +224,7 @@ export const events: Event[] = [
   },
   {
     id: "su6",
-    title: "Draco Dark (DJ)",
+    title: "Draco Dark",
     time: "04:00 - 06:00",
     venue: "unten",
     day: "Sonntag",
@@ -233,7 +233,7 @@ export const events: Event[] = [
   },
   {
     id: "su7",
-    title: "Ideal Standard (DJ)",
+    title: "Ideal Standard",
     time: "06:00 - 08:00",
     venue: "oben",
     day: "Sonntag",
@@ -242,7 +242,7 @@ export const events: Event[] = [
   },
   {
     id: "su8",
-    title: "Melaune (DJ)",
+    title: "Melaune",
     time: "08:00 - 10:00",
     venue: "oben",
     day: "Sonntag",
@@ -251,7 +251,7 @@ export const events: Event[] = [
   },
   {
     id: "su9",
-    title: "Briefe öffnen mit Momo und Timo (Performance)",
+    title: "Briefe öffnen mit Momo und Timo",
     time: "10:00 - 12:00",
     venue: "draussen",
     day: "Sonntag",
@@ -260,7 +260,7 @@ export const events: Event[] = [
   },
   {
     id: "su10",
-    title: "Nepomuk (DJ)",
+    title: "Nepomuk",
     time: "10:00 - 12:00",
     venue: "oben",
     day: "Sonntag",
@@ -269,7 +269,7 @@ export const events: Event[] = [
   },
   {
     id: "su11",
-    title: "Confering (DJ)",
+    title: "Confering",
     time: "11:00 - 13:00",
     venue: "oben",
     day: "Sonntag",
@@ -278,7 +278,7 @@ export const events: Event[] = [
   },
   {
     id: "su12",
-    title: "Regentag (DJ)",
+    title: "Regentag",
     time: "13:00 - 14:30",
     venue: "oben",
     day: "Sonntag",
@@ -287,7 +287,7 @@ export const events: Event[] = [
   },
   {
     id: "su13",
-    title: "Firlefanz & Schabernack (DJ) / Sekt Kegeln (Performance)",
+    title: "Firlefanz & Schabernack / Sekt Kegeln",
     time: "14:30 - 16:30",
     venue: "draussen",
     day: "Sonntag",
@@ -296,7 +296,7 @@ export const events: Event[] = [
   },
   {
     id: "su14",
-    title: "Moosen? (DJ)",
+    title: "Moosen?",
     time: "16:30 - 18:00",
     venue: "draussen",
     day: "Sonntag",
@@ -305,7 +305,7 @@ export const events: Event[] = [
   },
   {
     id: "su15",
-    title: "Nümphe? (DJ)",
+    title: "Nümphe?",
     time: "18:00 - 19:00",
     venue: "draussen",
     day: "Sonntag",
@@ -314,7 +314,7 @@ export const events: Event[] = [
   },
   {
     id: "su16",
-    title: "AYU (Live-Konzert)",
+    title: "AYU",
     time: "19:00 - 20:00",
     venue: "draussen",
     day: "Sonntag",

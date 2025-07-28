@@ -44,9 +44,15 @@ All colors MUST be HSL.
     --festival-dark: 250 60% 40%;
     --festival-darkest: 240 50% 25%;
     
-    --venue-draussen: 280 100% 85%;
+    --venue-draussen: 240 50% 25%;
     --venue-oben: 270 80% 70%;
     --venue-unten: 260 70% 55%;
+    
+    --type-dj: 25 95% 65%;
+    --type-live: 35 90% 60%;
+    --type-performance: 45 85% 55%;
+    --type-workshop: 55 80% 50%;
+    --type-interaktiv: 65 75% 45%;
     
     --gradient-primary: linear-gradient(135deg, hsl(var(--festival-light)), hsl(var(--festival-deep)));
     --gradient-secondary: linear-gradient(135deg, hsl(var(--festival-medium)), hsl(var(--festival-darkest)));

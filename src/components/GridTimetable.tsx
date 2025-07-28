@@ -24,10 +24,11 @@ const venues = [
 ];
 
 const typeColors = {
-  performance: "bg-festival-medium border-festival-medium/30",
-  dj: "bg-festival-deep border-festival-deep/30", 
-  workshop: "bg-festival-light border-festival-light/30",
-  live: "bg-festival-dark border-festival-dark/30"
+  performance: "bg-type-performance/80 border-type-performance text-type-performance",
+  dj: "bg-type-dj/80 border-type-dj text-type-dj", 
+  workshop: "bg-type-workshop/80 border-type-workshop text-type-workshop",
+  live: "bg-type-live/80 border-type-live text-type-live",
+  interaktiv: "bg-type-interaktiv/80 border-type-interaktiv text-type-interaktiv"
 };
 
 export const GridTimetable = ({ 

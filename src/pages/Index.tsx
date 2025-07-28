@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FestivalHeader } from "@/components/FestivalHeader";
 import { TimetableGrid } from "@/components/TimetableGrid";
 import { GridTimetable } from "@/components/GridTimetable";
+import { ChronologicalTimetable } from "@/components/ChronologicalTimetable";
 import { events } from "@/data/events";
 import { Event } from "@/components/EventCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -44,11 +45,12 @@ const Index = () => {
       
       <main className="container mx-auto px-4 py-8">
         {view === "list" ? (
-          <TimetableGrid
+          <ChronologicalTimetable
             events={events}
             selectedDay={selectedDay}
             selectedVenues={selectedVenues}
             searchQuery={searchQuery}
+            onEventClick={setSelectedEvent}
           />
         ) : (
           <GridTimetable
