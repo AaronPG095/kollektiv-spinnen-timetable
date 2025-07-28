@@ -6,6 +6,7 @@ interface ChronologicalTimetableProps {
   events: Event[];
   selectedDay: string;
   selectedVenues: string[];
+  selectedEventTypes: string[];
   searchQuery: string;
   onEventClick: (event: Event) => void;
 }
@@ -46,6 +47,7 @@ export const ChronologicalTimetable = ({
   events, 
   selectedDay, 
   selectedVenues, 
+  selectedEventTypes,
   searchQuery, 
   onEventClick 
 }: ChronologicalTimetableProps) => {
@@ -53,11 +55,12 @@ export const ChronologicalTimetable = ({
   const filteredEvents = events.filter(event => {
     const matchesDay = selectedDay === "Alle" || event.day === selectedDay;
     const matchesVenue = selectedVenues.length === 0 || selectedVenues.includes(event.venue);
+    const matchesEventType = selectedEventTypes.length === 0 || selectedEventTypes.includes(event.type);
     const matchesSearch = searchQuery === "" || 
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.description?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    return matchesDay && matchesVenue && matchesSearch;
+    return matchesDay && matchesVenue && matchesEventType && matchesSearch;
   });
 
   // Group events by day, preserving order

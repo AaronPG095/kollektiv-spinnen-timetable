@@ -1,4 +1,4 @@
-import { Search, Filter, Calendar, MapPin } from "lucide-react";
+import { Search, Filter, Calendar, MapPin, Music2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,8 @@ interface FestivalHeaderProps {
   onDayChange: (day: string) => void;
   selectedVenues: string[];
   onVenueToggle: (venue: string) => void;
+  selectedEventTypes: string[];
+  onEventTypeToggle: (eventType: string) => void;
   view: "grid" | "list";
   onViewChange: (view: "grid" | "list") => void;
 }
@@ -21,6 +23,13 @@ const venues = [
   { id: "oben", label: "Oben", color: "venue-oben" },
   { id: "unten", label: "Unten", color: "venue-unten" }
 ];
+const eventTypes = [
+  { id: "workshop", label: "Workshops", color: "type-workshop" },
+  { id: "performance", label: "Performances", color: "type-performance" },
+  { id: "dj", label: "DJs", color: "type-dj" },
+  { id: "live", label: "Live", color: "type-live" },
+  { id: "interaktiv", label: "Interaktiv", color: "type-interaktiv" }
+];
 
 export const FestivalHeader = ({
   searchQuery,
@@ -29,6 +38,8 @@ export const FestivalHeader = ({
   onDayChange,
   selectedVenues,
   onVenueToggle,
+  selectedEventTypes,
+  onEventTypeToggle,
   view,
   onViewChange
 }: FestivalHeaderProps) => {
@@ -94,6 +105,27 @@ export const FestivalHeader = ({
                       onClick={() => onVenueToggle(venue.id)}
                     >
                       {venue.label}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Event Type Filter */}
+              <div className="flex items-center gap-2">
+                <Music2 className="h-4 w-4 text-muted-foreground" />
+                <div className="flex gap-2 flex-wrap">
+                  {eventTypes.map((eventType) => (
+                    <Badge
+                      key={eventType.id}
+                      variant={selectedEventTypes.includes(eventType.id) ? "default" : "outline"}
+                      className={`cursor-pointer transition-smooth ${
+                        selectedEventTypes.includes(eventType.id) 
+                          ? `bg-${eventType.color} hover:bg-${eventType.color}/80 text-white` 
+                          : ""
+                      }`}
+                      onClick={() => onEventTypeToggle(eventType.id)}
+                    >
+                      {eventType.label}
                     </Badge>
                   ))}
                 </div>

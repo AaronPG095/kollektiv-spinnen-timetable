@@ -6,6 +6,7 @@ interface GridTimetableProps {
   events: Event[];
   selectedDay: string;
   selectedVenues: string[];
+  selectedEventTypes: string[];
   searchQuery: string;
   onEventClick: (event: Event) => void;
 }
@@ -35,6 +36,7 @@ export const GridTimetable = ({
   events, 
   selectedDay, 
   selectedVenues, 
+  selectedEventTypes,
   searchQuery,
   onEventClick 
 }: GridTimetableProps) => {
@@ -42,11 +44,12 @@ export const GridTimetable = ({
   const filteredEvents = events.filter(event => {
     const matchesDay = selectedDay === "Alle" || event.day === selectedDay;
     const matchesVenue = selectedVenues.length === 0 || selectedVenues.includes(event.venue);
+    const matchesEventType = selectedEventTypes.length === 0 || selectedEventTypes.includes(event.type);
     const matchesSearch = searchQuery === "" || 
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    return matchesDay && matchesVenue && matchesSearch;
+    return matchesDay && matchesVenue && matchesEventType && matchesSearch;
   });
 
   // Function to get events for specific venue and time

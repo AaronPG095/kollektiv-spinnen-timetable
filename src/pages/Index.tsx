@@ -13,6 +13,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDay, setSelectedDay] = useState("Alle");
   const [selectedVenues, setSelectedVenues] = useState<string[]>([]);
+  const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([]);
   const [view, setView] = useState<"grid" | "list">("list");
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
@@ -21,6 +22,14 @@ const Index = () => {
       prev.includes(venue) 
         ? prev.filter(v => v !== venue)
         : [...prev, venue]
+    );
+  };
+
+  const handleEventTypeToggle = (eventType: string) => {
+    setSelectedEventTypes(prev => 
+      prev.includes(eventType) 
+        ? prev.filter(t => t !== eventType)
+        : [...prev, eventType]
     );
   };
 
@@ -39,6 +48,8 @@ const Index = () => {
         onDayChange={setSelectedDay}
         selectedVenues={selectedVenues}
         onVenueToggle={handleVenueToggle}
+        selectedEventTypes={selectedEventTypes}
+        onEventTypeToggle={handleEventTypeToggle}
         view={view}
         onViewChange={setView}
       />
@@ -49,6 +60,7 @@ const Index = () => {
             events={events}
             selectedDay={selectedDay}
             selectedVenues={selectedVenues}
+            selectedEventTypes={selectedEventTypes}
             searchQuery={searchQuery}
             onEventClick={setSelectedEvent}
           />
@@ -57,6 +69,7 @@ const Index = () => {
             events={events}
             selectedDay={selectedDay}
             selectedVenues={selectedVenues}
+            selectedEventTypes={selectedEventTypes}
             searchQuery={searchQuery}
             onEventClick={setSelectedEvent}
           />
