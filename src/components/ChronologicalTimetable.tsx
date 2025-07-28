@@ -95,7 +95,7 @@ export const ChronologicalTimetable = ({
         <div key={day} className="space-y-4">
           {/* Day Header - only show if viewing all days */}
           {selectedDay === "Alle" && (
-            <h2 className="text-2xl font-bold text-festival-light border-b border-festival-medium/30 pb-2">
+            <h2 className="h-3 font-bold text-festival-light border-b border-festival-medium/30 pb-2">
               {day}
             </h2>
           )}
