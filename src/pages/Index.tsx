@@ -1,11 +1,46 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { FestivalHeader } from "@/components/FestivalHeader";
+import { TimetableGrid } from "@/components/TimetableGrid";
+import { events } from "@/data/events";
 
 const Index = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDay, setSelectedDay] = useState("Alle");
+  const [selectedVenues, setSelectedVenues] = useState<string[]>([]);
+
+  const handleVenueToggle = (venue: string) => {
+    setSelectedVenues(prev => 
+      prev.includes(venue) 
+        ? prev.filter(v => v !== venue)
+        : [...prev, venue]
+    );
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-background">
+      <FestivalHeader
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedDay={selectedDay}
+        onDayChange={setSelectedDay}
+        selectedVenues={selectedVenues}
+        onVenueToggle={handleVenueToggle}
+      />
+      
+      <main className="container mx-auto px-4 py-8">
+        <TimetableGrid
+          events={events}
+          selectedDay={selectedDay}
+          selectedVenues={selectedVenues}
+          searchQuery={searchQuery}
+        />
+      </main>
+      
+      {/* Background Effects */}
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-festival-purple/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-festival-pink/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-3/4 left-1/2 w-80 h-80 bg-festival-blue/20 rounded-full blur-3xl animate-pulse delay-2000" />
       </div>
     </div>
   );

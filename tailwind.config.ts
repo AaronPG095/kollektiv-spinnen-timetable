@@ -61,7 +61,30 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				festival: {
+					purple: 'hsl(var(--festival-purple))',
+					pink: 'hsl(var(--festival-pink))',
+					blue: 'hsl(var(--festival-blue))',
+					green: 'hsl(var(--festival-green))',
+					orange: 'hsl(var(--festival-orange))'
+				},
+				venue: {
+					draussen: 'hsl(var(--venue-draussen))',
+					oben: 'hsl(var(--venue-oben))',
+					unten: 'hsl(var(--venue-unten))'
 				}
+			},
+			backgroundImage: {
+				'gradient-primary': 'var(--gradient-primary)',
+				'gradient-secondary': 'var(--gradient-secondary)'
+			},
+			boxShadow: {
+				'glow': 'var(--shadow-glow)',
+				'card': 'var(--shadow-card)'
+			},
+			transitionTimingFunction: {
+				'smooth': 'var(--transition-smooth)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
