@@ -23,12 +23,12 @@ const venues = [
   { id: "unten", label: "UNTEN", color: "venue-unten" }
 ];
 
-const typeColors = {
-  performance: "bg-type-performance/80 border-type-performance text-type-performance",
-  dj: "bg-type-dj/80 border-type-dj text-type-dj", 
-  workshop: "bg-type-workshop/80 border-type-workshop text-type-workshop",
-  live: "bg-type-live/80 border-type-live text-type-live",
-  interaktiv: "bg-type-interaktiv/80 border-type-interaktiv text-type-interaktiv"
+const typeConfig = {
+  performance: { label: "Performance", color: "type-performance" },
+  dj: { label: "DJ", color: "type-dj" },
+  workshop: { label: "Workshop", color: "type-workshop" },
+  live: { label: "Live-Konzert", color: "type-live" },
+  interaktiv: { label: "Interaktiv", color: "type-interaktiv" }
 };
 
 export const GridTimetable = ({ 
@@ -124,8 +124,8 @@ export const GridTimetable = ({
                         <div
                           className={`
                             absolute inset-1 rounded-md cursor-pointer transition-smooth border-2
-                            bg-${mainEvent.type === 'performance' ? 'type-performance' : mainEvent.type === 'dj' ? 'type-dj' : mainEvent.type === 'workshop' ? 'type-workshop' : mainEvent.type === 'live' ? 'type-live' : 'type-interaktiv'}/20 
-                            border-${mainEvent.type === 'performance' ? 'type-performance' : mainEvent.type === 'dj' ? 'type-dj' : mainEvent.type === 'workshop' ? 'type-workshop' : mainEvent.type === 'live' ? 'type-live' : 'type-interaktiv'}
+                            bg-${typeConfig[mainEvent.type as keyof typeof typeConfig].color}/20 
+                            border-${typeConfig[mainEvent.type as keyof typeof typeConfig].color}
                             hover:scale-105 hover:shadow-glow hover:z-10
                             flex items-center justify-center p-2
                           `}

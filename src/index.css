@@ -48,11 +48,11 @@ All colors MUST be HSL.
     --venue-oben: 270 70% 60%;
     --venue-unten: 260 80% 40%;
     
-    --type-dj: 25 95% 65%;
-    --type-live: 35 90% 60%;
-    --type-performance: 45 85% 55%;
-    --type-workshop: 55 80% 50%;
-    --type-interaktiv: 65 75% 45%;
+    --type-dj: 35 95% 70%;
+    --type-live: 30 90% 65%;
+    --type-performance: 28 85% 60%;
+    --type-workshop: 26 80% 55%;
+    --type-interaktiv: 25 75% 50%;
     
     --gradient-primary: linear-gradient(135deg, hsl(var(--festival-light)), hsl(var(--festival-deep)));
     --gradient-secondary: linear-gradient(135deg, hsl(var(--festival-medium)), hsl(var(--festival-darkest)));

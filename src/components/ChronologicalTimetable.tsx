@@ -51,7 +51,7 @@ export const ChronologicalTimetable = ({
 }: ChronologicalTimetableProps) => {
   // Filter events
   const filteredEvents = events.filter(event => {
-    const matchesDay = selectedDay === "all" || event.day === selectedDay;
+    const matchesDay = selectedDay === "Alle" || event.day === selectedDay;
     const matchesVenue = selectedVenues.length === 0 || selectedVenues.includes(event.venue);
     const matchesSearch = searchQuery === "" || 
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -94,7 +94,7 @@ export const ChronologicalTimetable = ({
       {sortedDays.map(day => (
         <div key={day} className="space-y-4">
           {/* Day Header - only show if viewing all days */}
-          {selectedDay === "all" && (
+          {selectedDay === "Alle" && (
             <h2 className="text-2xl font-bold text-festival-light border-b border-festival-medium/30 pb-2">
               {day}
             </h2>
@@ -124,7 +124,7 @@ export const ChronologicalTimetable = ({
                         return (
                           <Card 
                             key={event.id}
-                            className="p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] bg-card/70 backdrop-blur-sm border-border/50"
+                            className={`p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2 bg-${type.color}/10 border-${type.color}/40`}
                             onClick={() => onEventClick(event)}
                           >
                             <div className="space-y-2">

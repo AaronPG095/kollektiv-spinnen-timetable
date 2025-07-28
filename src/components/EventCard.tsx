@@ -8,7 +8,7 @@ export interface Event {
   time: string;
   venue: "draussen" | "oben" | "unten";
   day: "Freitag" | "Samstag" | "Sonntag";
-  type: "performance" | "dj" | "workshop" | "live";
+  type: "performance" | "dj" | "workshop" | "live" | "interaktiv";
   description?: string;
 }
 

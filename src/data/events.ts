@@ -44,7 +44,7 @@ export const events: Event[] = [
     time: "21:00 - 00:00",
     venue: "unten",
     day: "Freitag",
-    type: "performance",
+    type: "interaktiv",
     description: "Sing your heart out with friends in our cozy karaoke lounge"
   },
 
@@ -151,7 +151,7 @@ export const events: Event[] = [
   {
     id: "s12",
     title: "Tamara Tischtennisball",
-    time: "20:00 - 22:00",
+    time: "21:30 - 23:00",
     venue: "unten",
     day: "Samstag",
     type: "dj",
@@ -169,7 +169,7 @@ export const events: Event[] = [
   {
     id: "s14",
     title: "1 Boy No Club",
-    time: "22:00 - 00:00",
+    time: "23:00 - 01:00",
     venue: "unten",
     day: "Samstag",
     type: "dj",
