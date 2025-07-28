@@ -9,7 +9,7 @@ export const events: Event[] = [
     venue: "oben",
     day: "Freitag",
     type: "performance",
-    description: "Start your festival experience with delicious street food and community vibes"
+    description: "Start your festival experience with delicious welcome dinner"
   },
   {
     id: "f2",
@@ -40,7 +40,7 @@ export const events: Event[] = [
     venue: "oben",
     day: "Freitag",
     type: "live",
-    description: "Immersive sound journey and conversation starting at 23:00"
+    description: "Immersive sound journey"
   },
   {
     id: "f5",
@@ -84,7 +84,7 @@ export const events: Event[] = [
     venue: "unten",
     day: "Samstag",
     type: "dj",
-    description: "Underground electronic sounds and experimental beats"
+    description: "Techno"
   },
   {
     id: "s3",
@@ -93,7 +93,7 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Samstag",
     type: "workshop",
-    description: "Mind-body connection through flowing yoga movements (11:30-12:00)"
+    description: "Mind-body connection through flowing yoga movements"
   },
   {
     id: "s4",
@@ -115,7 +115,7 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Samstag",
     type: "live",
-    description: "Soulful vocals and contemporary melodies",
+    description: "R&B, Soul, Pop",
     links: {
       instagram: "https://www.instagram.com/teeya.lamee?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
       spotify: "https://open.spotify.com/artist/0eDr9FGxuaqEVJk76OQUvT?si=RRqRTTYHRvKR0iQ9G_n4Cg"
@@ -141,7 +141,7 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Samstag",
     type: "performance",
-    description: "Movement therapy combining dance and wellness"
+    description: ""
   },
   {
     id: "s8",
@@ -174,7 +174,7 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Samstag",
     type: "performance",
-    description: "Stunning drag performance followed by outdoor festivities"
+    description: "Stunning drag & voguing performance"
   },
   {
     id: "s11",
@@ -407,7 +407,7 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Sonntag",
     type: "dj",
-    description: "Mystical electronic sounds and ethereal beats"
+    description: "Dirty Downtempo, Midtempo"
   },
   {
     id: "su16",
