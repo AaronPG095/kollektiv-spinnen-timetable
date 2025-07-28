@@ -41,16 +41,13 @@ export const FestivalHeader = ({
             <h1 className="text-4xl md:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
               Kollektiv Spinnen
             </h1>
-            <p className="text-muted-foreground text-lg">
-              Discover amazing performances across all venues
-            </p>
           </div>
 
           {/* Search */}
           <div className="relative max-w-md mx-auto w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search artists, events..."
+              placeholder="Künstler, Events suchen..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               className="pl-10 bg-card border-border"

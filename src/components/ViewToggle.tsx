@@ -16,7 +16,7 @@ export const ViewToggle = ({ view, onViewChange }: ViewToggleProps) => {
         className="gap-2"
       >
         <List className="h-4 w-4" />
-        Cards
+        Karten
       </Button>
       <Button
         variant={view === "grid" ? "default" : "ghost"}
@@ -25,7 +25,7 @@ export const ViewToggle = ({ view, onViewChange }: ViewToggleProps) => {
         className="gap-2"
       >
         <Grid className="h-4 w-4" />
-        Grid
+        Raster
       </Button>
     </div>
   );
