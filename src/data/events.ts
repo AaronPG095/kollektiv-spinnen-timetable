@@ -300,12 +300,15 @@ export const events: Event[] = [
   },
   {
     id: "su11",
-    title: "Confering",
+    title: "Confeffing",
     time: "11:00 - 13:00",
     venue: "oben",
     day: "Sonntag",
     type: "dj",
-    description: "Conference-inspired electronic soundscapes"
+    description: "Indie Dance / Disco House",
+    links: {
+      soundcloud: "https://on.soundcloud.com/M16nlKgKa2jXL1ZlRP"
+    }
   },
   {
     id: "su12",
