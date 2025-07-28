@@ -57,7 +57,11 @@ export const EventCard = ({ event, onClick }: EventCardProps) => {
 
   return (
     <Card 
-      className={`p-4 cursor-pointer transition-smooth hover:shadow-glow hover:scale-105 backdrop-blur-sm border-2 bg-${type.color}/10 border-${type.color}/40`}
+      className="p-4 cursor-pointer transition-smooth hover:shadow-glow hover:scale-105 backdrop-blur-sm border-2"
+      style={{
+        backgroundColor: `hsl(var(--${type.color}) / 0.1)`,
+        borderColor: `hsl(var(--${type.color}) / 0.4)`
+      }}
       onClick={() => onClick(event)}
     >
       <div className="space-y-3">
@@ -67,7 +71,12 @@ export const EventCard = ({ event, onClick }: EventCardProps) => {
             {event.title}
           </h3>
           <div 
-            className={`px-2 py-1 rounded text-xs font-medium bg-${type.color}/20 text-${type.color} border border-${type.color}/30`}
+            className="px-2 py-1 rounded text-xs font-medium border"
+            style={{
+              backgroundColor: `hsl(var(--${type.color}) / 0.2)`,
+              color: `hsl(var(--${type.color}))`,
+              borderColor: `hsl(var(--${type.color}) / 0.3)`
+            }}
           >
             {type.label}
           </div>
@@ -84,7 +93,12 @@ export const EventCard = ({ event, onClick }: EventCardProps) => {
           <VenueIcon className="h-3 w-3" />
           <Badge 
             variant="outline" 
-            className={`text-xs bg-${venue.color}/10 border-${venue.color}/20 text-${venue.color}`}
+            className="text-xs"
+            style={{
+              backgroundColor: `hsl(var(--venue-${event.venue}) / 0.1)`,
+              borderColor: `hsl(var(--venue-${event.venue}) / 0.2)`,
+              color: `hsl(var(--venue-${event.venue}))`
+            }}
           >
             {venue.label}
           </Badge>
