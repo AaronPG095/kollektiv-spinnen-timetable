@@ -18,7 +18,11 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Freitag",
     type: "live",
-    description: "Powerful live performance featuring traditional and modern fusion sounds"
+    description: "Powerful live performance featuring traditional and modern fusion sounds",
+    links: {
+      instagram: "https://instagram.com/washkar.sound",
+      bandcamp: "https://washkarsound.bandcamp.com"
+    }
   },
   {
     id: "f3",
@@ -95,7 +99,11 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Samstag",
     type: "live",
-    description: "Intimate acoustic performance with setup time included"
+    description: "Intimate acoustic performance with setup time included",
+    links: {
+      instagram: "https://instagram.com/antoni",
+      spotify: "https://spotify.com/artist/antoni"
+    }
   },
   {
     id: "s5",
@@ -104,7 +112,11 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Samstag",
     type: "live",
-    description: "Soulful vocals and contemporary melodies"
+    description: "Soulful vocals and contemporary melodies",
+    links: {
+      instagram: "https://instagram.com/teeyalamee",
+      spotify: "https://spotify.com/artist/teeyalamee"
+    }
   },
   {
     id: "s6",
@@ -113,7 +125,11 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Samstag",
     type: "live",
-    description: "High-energy rock performance with experimental elements"
+    description: "High-energy rock performance with experimental elements",
+    links: {
+      instagram: "https://instagram.com/rickyshark",
+      spotify: "https://spotify.com/artist/rickyshark"
+    }
   },
   {
     id: "s7",
@@ -167,7 +183,10 @@ export const events: Event[] = [
     venue: "unten",
     day: "Samstag",
     type: "dj",
-    description: "Playful electronic beats and party anthems"
+    description: "Playful electronic beats and party anthems",
+    links: {
+      soundcloud: "https://soundcloud.com/axxon-set"
+    }
   },
   {
     id: "s13",
@@ -331,6 +350,10 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Sonntag",
     type: "live",
-    description: "Closing live performance with emotional depth and musical storytelling"
+    description: "Closing live performance with emotional depth and musical storytelling",
+    links: {
+      instagram: "https://instagram.com/ayu",
+      youtube: "https://youtube.com/@ayu"
+    }
   }
 ];

@@ -7,7 +7,7 @@ import { events } from "@/data/events";
 import { Event } from "@/components/EventCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, MapPin } from "lucide-react";
+import { Clock, Calendar, MapPin, Instagram, Youtube, ExternalLink, Music } from "lucide-react";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -95,6 +95,70 @@ const Index = () => {
                   <p className="text-muted-foreground leading-relaxed">
                     {selectedEvent.description}
                   </p>
+                )}
+                
+                {/* Social Media Links */}
+                {selectedEvent.links && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-foreground">Links:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedEvent.links.instagram && (
+                        <a
+                          href={selectedEvent.links.instagram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
+                        >
+                          <Instagram className="h-3 w-3" />
+                          Instagram
+                        </a>
+                      )}
+                      {selectedEvent.links.spotify && (
+                        <a
+                          href={selectedEvent.links.spotify}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
+                        >
+                          <Music className="h-3 w-3" />
+                          Spotify
+                        </a>
+                      )}
+                      {selectedEvent.links.youtube && (
+                        <a
+                          href={selectedEvent.links.youtube}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
+                        >
+                          <Youtube className="h-3 w-3" />
+                          YouTube
+                        </a>
+                      )}
+                      {selectedEvent.links.soundcloud && (
+                        <a
+                          href={selectedEvent.links.soundcloud}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          SoundCloud
+                        </a>
+                      )}
+                      {selectedEvent.links.bandcamp && (
+                        <a
+                          href={selectedEvent.links.bandcamp}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Bandcamp
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             </>
