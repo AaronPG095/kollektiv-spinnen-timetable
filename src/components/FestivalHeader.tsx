@@ -77,7 +77,7 @@ export const FestivalHeader = ({
 
               {/* Venue Filter */}
               <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <MapPin className="h-2 w-4 text-muted-foreground" />
                 <div className="flex gap-2">
                   {venues.map((venue) => (
                     <Badge
