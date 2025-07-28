@@ -99,8 +99,8 @@ export const FestivalHeader = ({
                       variant={selectedVenues.includes(venue.id) ? "default" : "outline"}
                       className={`cursor-pointer transition-smooth ${
                         selectedVenues.includes(venue.id) 
-                          ? `bg-${venue.color} hover:bg-${venue.color}/80 text-white border-${venue.color}` 
-                          : "hover:bg-accent"
+                          ? `bg-${venue.color} hover:bg-${venue.color}/80 text-white border-${venue.color} shadow-md ring-2 ring-${venue.color}/20` 
+                          : "hover:bg-accent hover:scale-105"
                       }`}
                       onClick={() => onVenueToggle(venue.id)}
                     >
@@ -120,8 +120,8 @@ export const FestivalHeader = ({
                       variant={selectedEventTypes.includes(eventType.id) ? "default" : "outline"}
                       className={`cursor-pointer transition-smooth ${
                         selectedEventTypes.includes(eventType.id) 
-                          ? `bg-${eventType.color} hover:bg-${eventType.color}/80 text-white border-${eventType.color}` 
-                          : "hover:bg-accent"
+                          ? `bg-${eventType.color} hover:bg-${eventType.color}/80 text-white border-${eventType.color} shadow-md ring-2 ring-${eventType.color}/20` 
+                          : "hover:bg-accent hover:scale-105"
                       }`}
                       onClick={() => onEventTypeToggle(eventType.id)}
                     >
