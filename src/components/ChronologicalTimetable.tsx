@@ -101,67 +101,69 @@ export const ChronologicalTimetable = ({
             </h3>
           </div>
           
-          {/* Events grouped by day for this venue */}
+          {/* Days and events - aligned horizontally across all venue columns */}
           <div className="space-y-6">
             {sortedDays.map(day => {
               const venueEvents = eventsByDay[day]?.filter(event => event.venue === venueId) || [];
               
               return (
                 <div key={day} className="space-y-3">
-                  {/* Day separator within venue column */}
+                  {/* Day separator - always shown for alignment */}
                   {selectedDay === "Alle" && (
-                    <div className="text-sm font-semibold text-muted-foreground border-l-4 border-festival-medium/50 pl-3 py-1">
+                    <div className="text-sm font-semibold text-muted-foreground border-l-4 border-festival-medium/50 pl-3 py-1 min-h-[24px]">
                       {day}
                     </div>
                   )}
                   
-                  {/* Events for this day and venue */}
-                  {venueEvents.length > 0 ? (
-                    venueEvents.map(event => {
-                      const type = typeConfig[event.type as keyof typeof typeConfig];
-                      
-                      return (
-                        <Card 
-                          key={event.id}
-                          className={`p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2 bg-${type.color}/10 border-${type.color}/40`}
-                          onClick={() => onEventClick(event)}
-                        >
-                          <div className="space-y-2">
-                            {/* Title and Type */}
-                            <div className="flex items-start justify-between gap-2">
-                              <h4 className="font-medium text-foreground text-sm leading-tight flex-1">
-                                {event.title}
-                              </h4>
-                              <div 
-                                className={`px-2 py-1 rounded text-xs font-medium bg-${type.color}/20 text-${type.color} border border-${type.color}/30 shrink-0`}
-                              >
-                                {type.label}
+                  {/* Events container - minimum height to maintain alignment */}
+                  <div className="min-h-[60px] space-y-3">
+                    {venueEvents.length > 0 ? (
+                      venueEvents.map(event => {
+                        const type = typeConfig[event.type as keyof typeof typeConfig];
+                        
+                        return (
+                          <Card 
+                            key={event.id}
+                            className={`p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2 bg-${type.color}/10 border-${type.color}/40`}
+                            onClick={() => onEventClick(event)}
+                          >
+                            <div className="space-y-2">
+                              {/* Title and Type */}
+                              <div className="flex items-start justify-between gap-2">
+                                <h4 className="font-medium text-foreground text-sm leading-tight flex-1">
+                                  {event.title}
+                                </h4>
+                                <div 
+                                  className={`px-2 py-1 rounded text-xs font-medium bg-${type.color}/20 text-${type.color} border border-${type.color}/30 shrink-0`}
+                                >
+                                  {type.label}
+                                </div>
                               </div>
+                              
+                              {/* Time */}
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                <span>{event.time}</span>
+                              </div>
+                              
+                              {/* Description */}
+                              {event.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-2">
+                                  {event.description}
+                                </p>
+                              )}
                             </div>
-                            
-                            {/* Time */}
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Clock className="h-3 w-3" />
-                              <span>{event.time}</span>
-                            </div>
-                            
-                            {/* Description */}
-                            {event.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-2">
-                                {event.description}
-                              </p>
-                            )}
-                          </div>
-                        </Card>
-                      );
-                    })
-                  ) : (
-                    selectedDay === "Alle" && (
-                      <div className="text-xs text-muted-foreground text-center py-2 opacity-50">
-                        Keine Events
-                      </div>
-                    )
-                  )}
+                          </Card>
+                        );
+                      })
+                    ) : (
+                      selectedDay === "Alle" && (
+                        <div className="text-xs text-muted-foreground text-center py-6 opacity-30">
+                          Keine Events
+                        </div>
+                      )
+                    )}
+                  </div>
                 </div>
               );
             })}
