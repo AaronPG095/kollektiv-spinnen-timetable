@@ -1,12 +1,19 @@
 import { useState } from "react";
 import { FestivalHeader } from "@/components/FestivalHeader";
 import { TimetableGrid } from "@/components/TimetableGrid";
+import { GridTimetable } from "@/components/GridTimetable";
 import { events } from "@/data/events";
+import { Event } from "@/components/EventCard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Clock, Calendar, MapPin } from "lucide-react";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDay, setSelectedDay] = useState("Alle");
   const [selectedVenues, setSelectedVenues] = useState<string[]>([]);
+  const [view, setView] = useState<"grid" | "list">("list");
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const handleVenueToggle = (venue: string) => {
     setSelectedVenues(prev => 
@@ -14,6 +21,12 @@ const Index = () => {
         ? prev.filter(v => v !== venue)
         : [...prev, venue]
     );
+  };
+
+  const venueConfig = {
+    draussen: { label: "Draußen", color: "venue-draussen" },
+    oben: { label: "Oben", color: "venue-oben" },
+    unten: { label: "Unten", color: "venue-unten" }
   };
 
   return (
@@ -25,16 +38,67 @@ const Index = () => {
         onDayChange={setSelectedDay}
         selectedVenues={selectedVenues}
         onVenueToggle={handleVenueToggle}
+        view={view}
+        onViewChange={setView}
       />
       
       <main className="container mx-auto px-4 py-8">
-        <TimetableGrid
-          events={events}
-          selectedDay={selectedDay}
-          selectedVenues={selectedVenues}
-          searchQuery={searchQuery}
-        />
+        {view === "list" ? (
+          <TimetableGrid
+            events={events}
+            selectedDay={selectedDay}
+            selectedVenues={selectedVenues}
+            searchQuery={searchQuery}
+          />
+        ) : (
+          <GridTimetable
+            events={events}
+            selectedDay={selectedDay}
+            selectedVenues={selectedVenues}
+            searchQuery={searchQuery}
+            onEventClick={setSelectedEvent}
+          />
+        )}
       </main>
+
+      {/* Event Detail Modal for Grid View */}
+      <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
+        <DialogContent className="bg-card border-border">
+          {selectedEvent && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                  {selectedEvent.title}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {selectedEvent.time}
+                  </Badge>
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {selectedEvent.day}
+                  </Badge>
+                  <Badge 
+                    variant="outline" 
+                    className={`flex items-center gap-1 bg-${venueConfig[selectedEvent.venue].color}/10 border-${venueConfig[selectedEvent.venue].color}/20`}
+                  >
+                    <MapPin className="h-3 w-3" />
+                    {venueConfig[selectedEvent.venue].label}
+                  </Badge>
+                </div>
+                {selectedEvent.description && (
+                  <p className="text-muted-foreground leading-relaxed">
+                    {selectedEvent.description}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
       
       {/* Background Effects */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
