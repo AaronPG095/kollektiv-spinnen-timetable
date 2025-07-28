@@ -96,10 +96,10 @@ export const GridTimetable = ({
 
           {/* Venue rows */}
           {venues.map(venue => (
-            <div key={venue.id} className="grid grid-cols-[200px_repeat(24,100px)] border-b border-border/30 min-h-[80px]">
+            <div key={venue.id} className="grid grid-cols-[200px_repeat(24,100px)] border-b-0 min-h-[100px]">
               {/* Venue label */}
-              <div className={`p-4 bg-${venue.color}/20 border-r border-border/30 flex items-center justify-center`}>
-                <span className="font-bold text-sm text-center writing-mode-vertical-rl transform rotate-180">
+              <div className={`p-6 bg-${venue.color}/20 border-r border-border/30 flex items-center justify-center`}>
+                <span className="font-bold text-lg text-center writing-mode-vertical-rl transform rotate-180">
                   {venue.label}
                 </span>
               </div>

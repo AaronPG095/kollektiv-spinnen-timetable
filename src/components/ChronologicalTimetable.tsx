@@ -101,16 +101,16 @@ export const ChronologicalTimetable = ({
           )}
           
           {/* Three-column venue layout */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             {Object.entries(venueConfig).map(([venueId, venueInfo]) => {
               const venueEvents = eventsByDay[day]?.filter(event => event.venue === venueId) || [];
               
               return (
-                <div key={venueId} className={`space-y-3 p-4 rounded-lg ${venueInfo.bgColor} ${venueInfo.borderColor} border`}>
+                <div key={venueId} className={`space-y-3 p-6 rounded-lg ${venueInfo.bgColor} ${venueInfo.borderColor} border`}>
                   {/* Venue Header */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <venueInfo.icon className="h-4 w-4" />
-                    <h3 className={`font-semibold text-${venueInfo.color}`}>
+                  <div className="flex items-center gap-3 mb-4">
+                    <venueInfo.icon className="h-6 w-6" />
+                    <h3 className={`text-xl font-bold text-${venueInfo.color}`}>
                       {venueInfo.label}
                     </h3>
                   </div>
