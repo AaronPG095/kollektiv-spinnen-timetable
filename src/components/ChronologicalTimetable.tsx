@@ -90,80 +90,88 @@ export const ChronologicalTimetable = ({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {Object.entries(venueConfig).map(([venueId, venueInfo]) => (
-        <div key={venueId} className={`space-y-6 p-6 rounded-lg ${venueInfo.bgColor} ${venueInfo.borderColor} border`}>
-          {/* Venue Header - shown once at top */}
-          <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-4">
-            <venueInfo.icon className="h-6 w-6" />
-            <h3 className={`text-xl font-bold text-${venueInfo.color}`}>
-              {venueInfo.label}
-            </h3>
+    <div className="space-y-8">
+      {/* Venue Headers */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {Object.entries(venueConfig).map(([venueId, venueInfo]) => (
+          <div key={venueId} className={`p-6 rounded-lg ${venueInfo.bgColor} ${venueInfo.borderColor} border`}>
+            <div className="flex items-center gap-3 border-b border-border/30 pb-4">
+              <venueInfo.icon className="h-6 w-6" />
+              <h3 className={`text-xl font-bold text-${venueInfo.color}`}>
+                {venueInfo.label}
+              </h3>
+            </div>
           </div>
-          
-          {/* Days and events - aligned horizontally across all venue columns */}
-          <div className="space-y-6">
-            {sortedDays.map(day => {
+        ))}
+      </div>
+
+      {/* Days and Events - perfectly aligned */}
+      {sortedDays.map(day => (
+        <div key={day} className="space-y-4">
+          {/* Day Header - always shown across all columns when viewing all days */}
+          {selectedDay === "Alle" && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {Object.entries(venueConfig).map(([venueId]) => (
+                <div key={`${day}-${venueId}-header`} className="px-6">
+                  <div className="text-xl font-bold text-muted-foreground border-l-4 border-festival-medium/50 pl-4 py-2">
+                    {day}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Events Grid for this day */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Object.entries(venueConfig).map(([venueId, venueInfo]) => {
               const venueEvents = eventsByDay[day]?.filter(event => event.venue === venueId) || [];
               
               return (
-                <div key={day} className="space-y-3">
-                  {/* Day separator - always shown for alignment */}
-                  {selectedDay === "Alle" && (
-                    <div className="text-sm font-semibold text-muted-foreground border-l-4 border-festival-medium/50 pl-3 py-1 min-h-[24px]">
-                      {day}
+                <div key={`${day}-${venueId}`} className={`p-6 rounded-lg ${venueInfo.bgColor} ${venueInfo.borderColor} border space-y-3 min-h-[120px]`}>
+                  {venueEvents.length > 0 ? (
+                    venueEvents.map(event => {
+                      const type = typeConfig[event.type as keyof typeof typeConfig];
+                      
+                      return (
+                        <Card 
+                          key={event.id}
+                          className={`p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2 bg-${type.color}/10 border-${type.color}/40`}
+                          onClick={() => onEventClick(event)}
+                        >
+                          <div className="space-y-2">
+                            {/* Title and Type */}
+                            <div className="flex items-start justify-between gap-2">
+                              <h4 className="font-medium text-foreground text-sm leading-tight flex-1">
+                                {event.title}
+                              </h4>
+                              <div 
+                                className={`px-2 py-1 rounded text-xs font-medium bg-${type.color}/20 text-${type.color} border border-${type.color}/30 shrink-0`}
+                              >
+                                {type.label}
+                              </div>
+                            </div>
+                            
+                            {/* Time */}
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              <span>{event.time}</span>
+                            </div>
+                            
+                            {/* Description */}
+                            {event.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                {event.description}
+                              </p>
+                            )}
+                          </div>
+                        </Card>
+                      );
+                    })
+                  ) : (
+                    <div className="text-xs text-muted-foreground text-center py-6 opacity-30">
+                      Keine Events
                     </div>
                   )}
-                  
-                  {/* Events container - minimum height to maintain alignment */}
-                  <div className="min-h-[60px] space-y-3">
-                    {venueEvents.length > 0 ? (
-                      venueEvents.map(event => {
-                        const type = typeConfig[event.type as keyof typeof typeConfig];
-                        
-                        return (
-                          <Card 
-                            key={event.id}
-                            className={`p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2 bg-${type.color}/10 border-${type.color}/40`}
-                            onClick={() => onEventClick(event)}
-                          >
-                            <div className="space-y-2">
-                              {/* Title and Type */}
-                              <div className="flex items-start justify-between gap-2">
-                                <h4 className="font-medium text-foreground text-sm leading-tight flex-1">
-                                  {event.title}
-                                </h4>
-                                <div 
-                                  className={`px-2 py-1 rounded text-xs font-medium bg-${type.color}/20 text-${type.color} border border-${type.color}/30 shrink-0`}
-                                >
-                                  {type.label}
-                                </div>
-                              </div>
-                              
-                              {/* Time */}
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Clock className="h-3 w-3" />
-                                <span>{event.time}</span>
-                              </div>
-                              
-                              {/* Description */}
-                              {event.description && (
-                                <p className="text-xs text-muted-foreground line-clamp-2">
-                                  {event.description}
-                                </p>
-                              )}
-                            </div>
-                          </Card>
-                        );
-                      })
-                    ) : (
-                      selectedDay === "Alle" && (
-                        <div className="text-xs text-muted-foreground text-center py-6 opacity-30">
-                          Keine Events
-                        </div>
-                      )
-                    )}
-                  </div>
                 </div>
               );
             })}
