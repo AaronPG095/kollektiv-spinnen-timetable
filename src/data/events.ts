@@ -20,8 +20,8 @@ export const events: Event[] = [
     type: "live",
     description: "Powerful live performance featuring traditional and modern fusion sounds",
     links: {
-      instagram: "https://instagram.com/washkar.sound",
-      bandcamp: "https://washkarsound.bandcamp.com"
+      instagram: "https://www.instagram.com/waskhar_sound?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
+      bandcamp: "https://waskhar.bandcamp.com/"
     }
   },
   {
@@ -72,7 +72,10 @@ export const events: Event[] = [
     venue: "unten",
     day: "Samstag",
     type: "dj",
-    description: "Deep house and electronic beats to keep the night alive"
+    description: "Abenteuer House",
+    links: {
+      soundcloud: "https://on.soundcloud.com/ZQUMQ8m7VdJ0bsnC0k"
+    }
   },
   {
     id: "s2",
@@ -99,10 +102,10 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Samstag",
     type: "live",
-    description: "Intimate acoustic performance with setup time included",
+    description: "Indie-Folk",
     links: {
-      instagram: "https://instagram.com/antoni",
-      spotify: "https://spotify.com/artist/antoni"
+      instagram: "https://www.instagram.com/antonimusic_/",
+      spotify: "https://open.spotify.com/intl-de/artist/7jP2bIZ5G2DD3JTgpulrWr?si=EWOS2L2UQWCGxSwvm7WpUQ"
     }
   },
   {
@@ -114,8 +117,8 @@ export const events: Event[] = [
     type: "live",
     description: "Soulful vocals and contemporary melodies",
     links: {
-      instagram: "https://instagram.com/teeyalamee",
-      spotify: "https://spotify.com/artist/teeyalamee"
+      instagram: "https://www.instagram.com/teeya.lamee?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
+      spotify: "https://open.spotify.com/artist/0eDr9FGxuaqEVJk76OQUvT?si=RRqRTTYHRvKR0iQ9G_n4Cg"
     }
   },
   {
@@ -125,10 +128,10 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Samstag",
     type: "live",
-    description: "High-energy rock performance with experimental elements",
+    description: "Euro Dance, Trance and Electronica",
     links: {
-      instagram: "https://instagram.com/rickyshark",
-      spotify: "https://spotify.com/artist/rickyshark"
+      instagram: "https://www.instagram.com/ricky.shark?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
+      spotify: "https://open.spotify.com/intl-de/artist/0lJ7FM4kDzVebs65cb1KCH?si=3QxBpmJ6TSmfmwt7YRglTg"
     }
   },
   {
@@ -147,7 +150,10 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Samstag",
     type: "dj",
-    description: "Eclectic mix of world music and electronic fusion"
+    description: "Dark Disco, Downtempo",
+    links: {
+      soundcloud: "https://on.soundcloud.com/Gp2RXHCpHwEarhUWRR"
+    }
   },
   {
     id: "s9",
@@ -156,7 +162,10 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Samstag",
     type: "dj",
-    description: "Dark ambient and industrial soundscapes"
+    description: "Ambient / Downbeat / Experimental Chill",
+    links: {
+      soundcloud: "https://on.soundcloud.com/tYerOrnMMsCMjKfGvs"
+    }
   },
   {
     id: "s10",
@@ -174,7 +183,10 @@ export const events: Event[] = [
     venue: "oben",
     day: "Samstag",
     type: "dj",
-    description: "Uplifting house and disco vibes"
+    description: "Downtempo",
+    links: {
+      soundcloud: "https://on.soundcloud.com/kxcwNtV4Botm5okM8i"
+    }
   },
   {
     id: "s12",
@@ -183,9 +195,9 @@ export const events: Event[] = [
     venue: "unten",
     day: "Samstag",
     type: "dj",
-    description: "Playful electronic beats and party anthems",
+    description: "House / Hard House",
     links: {
-      soundcloud: "https://soundcloud.com/axxon-set"
+      soundcloud: "https://on.soundcloud.com/ujwZAcupIOMo96xsIf"
     }
   },
   {
@@ -195,7 +207,10 @@ export const events: Event[] = [
     venue: "oben",
     day: "Samstag",
     type: "dj",
-    description: "Atmospheric electronic music and ambient textures"
+    description: "Melodic Techno / Techy House",
+    links: {
+      soundcloud: "https://soundcloud.com/isl-and?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing"
+    }
   },
   {
     id: "s14",
@@ -204,7 +219,10 @@ export const events: Event[] = [
     venue: "unten",
     day: "Samstag",
     type: "dj",
-    description: "Alternative electronic sounds and underground vibes"
+    description: "Power House",
+    links: {
+      soundcloud: "https://on.soundcloud.com/n4ZhXyi8U4jys8qPRa"
+    }
   },
 
   // Sunday Events
@@ -215,7 +233,10 @@ export const events: Event[] = [
     venue: "oben",
     day: "Sonntag",
     type: "dj",
-    description: "Minimal techno and hypnotic rhythms"
+    description: "Dirty Midtempo / Bouncetempo",
+    links: {
+      soundcloud: "https://on.soundcloud.com/V2mPyzr9jdtktheCa2"
+    }
   },
   {
     id: "su2",
@@ -224,7 +245,10 @@ export const events: Event[] = [
     venue: "unten",
     day: "Sonntag",
     type: "dj",
-    description: "Experimental soundscapes and field recordings"
+    description: "Trance / Hard-Groove",
+    links: {
+      soundcloud: "https://on.soundcloud.com/qyStxld3tjBoHduMUY"
+    }
   },
   {
     id: "su3",
@@ -233,7 +257,10 @@ export const events: Event[] = [
     venue: "oben",
     day: "Sonntag",
     type: "dj",
-    description: "Progressive electronic music journey"
+    description: "House / Tech House",
+    links: {
+      soundcloud: "https://soundcloud.com/raulpr?ref=clipboard&p=a&c=1&si=cabc0c60d02b4caab8396ac2ff652d8b&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing"
+    }
   },
   {
     id: "su4",
@@ -242,7 +269,10 @@ export const events: Event[] = [
     venue: "unten",
     day: "Sonntag",
     type: "dj",
-    description: "Flowing electronic beats and organic sounds"
+    description: "Trance",
+    links: {
+      soundcloud: "https://on.soundcloud.com/fpvK4frm5RJRuVzDg1"
+    }
   },
   {
     id: "su5",
@@ -251,7 +281,10 @@ export const events: Event[] = [
     venue: "oben",
     day: "Sonntag",
     type: "dj",
-    description: "Early morning electronic meditation"
+    description: "Indie Dance / House",
+    links: {
+      soundcloud: "https://on.soundcloud.com/ytzaDkm49UjIAkAAPR"
+    }
   },
   {
     id: "su6",
@@ -260,7 +293,10 @@ export const events: Event[] = [
     venue: "unten",
     day: "Sonntag",
     type: "dj",
-    description: "Dark electronic atmospheres for the early hours"
+    description: "Melodic / Psy-Techno",
+    links: {
+      soundcloud: "https://on.soundcloud.com/Y8ucqTuuxoEZCyGYe6"
+    }
   },
   {
     id: "su7",
@@ -269,7 +305,10 @@ export const events: Event[] = [
     venue: "oben",
     day: "Sonntag",
     type: "dj",
-    description: "Sunrise sets with uplifting electronic music"
+    description: "House/techhouse",
+    links: {
+      soundcloud: "https://soundcloud.com/user-997519530?ref=clipboard&p=i&c=0&si=6516D87EF628413E8C1F20E3343590DF&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing"
+    }
   },
   {
     id: "su8",
@@ -278,7 +317,10 @@ export const events: Event[] = [
     venue: "oben",
     day: "Sonntag",
     type: "dj",
-    description: "Morning electronic music and gentle beats"
+    description: "Dark Disco / Indie Dance",
+    links: {
+      soundcloud: "https://on.soundcloud.com/84BYyCOjWMA8tsOiY9"
+    }
   },
   {
     id: "su9",
@@ -296,7 +338,10 @@ export const events: Event[] = [
     venue: "oben",
     day: "Sonntag",
     type: "dj",
-    description: "Downtempo and chillout electronic music"
+    description: "House",
+    links: {
+      soundcloud: "https://on.soundcloud.com/hnLI95A5SH9l2S4tfO"
+    }
   },
   {
     id: "su11",
@@ -317,7 +362,10 @@ export const events: Event[] = [
     venue: "oben",
     day: "Sonntag",
     type: "dj",
-    description: "Rainy day vibes with ambient electronic music"
+    description: "Downtempo",
+    links: {
+      soundcloud: "https://soundcloud.com/regentag_music/freihgefuhl-festival-25"
+    }
   },
   {
     id: "su13",
@@ -326,7 +374,10 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Sonntag",
     type: "performance",
-    description: "Playful DJ set combined with champagne bowling performance"
+    description: "House / Tech House",
+    links: {
+      soundcloud: "https://on.soundcloud.com/eXrPRoebAG23g0BCkj"
+    }
   },
   {
     id: "su14",
@@ -335,7 +386,10 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Sonntag",
     type: "dj",
-    description: "Nature-inspired electronic music and organic sounds"
+    description: "Downtempo",
+    links: {
+      soundcloud: "https://on.soundcloud.com/TDf0wBLLNw9TAO7JYt"
+    }
   },
   {
     id: "su15",
@@ -353,10 +407,10 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Sonntag",
     type: "live",
-    description: "Closing live performance with emotional depth and musical storytelling",
+    description: "Live-Looping Soundjourney",
     links: {
-      instagram: "https://instagram.com/ayu",
-      youtube: "https://youtube.com/@ayu"
+      instagram: "https://www.instagram.com/ayu.echoes/",
+      youtube: "https://www.youtube.com/watch?v=1zHfMboqteY&t=303s"
     }
   }
 ];
