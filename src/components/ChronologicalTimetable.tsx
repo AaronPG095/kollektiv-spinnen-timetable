@@ -91,87 +91,77 @@ export const ChronologicalTimetable = ({
 
   return (
     <div className="space-y-8">
-      {/* Venue Headers */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {Object.entries(venueConfig).map(([venueId, venueInfo]) => (
-          <div key={venueId} className={`p-6 rounded-lg ${venueInfo.bgColor} ${venueInfo.borderColor} border`}>
-            <div className="flex items-center gap-3 border-b border-border/30 pb-4">
-              <venueInfo.icon className="h-6 w-6" />
-              <h3 className={`text-xl font-bold text-${venueInfo.color}`}>
-                {venueInfo.label}
-              </h3>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Days and Events - perfectly aligned */}
       {sortedDays.map(day => (
         <div key={day} className="space-y-4">
-          {/* Day Header - always shown across all columns when viewing all days */}
+          {/* Day Header - only show if viewing all days */}
           {selectedDay === "Alle" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {Object.entries(venueConfig).map(([venueId]) => (
-                <div key={`${day}-${venueId}-header`} className="px-6">
-                  <div className="text-xl font-bold text-muted-foreground border-l-4 border-festival-medium/50 pl-4 py-2">
-                    {day}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <h2 className="text-2xl font-bold text-festival-light border-b border-festival-medium/30 pb-2">
+              {day}
+            </h2>
           )}
-
-          {/* Events Grid for this day */}
+          
+          {/* Three-column venue layout */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {Object.entries(venueConfig).map(([venueId, venueInfo]) => {
               const venueEvents = eventsByDay[day]?.filter(event => event.venue === venueId) || [];
               
               return (
-                <div key={`${day}-${venueId}`} className={`p-6 rounded-lg ${venueInfo.bgColor} ${venueInfo.borderColor} border space-y-3 min-h-[120px]`}>
-                  {venueEvents.length > 0 ? (
-                    venueEvents.map(event => {
-                      const type = typeConfig[event.type as keyof typeof typeConfig];
-                      
-                      return (
-                        <Card 
-                          key={event.id}
-                          className={`p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2 bg-${type.color}/10 border-${type.color}/40`}
-                          onClick={() => onEventClick(event)}
-                        >
-                          <div className="space-y-2">
-                            {/* Title and Type */}
-                            <div className="flex items-start justify-between gap-2">
-                              <h4 className="font-medium text-foreground text-sm leading-tight flex-1">
-                                {event.title}
-                              </h4>
-                              <div 
-                                className={`px-2 py-1 rounded text-xs font-medium bg-${type.color}/20 text-${type.color} border border-${type.color}/30 shrink-0`}
-                              >
-                                {type.label}
+                <div key={venueId} className={`space-y-3 p-4 rounded-lg ${venueInfo.bgColor} ${venueInfo.borderColor} border`}>
+                  {/* Venue Header */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <venueInfo.icon className="h-4 w-4" />
+                    <h3 className={`font-semibold text-${venueInfo.color}`}>
+                      {venueInfo.label}
+                    </h3>
+                  </div>
+                  
+                  {/* Events for this venue */}
+                  <div className="space-y-3">
+                    {venueEvents.length > 0 ? (
+                      venueEvents.map(event => {
+                        const type = typeConfig[event.type as keyof typeof typeConfig];
+                        
+                        return (
+                          <Card 
+                            key={event.id}
+                            className={`p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2 bg-${type.color}/10 border-${type.color}/40`}
+                            onClick={() => onEventClick(event)}
+                          >
+                            <div className="space-y-2">
+                              {/* Title and Type */}
+                              <div className="flex items-start justify-between gap-2">
+                                <h4 className="font-medium text-foreground text-sm leading-tight flex-1">
+                                  {event.title}
+                                </h4>
+                                <div 
+                                  className={`px-2 py-1 rounded text-xs font-medium bg-${type.color}/20 text-${type.color} border border-${type.color}/30 shrink-0`}
+                                >
+                                  {type.label}
+                                </div>
                               </div>
+                              
+                              {/* Time */}
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                <span>{event.time}</span>
+                              </div>
+                              
+                              {/* Description */}
+                              {event.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-2">
+                                  {event.description}
+                                </p>
+                              )}
                             </div>
-                            
-                            {/* Time */}
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Clock className="h-3 w-3" />
-                              <span>{event.time}</span>
-                            </div>
-                            
-                            {/* Description */}
-                            {event.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-2">
-                                {event.description}
-                              </p>
-                            )}
-                          </div>
-                        </Card>
-                      );
-                    })
-                  ) : (
-                    <div className="text-xs text-muted-foreground text-center py-6 opacity-30">
-                      Keine Events
-                    </div>
-                  )}
+                          </Card>
+                        );
+                      })
+                    ) : (
+                      <div className="text-xs text-muted-foreground text-center py-4">
+                        Keine Events
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
