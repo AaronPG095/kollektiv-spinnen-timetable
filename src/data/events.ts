@@ -369,7 +369,7 @@ export const events: Event[] = [
   },
   {
     id: "su13",
-    title: "Firlefanz & Schabernack / Sekt Kegeln",
+    title: "Firlefanz & Schabernack",
     time: "14:30 - 16:30",
     venue: "draussen",
     day: "Sonntag",
@@ -378,6 +378,15 @@ export const events: Event[] = [
     links: {
       soundcloud: "https://on.soundcloud.com/eXrPRoebAG23g0BCkj"
     }
+  },
+  {
+    id: "su13b",
+    title: "Sekt Kegeln",
+    time: "14:30 - 16:30",
+    venue: "draussen",
+    day: "Sonntag",
+    type: "interaktiv",
+    description: "Interactive bowling with sparkling wine - fun and games for everyone"
   },
   {
     id: "su14",
