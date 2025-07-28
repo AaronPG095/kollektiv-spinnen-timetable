@@ -8,58 +8,67 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    /* Deep cosmic space background */
+    --background: 225 60% 8%;
+    --foreground: 195 100% 90%;
 
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 225 50% 12%;
+    --card-foreground: 195 100% 90%;
 
-    --popover: 240 5% 6%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 225 55% 10%;
+    --popover-foreground: 195 100% 90%;
 
-    --primary: 280 100% 85%;
-    --primary-foreground: 240 10% 3.9%;
+    /* Electric cyan primary */
+    --primary: 195 100% 65%;
+    --primary-foreground: 225 60% 8%;
 
-    --secondary: 270 50% 25%;
-    --secondary-foreground: 0 0% 98%;
+    /* Deep space secondary */
+    --secondary: 240 45% 18%;
+    --secondary-foreground: 195 100% 90%;
 
-    --muted: 240 5% 6%;
-    --muted-foreground: 240 5% 65%;
+    --muted: 225 40% 15%;
+    --muted-foreground: 220 20% 65%;
 
-    --accent: 290 100% 75%;
-    --accent-foreground: 240 10% 3.9%;
+    /* Bright nebula accent */
+    --accent: 280 100% 70%;
+    --accent-foreground: 225 60% 8%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 340 75% 55%;
+    --destructive-foreground: 195 100% 90%;
 
-    --border: 240 6% 20%;
-    --input: 240 6% 20%;
-    --ring: 280 100% 85%;
+    --border: 225 30% 20%;
+    --input: 225 30% 20%;
+    --ring: 195 100% 65%;
 
     --radius: 0.75rem;
 
-    --festival-light: 280 100% 85%;
-    --festival-medium: 270 80% 70%;
-    --festival-deep: 260 70% 55%;
-    --festival-dark: 250 60% 40%;
-    --festival-darkest: 240 50% 25%;
+    /* Cosmic nebula festival colors */
+    --festival-light: 195 100% 75%;    /* Bright electric cyan */
+    --festival-medium: 250 90% 65%;    /* Purple nebula */
+    --festival-deep: 280 80% 55%;      /* Deep magenta */
+    --festival-dark: 240 60% 35%;      /* Dark cosmic blue */
+    --festival-darkest: 225 50% 18%;   /* Deep space */
     
-    --venue-draussen: 280 60% 80%;
-    --venue-oben: 270 70% 60%;
-    --venue-unten: 260 80% 40%;
+    /* Cosmic venue colors */
+    --venue-draussen: 195 90% 70%;     /* Electric cyan for outside */
+    --venue-oben: 250 80% 60%;         /* Purple for upstairs */
+    --venue-unten: 280 70% 50%;        /* Magenta for downstairs */
     
-    --type-dj: 0 100% 50%;
-    --type-live: 15 90% 60%;
-    --type-performance: 45 100% 50%;
-    --type-workshop: 120 100% 35%;
-    --type-interaktiv: 10 88% 58%;
+    /* Nebula event type colors */
+    --type-dj: 340 85% 60%;            /* Cosmic red */
+    --type-live: 20 90% 65%;           /* Warm cosmic orange */
+    --type-performance: 60 95% 55%;    /* Cosmic yellow */
+    --type-workshop: 140 80% 50%;      /* Cosmic green */
+    --type-interaktiv: 300 90% 65%;    /* Cosmic pink */
     
+    /* Cosmic gradients */
     --gradient-primary: linear-gradient(135deg, hsl(var(--festival-light)), hsl(var(--festival-deep)));
     --gradient-secondary: linear-gradient(135deg, hsl(var(--festival-medium)), hsl(var(--festival-darkest)));
     --gradient-hero: linear-gradient(90deg, hsl(var(--festival-light)), hsl(var(--festival-medium)), hsl(var(--festival-deep)), hsl(var(--festival-darkest)));
     
-    --shadow-glow: 0 0 30px hsl(var(--festival-medium) / 0.3);
-    --shadow-card: 0 10px 25px -5px hsl(240 10% 3.9% / 0.4);
+    /* Cosmic glow effects */
+    --shadow-glow: 0 0 40px hsl(var(--festival-light) / 0.4);
+    --shadow-card: 0 15px 35px -5px hsl(225 60% 8% / 0.6);
 
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
