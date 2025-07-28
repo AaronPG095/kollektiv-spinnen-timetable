@@ -59,8 +59,8 @@ export const EventCard = ({ event, onClick }: EventCardProps) => {
     <Card 
       className="p-4 cursor-pointer transition-smooth hover:shadow-glow hover:scale-105 backdrop-blur-sm border-2"
       style={{
-        backgroundColor: `hsl(var(--${type.color}) / 0.1)`,
-        borderColor: `hsl(var(--${type.color}) / 0.4)`
+        backgroundColor: `hsl(var(--${type.color}) / 0.2)`,
+        borderColor: `hsl(var(--${type.color}) / 0.6)`
       }}
       onClick={() => onClick(event)}
     >
@@ -73,9 +73,9 @@ export const EventCard = ({ event, onClick }: EventCardProps) => {
           <div 
             className="px-2 py-1 rounded text-xs font-medium border"
             style={{
-              backgroundColor: `hsl(var(--${type.color}) / 0.2)`,
+              backgroundColor: `hsl(var(--${type.color}) / 0.3)`,
               color: `hsl(var(--${type.color}))`,
-              borderColor: `hsl(var(--${type.color}) / 0.3)`
+              borderColor: `hsl(var(--${type.color}) / 0.5)`
             }}
           >
             {type.label}
