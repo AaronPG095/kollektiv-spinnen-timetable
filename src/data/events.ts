@@ -359,7 +359,7 @@ export const events: Event[] = [
     id: "su12",
     title: "Regentag",
     time: "13:00 - 14:30",
-    venue: "oben",
+    venue: "draussen",
     day: "Sonntag",
     type: "dj",
     description: "Downtempo",
