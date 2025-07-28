@@ -90,78 +90,78 @@ export const ChronologicalTimetable = ({
   }
 
   return (
-    <div className="space-y-8">
-      {sortedDays.map(day => (
-        <div key={day} className="space-y-4">
-          {/* Day Header - only show if viewing all days */}
-          {selectedDay === "Alle" && (
-            <h2 className="text-2xl font-bold text-festival-light border-b border-festival-medium/30 pb-2">
-              {day}
-            </h2>
-          )}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {Object.entries(venueConfig).map(([venueId, venueInfo]) => (
+        <div key={venueId} className={`space-y-6 p-6 rounded-lg ${venueInfo.bgColor} ${venueInfo.borderColor} border`}>
+          {/* Venue Header - shown once at top */}
+          <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-4">
+            <venueInfo.icon className="h-6 w-6" />
+            <h3 className={`text-xl font-bold text-${venueInfo.color}`}>
+              {venueInfo.label}
+            </h3>
+          </div>
           
-          {/* Three-column venue layout */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            {Object.entries(venueConfig).map(([venueId, venueInfo]) => {
+          {/* Events grouped by day for this venue */}
+          <div className="space-y-6">
+            {sortedDays.map(day => {
               const venueEvents = eventsByDay[day]?.filter(event => event.venue === venueId) || [];
               
               return (
-                <div key={venueId} className={`space-y-3 p-6 rounded-lg ${venueInfo.bgColor} ${venueInfo.borderColor} border`}>
-                  {/* Venue Header */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <venueInfo.icon className="h-6 w-6" />
-                    <h3 className={`text-xl font-bold text-${venueInfo.color}`}>
-                      {venueInfo.label}
-                    </h3>
-                  </div>
+                <div key={day} className="space-y-3">
+                  {/* Day separator within venue column */}
+                  {selectedDay === "Alle" && (
+                    <div className="text-sm font-semibold text-muted-foreground border-l-4 border-festival-medium/50 pl-3 py-1">
+                      {day}
+                    </div>
+                  )}
                   
-                  {/* Events for this venue */}
-                  <div className="space-y-3">
-                    {venueEvents.length > 0 ? (
-                      venueEvents.map(event => {
-                        const type = typeConfig[event.type as keyof typeof typeConfig];
-                        
-                        return (
-                          <Card 
-                            key={event.id}
-                            className={`p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2 bg-${type.color}/10 border-${type.color}/40`}
-                            onClick={() => onEventClick(event)}
-                          >
-                            <div className="space-y-2">
-                              {/* Title and Type */}
-                              <div className="flex items-start justify-between gap-2">
-                                <h4 className="font-medium text-foreground text-sm leading-tight flex-1">
-                                  {event.title}
-                                </h4>
-                                <div 
-                                  className={`px-2 py-1 rounded text-xs font-medium bg-${type.color}/20 text-${type.color} border border-${type.color}/30 shrink-0`}
-                                >
-                                  {type.label}
-                                </div>
+                  {/* Events for this day and venue */}
+                  {venueEvents.length > 0 ? (
+                    venueEvents.map(event => {
+                      const type = typeConfig[event.type as keyof typeof typeConfig];
+                      
+                      return (
+                        <Card 
+                          key={event.id}
+                          className={`p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2 bg-${type.color}/10 border-${type.color}/40`}
+                          onClick={() => onEventClick(event)}
+                        >
+                          <div className="space-y-2">
+                            {/* Title and Type */}
+                            <div className="flex items-start justify-between gap-2">
+                              <h4 className="font-medium text-foreground text-sm leading-tight flex-1">
+                                {event.title}
+                              </h4>
+                              <div 
+                                className={`px-2 py-1 rounded text-xs font-medium bg-${type.color}/20 text-${type.color} border border-${type.color}/30 shrink-0`}
+                              >
+                                {type.label}
                               </div>
-                              
-                              {/* Time */}
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Clock className="h-3 w-3" />
-                                <span>{event.time}</span>
-                              </div>
-                              
-                              {/* Description */}
-                              {event.description && (
-                                <p className="text-xs text-muted-foreground line-clamp-2">
-                                  {event.description}
-                                </p>
-                              )}
                             </div>
-                          </Card>
-                        );
-                      })
-                    ) : (
-                      <div className="text-xs text-muted-foreground text-center py-4">
+                            
+                            {/* Time */}
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              <span>{event.time}</span>
+                            </div>
+                            
+                            {/* Description */}
+                            {event.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                {event.description}
+                              </p>
+                            )}
+                          </div>
+                        </Card>
+                      );
+                    })
+                  ) : (
+                    selectedDay === "Alle" && (
+                      <div className="text-xs text-muted-foreground text-center py-2 opacity-50">
                         Keine Events
                       </div>
-                    )}
-                  </div>
+                    )
+                  )}
                 </div>
               );
             })}
