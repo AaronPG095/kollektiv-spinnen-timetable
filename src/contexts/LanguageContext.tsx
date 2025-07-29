@@ -24,9 +24,9 @@ const translations = {
     listView: 'Liste',
     
     // Venues
-    draussen: 'DRAUSSEN',
-    oben: 'OBEN',
-    unten: 'UNTEN',
+    draussen: 'Neue Ufer',
+    oben: 'Salon',
+    unten: 'Flora',
     
     // Event Types
     performance: 'Performance',
@@ -66,9 +66,9 @@ const translations = {
     listView: 'List',
     
     // Venues
-    draussen: 'OUTSIDE',
-    oben: 'UPSTAIRS',
-    unten: 'DOWNSTAIRS',
+    draussen: 'Neue Ufer',
+    oben: 'Salon',
+    unten: 'Flora',
     
     // Event Types
     performance: 'Performance',
