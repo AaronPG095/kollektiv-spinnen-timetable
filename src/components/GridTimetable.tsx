@@ -190,7 +190,7 @@ export const GridTimetable = ({
 
   return (
     <div className="bg-card/30 backdrop-blur-sm rounded-lg border border-border/50 overflow-hidden">
-      <ScrollArea className="w-full h-[700px]">
+      <ScrollArea className="w-full h-[900px]">
         <div className="min-w-[900px]">
           {/* Header with venues */}
           <div className="grid grid-cols-[60px_60px_repeat(3,1fr)] bg-muted/50 sticky top-0 z-10">
