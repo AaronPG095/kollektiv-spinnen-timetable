@@ -87,37 +87,69 @@ export const GridTimetable = ({
   // Function to get events for specific venue and time
   const getEventForSlot = (venueId: string, timeSlot: string, slotIndex: number) => {
     return filteredEvents.find(event => {
-      const [startTime, endTime] = event.time.split(' - ');
-      const slotHour = parseInt(timeSlot.split(':')[0]);
-      const startHour = parseInt(startTime.split(':')[0]);
+      if (event.venue !== venueId) return false;
       
-      // Determine which day this event is on and adjust hours accordingly
-      let eventStartSlot = 0;
-      if (event.day === 'Freitag' && startHour >= 19) {
-        eventStartSlot = startHour - 19; // Friday 19:00-23:00 (slots 0-4)
-      } else if (event.day === 'Samstag') {
-        eventStartSlot = startHour + 5; // Saturday 00:00-23:00 (slots 5-28)
-      } else if (event.day === 'Sonntag') {
-        eventStartSlot = startHour + 29; // Sunday 00:00-20:00 (slots 29-49)
+      const [startTime, endTime] = event.time.split(' - ');
+      const [startHour, startMin = '0'] = startTime.split(':');
+      const [endHour, endMin = '0'] = endTime.split(':');
+      
+      // Convert to minutes for precise calculation
+      const startMinutes = parseInt(startHour) * 60 + parseInt(startMin);
+      let endMinutes = parseInt(endHour) * 60 + parseInt(endMin);
+      
+      // Handle cross-day events
+      if (endMinutes <= startMinutes) {
+        endMinutes += 24 * 60; // Add 24 hours for next day
       }
       
-      // Check if this slot matches the event start
-      return event.venue === venueId && slotIndex === eventStartSlot;
+      // Calculate event start slot based on day and time
+      let eventStartSlot = 0;
+      if (event.day === 'Freitag') {
+        eventStartSlot = parseInt(startHour) - 19; // Friday 19:00-23:00 (slots 0-4)
+      } else if (event.day === 'Samstag') {
+        eventStartSlot = parseInt(startHour) + 5; // Saturday 00:00-23:00 (slots 5-28)
+      } else if (event.day === 'Sonntag') {
+        eventStartSlot = parseInt(startHour) + 29; // Sunday 00:00-20:00 (slots 29-49)
+      }
+      
+      // Special handling for cross-day events (like Fireshow 22:30-00:00)
+      if (event.day === 'Freitag' && endMinutes > startMinutes + 60 && parseInt(endHour) < parseInt(startHour)) {
+        // This is a Friday event that goes into Saturday
+        return slotIndex === eventStartSlot;
+      }
+      
+      // Round down start time to nearest hour for grid alignment
+      const eventHourSlot = Math.floor(startMinutes / 60);
+      if (event.day === 'Freitag') {
+        eventStartSlot = eventHourSlot - 19;
+      } else if (event.day === 'Samstag') {
+        eventStartSlot = eventHourSlot + 5;
+      } else if (event.day === 'Sonntag') {
+        eventStartSlot = eventHourSlot + 29;
+      }
+      
+      return slotIndex === eventStartSlot;
     });
   };
 
   // Function to calculate event span in hours
   const getEventSpan = (event: Event) => {
     const [startTime, endTime] = event.time.split(' - ');
-    const startHour = parseInt(startTime.split(':')[0]);
-    let endHour = parseInt(endTime.split(':')[0]);
+    const [startHour, startMin = '0'] = startTime.split(':');
+    const [endHour, endMin = '0'] = endTime.split(':');
     
-    // Handle overnight events
-    if (endHour < startHour) {
-      endHour += 24;
+    // Convert to minutes for precise calculation
+    const startMinutes = parseInt(startHour) * 60 + parseInt(startMin);
+    let endMinutes = parseInt(endHour) * 60 + parseInt(endMin);
+    
+    // Handle cross-day events
+    if (endMinutes <= startMinutes) {
+      endMinutes += 24 * 60; // Add 24 hours for next day
     }
     
-    return Math.max(1, endHour - startHour);
+    // Calculate duration in hours (rounded up to nearest hour)
+    const durationMinutes = endMinutes - startMinutes;
+    return Math.max(1, Math.ceil(durationMinutes / 60));
   };
 
   // Check if a slot should be skipped (part of a multi-hour event)
@@ -126,18 +158,19 @@ export const GridTimetable = ({
       if (event.venue !== venueId) return false;
       
       const [startTime, endTime] = event.time.split(' - ');
-      const startHour = parseInt(startTime.split(':')[0]);
-      const endHour = parseInt(endTime.split(':')[0]);
+      const [startHour, startMin = '0'] = startTime.split(':');
       const span = getEventSpan(event);
       
       // Calculate event start slot index
       let eventStartSlot = 0;
-      if (event.day === 'Freitag' && startHour >= 19) {
-        eventStartSlot = startHour - 19;
+      const eventHourSlot = parseInt(startHour);
+      
+      if (event.day === 'Freitag') {
+        eventStartSlot = eventHourSlot - 19;
       } else if (event.day === 'Samstag') {
-        eventStartSlot = startHour + 5;
+        eventStartSlot = eventHourSlot + 5;
       } else if (event.day === 'Sonntag') {
-        eventStartSlot = startHour + 29;
+        eventStartSlot = eventHourSlot + 29;
       }
       
       // Check if this slot is within the event span but not the start
@@ -232,7 +265,7 @@ export const GridTimetable = ({
                         `}
                         onClick={() => onEventClick(event)}
                       >
-                        <div className="font-bold text-lg text-foreground mb-2 line-clamp-3 leading-tight">
+                        <div className="font-bold text-3xl text-foreground mb-2 line-clamp-2 leading-tight">
                           {event.title}
                         </div>
                         <Badge 
