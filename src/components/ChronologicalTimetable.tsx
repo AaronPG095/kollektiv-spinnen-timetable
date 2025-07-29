@@ -1,6 +1,7 @@
 import { Clock, MapPin, Music, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Event } from "@/components/EventCard";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ChronologicalTimetableProps {
   events: Event[];
@@ -11,37 +12,6 @@ interface ChronologicalTimetableProps {
   onEventClick: (event: Event) => void;
 }
 
-const venueConfig = {
-  draussen: { 
-    label: "Draußen", 
-    color: "venue-draussen",
-    bgColor: "bg-venue-draussen/10",
-    borderColor: "border-venue-draussen/20",
-    icon: Music
-  },
-  oben: { 
-    label: "Oben", 
-    color: "venue-oben",
-    bgColor: "bg-venue-oben/10", 
-    borderColor: "border-venue-oben/20",
-    icon: Users
-  },
-  unten: { 
-    label: "Unten", 
-    color: "venue-unten",
-    bgColor: "bg-venue-unten/10",
-    borderColor: "border-venue-unten/20", 
-    icon: Music
-  }
-};
-
-const typeConfig = {
-  performance: { label: "Performance", color: "type-performance" },
-  dj: { label: "DJ", color: "type-dj" },
-  workshop: { label: "Workshop", color: "type-workshop" },
-  live: { label: "Live-Konzert", color: "type-live" },
-  interaktiv: { label: "Interaktiv", color: "type-interaktiv" }
-};
 
 export const ChronologicalTimetable = ({ 
   events, 
@@ -51,6 +21,39 @@ export const ChronologicalTimetable = ({
   searchQuery, 
   onEventClick 
 }: ChronologicalTimetableProps) => {
+  const { t } = useLanguage();
+
+  const venueConfig = {
+    draussen: { 
+      label: t('draussen'), 
+      color: "venue-draussen",
+      bgColor: "bg-venue-draussen/10",
+      borderColor: "border-venue-draussen/20",
+      icon: Music
+    },
+    oben: { 
+      label: t('oben'), 
+      color: "venue-oben",
+      bgColor: "bg-venue-oben/10", 
+      borderColor: "border-venue-oben/20",
+      icon: Users
+    },
+    unten: { 
+      label: t('unten'), 
+      color: "venue-unten",
+      bgColor: "bg-venue-unten/10",
+      borderColor: "border-venue-unten/20", 
+      icon: Music
+    }
+  };
+
+  const typeConfig = {
+    performance: { label: t('performance'), color: "type-performance" },
+    dj: { label: t('dj'), color: "type-dj" },
+    workshop: { label: t('workshop'), color: "type-workshop" },
+    live: { label: t('live'), color: "type-live" },
+    interaktiv: { label: t('interaktiv'), color: "type-interaktiv" }
+  };
   // Filter events
   const filteredEvents = events.filter(event => {
     const matchesDay = selectedDay === "Alle" || event.day === selectedDay;
@@ -87,7 +90,7 @@ export const ChronologicalTimetable = ({
   if (filteredEvents.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-12">
-        <p>Keine Events gefunden.</p>
+        <p>{t('noEvents')}</p>
       </div>
     );
   }
@@ -99,7 +102,7 @@ export const ChronologicalTimetable = ({
           {/* Day Header - only show if viewing all days */}
           {selectedDay === "Alle" && (
             <h2 className="text-2xl font-bold text-festival-light border-b border-festival-medium/30 pb-2">
-              {day}
+              {t(day.toLowerCase())}
             </h2>
           )}
           
@@ -161,7 +164,7 @@ export const ChronologicalTimetable = ({
                       })
                     ) : (
                       <div className="text-xs text-muted-foreground text-center py-4">
-                        Keine Events
+                        {t('noEvents')}
                       </div>
                     )}
                   </div>

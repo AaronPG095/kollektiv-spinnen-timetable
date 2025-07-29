@@ -8,8 +8,10 @@ import { Event } from "@/components/EventCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Calendar, MapPin, Instagram, Youtube, ExternalLink, Music } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDay, setSelectedDay] = useState("Alle");
   const [selectedVenues, setSelectedVenues] = useState<string[]>([]);
@@ -34,9 +36,9 @@ const Index = () => {
   };
 
   const venueConfig = {
-    draussen: { label: "Draußen", color: "venue-draussen" },
-    oben: { label: "Oben", color: "venue-oben" },
-    unten: { label: "Unten", color: "venue-unten" }
+    draussen: { label: t('draussen'), color: "venue-draussen" },
+    oben: { label: t('oben'), color: "venue-oben" },
+    unten: { label: t('unten'), color: "venue-unten" }
   };
 
   return (
@@ -94,7 +96,7 @@ const Index = () => {
                   </Badge>
                   <Badge variant="outline" className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {selectedEvent.day}
+                    {t(selectedEvent.day.toLowerCase())}
                   </Badge>
                   <Badge 
                     variant="outline" 
@@ -113,7 +115,7 @@ const Index = () => {
                 {/* Social Media Links */}
                 {selectedEvent.links && (
                   <div className="space-y-2">
-                    <h4 className="font-medium text-foreground">Links:</h4>
+                    <h4 className="font-medium text-foreground">{t('links')}:</h4>
                     <div className="flex flex-wrap gap-2">
                       {selectedEvent.links.instagram && (
                         <a

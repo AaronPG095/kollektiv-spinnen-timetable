@@ -1,8 +1,9 @@
-import { Search, Filter, Calendar, MapPin, Music2 } from "lucide-react";
+import { Search, Filter, Calendar, MapPin, Music2, Languages } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ViewToggle } from "./ViewToggle";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface FestivalHeaderProps {
   searchQuery: string;
@@ -17,19 +18,6 @@ interface FestivalHeaderProps {
   onViewChange: (view: "grid" | "list") => void;
 }
 
-const days = ["Alle", "Freitag", "Samstag", "Sonntag"];
-const venues = [
-  { id: "draussen", label: "Draußen", color: "venue-draussen" },
-  { id: "oben", label: "Oben", color: "venue-oben" },
-  { id: "unten", label: "Unten", color: "venue-unten" }
-];
-const eventTypes = [
-  { id: "workshop", label: "Workshops", color: "type-workshop" },
-  { id: "performance", label: "Performances", color: "type-performance" },
-  { id: "dj", label: "DJs", color: "type-dj" },
-  { id: "live", label: "Live", color: "type-live" },
-  { id: "interaktiv", label: "Interaktiv", color: "type-interaktiv" }
-];
 
 export const FestivalHeader = ({
   searchQuery,
@@ -43,12 +31,45 @@ export const FestivalHeader = ({
   view,
   onViewChange
 }: FestivalHeaderProps) => {
+  const { language, setLanguage, t } = useLanguage();
+
+  const days = [
+    { key: "Alle", label: t('allDays') },
+    { key: "Freitag", label: t('friday') },
+    { key: "Samstag", label: t('saturday') },
+    { key: "Sonntag", label: t('sunday') }
+  ];
+
+  const venues = [
+    { id: "draussen", label: t('draussen'), color: "venue-draussen" },
+    { id: "oben", label: t('oben'), color: "venue-oben" },
+    { id: "unten", label: t('unten'), color: "venue-unten" }
+  ];
+
+  const eventTypes = [
+    { id: "workshop", label: t('workshop'), color: "type-workshop" },
+    { id: "performance", label: t('performance'), color: "type-performance" },
+    { id: "dj", label: t('dj'), color: "type-dj" },
+    { id: "live", label: t('live'), color: "type-live" },
+    { id: "interaktiv", label: t('interaktiv'), color: "type-interaktiv" }
+  ];
   return (
     <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col gap-6">
-          {/* Header */}
-          <div className="text-center">
+          {/* Header with Language Toggle */}
+          <div className="text-center relative">
+            <div className="absolute top-0 right-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLanguage(language === 'de' ? 'en' : 'de')}
+                className="flex items-center gap-2"
+              >
+                <Languages className="h-4 w-4" />
+                {language.toUpperCase()}
+              </Button>
+            </div>
             <h1 className="text-4xl md:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
               Kollektiv Spinnen
             </h1>
@@ -61,7 +82,7 @@ export const FestivalHeader = ({
           <div className="relative max-w-md mx-auto w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Künstler, Events suchen..."
+              placeholder={t('search')}
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               className="pl-10 bg-card border-border"
@@ -77,13 +98,13 @@ export const FestivalHeader = ({
                 <div className="flex gap-2">
                   {days.map((day) => (
                     <Button
-                      key={day}
-                      variant={selectedDay === day ? "default" : "outline"}
+                      key={day.key}
+                      variant={selectedDay === day.key ? "default" : "outline"}
                       size="sm"
-                      onClick={() => onDayChange(day)}
+                      onClick={() => onDayChange(day.key)}
                       className="transition-smooth"
                     >
-                      {day}
+                      {day.label}
                     </Button>
                   ))}
                 </div>

@@ -1,6 +1,7 @@
 import { Event } from "./EventCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface GridTimetableProps {
   events: Event[];
@@ -11,17 +12,10 @@ interface GridTimetableProps {
   onEventClick: (event: Event) => void;
 }
 
-const timeSlots = [
-  "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", 
-  "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", 
-  "23:00", "00:00", "01:00", "02:00", "03:00", "04:00", 
-  "05:00", "06:00", "07:00", "08:00", "09:00", "10:00"
-];
-
 const venues = [
-  { id: "draussen", label: "DRAUSSEN", color: "venue-draussen" },
-  { id: "oben", label: "OBEN", color: "venue-oben" },
-  { id: "unten", label: "UNTEN", color: "venue-unten" }
+  { id: "draussen", color: "venue-draussen" },
+  { id: "oben", color: "venue-oben" },
+  { id: "unten", color: "venue-unten" }
 ];
 
 const typeConfig = {
@@ -40,6 +34,8 @@ export const GridTimetable = ({
   searchQuery,
   onEventClick 
 }: GridTimetableProps) => {
+  const { t } = useLanguage();
+
   // Filter events
   const filteredEvents = events.filter(event => {
     const matchesDay = selectedDay === "Alle" || event.day === selectedDay;
@@ -52,22 +48,62 @@ export const GridTimetable = ({
     return matchesDay && matchesVenue && matchesEventType && matchesSearch;
   });
 
+  // Generate time slots from actual events
+  const generateTimeSlots = () => {
+    const times = new Set<string>();
+    filteredEvents.forEach(event => {
+      const [startTime, endTime] = event.time.split(' - ');
+      const startHour = parseInt(startTime.split(':')[0]);
+      let endHour = parseInt(endTime.split(':')[0]);
+      
+      // Handle overnight events
+      if (endHour < startHour) {
+        endHour += 24;
+      }
+      
+      // Add all hours from start to end
+      for (let hour = startHour; hour < endHour; hour++) {
+        const displayHour = hour >= 24 ? hour - 24 : hour;
+        times.add(`${displayHour.toString().padStart(2, '0')}:00`);
+      }
+    });
+    
+    // Convert to array and sort
+    const sortedTimes = Array.from(times).sort((a, b) => {
+      const hourA = parseInt(a.split(':')[0]);
+      const hourB = parseInt(b.split(':')[0]);
+      
+      // Handle day transition (put late hours at beginning)
+      const adjustedA = hourA >= 11 ? hourA : hourA + 24;
+      const adjustedB = hourB >= 11 ? hourB : hourB + 24;
+      
+      return adjustedA - adjustedB;
+    });
+    
+    return sortedTimes;
+  };
+
+  const timeSlots = generateTimeSlots();
+
   // Function to get events for specific venue and time
-  const getEventsForSlot = (venueId: string, timeSlot: string) => {
-    return filteredEvents.filter(event => {
-      const eventStartTime = event.time.split(' - ')[0];
-      const eventEndTime = event.time.split(' - ')[1];
-      
-      // Check if the time slot falls within the event duration
+  const getEventForSlot = (venueId: string, timeSlot: string) => {
+    return filteredEvents.find(event => {
+      const [startTime, endTime] = event.time.split(' - ');
       const slotHour = parseInt(timeSlot.split(':')[0]);
-      const startHour = parseInt(eventStartTime.split(':')[0]);
-      const endHour = parseInt(eventEndTime.split(':')[0]);
+      const startHour = parseInt(startTime.split(':')[0]);
+      let endHour = parseInt(endTime.split(':')[0]);
       
-      return event.venue === venueId && slotHour >= startHour && slotHour < endHour;
+      // Handle overnight events
+      if (endHour < startHour) {
+        endHour += 24;
+      }
+      
+      // Check if this is the starting slot for the event
+      return event.venue === venueId && startHour === slotHour;
     });
   };
 
-  // Function to calculate event span
+  // Function to calculate event span in hours
   const getEventSpan = (event: Event) => {
     const [startTime, endTime] = event.time.split(' - ');
     const startHour = parseInt(startTime.split(':')[0]);
@@ -81,94 +117,131 @@ export const GridTimetable = ({
     return Math.max(1, endHour - startHour);
   };
 
+  // Check if a slot should be skipped (part of a multi-hour event)
+  const shouldSkipSlot = (venueId: string, timeSlot: string) => {
+    const slotHour = parseInt(timeSlot.split(':')[0]);
+    
+    return filteredEvents.some(event => {
+      if (event.venue !== venueId) return false;
+      
+      const [startTime, endTime] = event.time.split(' - ');
+      const startHour = parseInt(startTime.split(':')[0]);
+      let endHour = parseInt(endTime.split(':')[0]);
+      
+      // Handle overnight events
+      if (endHour < startHour) {
+        endHour += 24;
+      }
+      
+      // Check if this slot is within the event duration but not the start
+      const adjustedSlotHour = slotHour >= 11 ? slotHour : slotHour + 24;
+      const adjustedStartHour = startHour >= 11 ? startHour : startHour + 24;
+      const adjustedEndHour = endHour >= 11 ? endHour : endHour + 24;
+      
+      return adjustedSlotHour > adjustedStartHour && adjustedSlotHour < adjustedEndHour;
+    });
+  };
+
+  if (filteredEvents.length === 0) {
+    return (
+      <div className="bg-card/30 backdrop-blur-sm rounded-lg border border-border/50 p-12">
+        <div className="text-center">
+          <div className="text-4xl mb-4">🎵</div>
+          <h3 className="text-xl font-semibold mb-2">{t('noEvents')}</h3>
+          <p className="text-muted-foreground">
+            {t('noEventsDesc')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-card/30 backdrop-blur-sm rounded-lg border border-border/50 overflow-hidden">
-      <ScrollArea className="w-full">
-        <div className="min-w-[1200px]">
-          {/* Header with time slots */}
-          <div className="grid grid-cols-[200px_repeat(24,100px)] bg-muted/50">
-            <div className="p-4 font-bold text-center border-r border-border/30">
-              VENUE
+      <ScrollArea className="w-full h-[600px]">
+        <div className="min-w-[800px]">
+          {/* Header with venues */}
+          <div className="grid grid-cols-[100px_repeat(3,1fr)] bg-muted/50 sticky top-0 z-10">
+            <div className="p-4 font-bold text-center border-r border-border/30 bg-background/80">
+              {t('time')}
             </div>
-            {timeSlots.map(time => (
-              <div key={time} className="p-4 text-center font-semibold border-r border-border/30 text-sm">
-                {time}
+            {venues.map(venue => (
+              <div 
+                key={venue.id} 
+                className={`p-4 text-center font-semibold border-r border-border/30 bg-${venue.color}/10`}
+              >
+                <span className="text-sm font-bold">
+                  {t(venue.id)}
+                </span>
               </div>
             ))}
           </div>
 
-          {/* Venue rows */}
-          {venues.map(venue => (
-            <div key={venue.id} className="grid grid-cols-[200px_repeat(24,100px)] border-b border-border/30 min-h-[80px]">
-              {/* Venue label */}
-              <div className={`p-4 bg-${venue.color}/20 border-r border-border/30 flex items-center justify-center`}>
-                <span className="font-bold text-sm text-center writing-mode-vertical-rl transform rotate-180">
-                  {venue.label}
+          {/* Time slot rows */}
+          {timeSlots.map((timeSlot, timeIndex) => (
+            <div key={timeSlot} className="grid grid-cols-[100px_repeat(3,1fr)] border-b border-border/30 min-h-[80px]">
+              {/* Time label */}
+              <div className="p-4 bg-muted/20 border-r border-border/30 flex items-center justify-center">
+                <span className="font-bold text-sm">
+                  {timeSlot}
                 </span>
               </div>
 
-              {/* Time slots for this venue */}
-              <div className="col-span-24 grid grid-cols-24 relative">
-                {timeSlots.map((timeSlot, index) => {
-                  const eventsInSlot = getEventsForSlot(venue.id, timeSlot);
-                  const mainEvent = eventsInSlot.find(event => {
-                    const eventStartTime = event.time.split(' - ')[0];
-                    const slotTime = timeSlot;
-                    return eventStartTime === slotTime;
-                  });
+              {/* Venue columns for this time */}
+              {venues.map((venue, venueIndex) => {
+                const event = getEventForSlot(venue.id, timeSlot);
+                const shouldSkip = shouldSkipSlot(venue.id, timeSlot);
 
-                  if (mainEvent) {
-                    const span = getEventSpan(mainEvent);
-                    return (
-                      <div
-                        key={`${venue.id}-${timeSlot}`}
-                        className={`col-span-${Math.min(span, 24 - index)} relative group`}
-                      >
-                        <div
-                          className={`
-                            absolute inset-1 rounded-md cursor-pointer transition-smooth border-2
-                            bg-${typeConfig[mainEvent.type as keyof typeof typeConfig].color}/20 
-                            border-${typeConfig[mainEvent.type as keyof typeof typeConfig].color}
-                            hover:scale-105 hover:shadow-glow hover:z-10
-                            flex items-center justify-center p-2
-                          `}
-                          onClick={() => onEventClick(mainEvent)}
-                        >
-                          <div className="text-center">
-                            <div className="font-semibold text-xs text-white drop-shadow-sm">
-                              {mainEvent.title}
-                            </div>
-                            <div className="text-xs text-white/80 mt-1">
-                              {mainEvent.time}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
+                if (shouldSkip) {
+                  return null; // This slot is covered by a previous event
+                }
 
+                if (event) {
+                  const span = getEventSpan(event);
                   return (
-                    <div 
-                      key={`${venue.id}-${timeSlot}`} 
-                      className="border-r border-border/20 min-h-[72px] bg-background/20"
-                    />
+                    <div
+                      key={`${venue.id}-${timeSlot}`}
+                      className={`relative group border-r border-border/30 ${span > 1 ? `row-span-${Math.min(span, timeSlots.length - timeIndex)}` : ''}`}
+                      style={span > 1 ? { gridRow: `span ${Math.min(span, timeSlots.length - timeIndex)}` } : {}}
+                    >
+                      <div
+                        className={`
+                          absolute inset-1 rounded-md cursor-pointer transition-smooth border-2
+                          bg-${typeConfig[event.type as keyof typeof typeConfig].color}/20 
+                          border-${typeConfig[event.type as keyof typeof typeConfig].color}
+                          hover:scale-[1.02] hover:shadow-glow hover:z-10
+                          flex flex-col items-center justify-center p-3 text-center
+                        `}
+                        onClick={() => onEventClick(event)}
+                      >
+                        <div className="font-semibold text-xs text-foreground mb-1 line-clamp-2">
+                          {event.title}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {event.time}
+                        </div>
+                        <Badge 
+                          variant="secondary" 
+                          className={`mt-2 text-xs bg-${typeConfig[event.type as keyof typeof typeConfig].color}/30`}
+                        >
+                          {t(event.type)}
+                        </Badge>
+                      </div>
+                    </div>
                   );
-                })}
-              </div>
+                }
+
+                return (
+                  <div 
+                    key={`${venue.id}-${timeSlot}`} 
+                    className="border-r border-border/30 min-h-[80px] bg-background/10 hover:bg-background/20 transition-colors"
+                  />
+                );
+              })}
             </div>
           ))}
         </div>
       </ScrollArea>
-
-      {filteredEvents.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-4xl mb-4">🎵</div>
-          <h3 className="text-xl font-semibold mb-2">No events found</h3>
-          <p className="text-muted-foreground">
-            Try adjusting your filters or search query
-          </p>
-        </div>
-      )}
     </div>
   );
 };
