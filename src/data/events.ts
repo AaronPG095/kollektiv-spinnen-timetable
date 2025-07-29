@@ -13,12 +13,12 @@ export const events: Event[] = [
   },
   {
     id: "f2",
-    title: "Washkar Sound",
+    title: "Washkar.sound",
     time: "20:00 - 21:00",
     venue: "draussen",
     day: "Freitag",
     type: "live",
-    description: "Powerful live performance featuring traditional and modern fusion sounds",
+    description: "World Music / Healing Sounds",
     links: {
       instagram: "https://www.instagram.com/waskhar_sound?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
       bandcamp: "https://waskhar.bandcamp.com/"
@@ -98,7 +98,7 @@ export const events: Event[] = [
   {
     id: "s4",
     title: "ANTONI",
-    time: "13:00 - 14:30",
+    time: "13:00 - 13:30",
     venue: "draussen",
     day: "Samstag",
     type: "live",
@@ -106,19 +106,6 @@ export const events: Event[] = [
     links: {
       instagram: "https://www.instagram.com/antonimusic_/",
       spotify: "https://open.spotify.com/intl-de/artist/7jP2bIZ5G2DD3JTgpulrWr?si=EWOS2L2UQWCGxSwvm7WpUQ"
-    }
-  },
-  {
-    id: "s5",
-    title: "Teeya Lamee",
-    time: "13:00 - 14:30",
-    venue: "draussen",
-    day: "Samstag",
-    type: "live",
-    description: "Soulful vocals and contemporary melodies",
-    links: {
-      instagram: "https://www.instagram.com/teeya.lamee?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
-      spotify: "https://open.spotify.com/artist/0eDr9FGxuaqEVJk76OQUvT?si=RRqRTTYHRvKR0iQ9G_n4Cg"
     }
   },
   {
@@ -174,7 +161,7 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Samstag",
     type: "performance",
-    description: "Stunning drag performance followed by outdoor festivities"
+    description: "Stunning drag & voguing performance"
   },
   {
     id: "s11",
@@ -305,7 +292,7 @@ export const events: Event[] = [
     venue: "oben",
     day: "Sonntag",
     type: "dj",
-    description: "House/techhouse",
+    description: "House / Tech House",
     links: {
       soundcloud: "https://soundcloud.com/user-997519530?ref=clipboard&p=i&c=0&si=6516D87EF628413E8C1F20E3343590DF&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing"
     }
@@ -407,7 +394,7 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Sonntag",
     type: "dj",
-    description: "Mystical electronic sounds and ethereal beats"
+    description: "Dirty Downtempo / Midtempo"
   },
   {
     id: "su16",
