@@ -212,7 +212,7 @@ export const GridTimetable = ({
 
           {/* Time slot rows */}
           {timeSlots.map((timeSlot, timeIndex) => (
-            <div key={timeSlot} className="grid grid-cols-[60px_60px_repeat(3,1fr)] border-b border-border/30 min-h-[60px]">
+            <div key={timeSlot} className="grid grid-cols-[60px_60px_repeat(3,1fr)] border-b border-border/30 h-[60px]">
               {/* Day label */}
               <div className="p-2 bg-muted/20 border-r border-border/30 flex items-center justify-center">
                 {isNewDay(timeIndex) && (
