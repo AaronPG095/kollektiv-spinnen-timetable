@@ -89,37 +89,13 @@ export const GridTimetable = ({
     return filteredEvents.find(event => {
       if (event.venue !== venueId) return false;
       
-      const [startTime, endTime] = event.time.split(' - ');
+      const [startTime] = event.time.split(' - ');
       const [startHour, startMin = '0'] = startTime.split(':');
-      const [endHour, endMin = '0'] = endTime.split(':');
       
-      // Convert to minutes for precise calculation
-      const startMinutes = parseInt(startHour) * 60 + parseInt(startMin);
-      let endMinutes = parseInt(endHour) * 60 + parseInt(endMin);
-      
-      // Handle cross-day events
-      if (endMinutes <= startMinutes) {
-        endMinutes += 24 * 60; // Add 24 hours for next day
-      }
-      
-      // Calculate event start slot based on day and time
+      // Calculate which hour slot this event should start in
+      const eventHourSlot = parseInt(startHour);
       let eventStartSlot = 0;
-      if (event.day === 'Freitag') {
-        eventStartSlot = parseInt(startHour) - 19; // Friday 19:00-23:00 (slots 0-4)
-      } else if (event.day === 'Samstag') {
-        eventStartSlot = parseInt(startHour) + 5; // Saturday 00:00-23:00 (slots 5-28)
-      } else if (event.day === 'Sonntag') {
-        eventStartSlot = parseInt(startHour) + 29; // Sunday 00:00-20:00 (slots 29-49)
-      }
       
-      // Special handling for cross-day events (like Fireshow 22:30-00:00)
-      if (event.day === 'Freitag' && endMinutes > startMinutes + 60 && parseInt(endHour) < parseInt(startHour)) {
-        // This is a Friday event that goes into Saturday
-        return slotIndex === eventStartSlot;
-      }
-      
-      // Round down start time to nearest hour for grid alignment
-      const eventHourSlot = Math.floor(startMinutes / 60);
       if (event.day === 'Freitag') {
         eventStartSlot = eventHourSlot - 19;
       } else if (event.day === 'Samstag') {
@@ -144,12 +120,32 @@ export const GridTimetable = ({
     
     // Handle cross-day events
     if (endMinutes <= startMinutes) {
-      endMinutes += 24 * 60; // Add 24 hours for next day
+      endMinutes += 24 * 60;
     }
     
     // Calculate duration in hours (rounded up to nearest hour)
     const durationMinutes = endMinutes - startMinutes;
     return Math.max(1, Math.ceil(durationMinutes / 60));
+  };
+
+  // Get precise positioning within the hour slot
+  const getEventPosition = (event: Event) => {
+    const [startTime, endTime] = event.time.split(' - ');
+    const [startHour, startMin = '0'] = startTime.split(':');
+    const [endHour, endMin = '0'] = endTime.split(':');
+    
+    const startMinutes = parseInt(startMin);
+    let endMinutes = parseInt(endMin);
+    const startH = parseInt(startHour);
+    let endH = parseInt(endHour);
+    
+    if (endH < startH) endH += 24; // Handle cross-day
+    
+    const durationMinutes = (endH - startH) * 60 + (endMinutes - startMinutes);
+    const topOffset = (startMinutes / 60) * 100; // Percentage within the hour
+    const height = Math.max((durationMinutes / 60) * 100, 25); // Minimum 25% height
+    
+    return { topOffset, height };
   };
 
   // Check if a slot should be skipped (part of a multi-hour event)
@@ -194,7 +190,7 @@ export const GridTimetable = ({
 
   return (
     <div className="bg-card/30 backdrop-blur-sm rounded-lg border border-border/50 overflow-hidden">
-      <ScrollArea className="w-full h-[1000px]">
+      <ScrollArea className="w-full h-[700px]">
         <div className="min-w-[900px]">
           {/* Header with venues */}
           <div className="grid grid-cols-[60px_60px_repeat(3,1fr)] bg-muted/50 sticky top-0 z-10">
@@ -244,6 +240,7 @@ export const GridTimetable = ({
 
                 if (event) {
                   const span = getEventSpan(event);
+                  const { topOffset, height } = getEventPosition(event);
                   const slotHeight = Math.min(span, timeSlots.length - timeIndex);
                   
                   return (
@@ -257,23 +254,21 @@ export const GridTimetable = ({
                     >
                       <div
                         className={`
-                          absolute inset-1 rounded-md cursor-pointer transition-smooth border-2
+                          absolute inset-x-1 rounded-md cursor-pointer transition-smooth border-2
                           bg-${typeConfig[event.type as keyof typeof typeConfig].color}/20 
                           border-${typeConfig[event.type as keyof typeof typeConfig].color}
                           hover:scale-[1.02] hover:shadow-glow hover:z-10
                           flex flex-col items-center justify-center p-2 text-center
                         `}
+                        style={{
+                          top: `${topOffset}%`,
+                          height: `${Math.min(height, slotHeight * 100)}%`
+                        }}
                         onClick={() => onEventClick(event)}
                       >
-                        <div className="font-bold text-3xl text-foreground mb-2 line-clamp-2 leading-tight">
+                        <div className="font-bold text-3xl text-foreground line-clamp-2 leading-tight">
                           {event.title}
                         </div>
-                        <Badge 
-                          variant="secondary" 
-                          className={`text-xs bg-${typeConfig[event.type as keyof typeof typeConfig].color}/30`}
-                        >
-                          {t(event.type)}
-                        </Badge>
                       </div>
                     </div>
                   );
