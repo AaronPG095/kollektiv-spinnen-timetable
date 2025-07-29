@@ -235,7 +235,12 @@ export const GridTimetable = ({
                 const shouldSkip = shouldSkipSlot(venue.id, timeIndex);
 
                 if (shouldSkip) {
-                  return null; // This slot is covered by a previous event
+                  return (
+                    <div 
+                      key={`${venue.id}-${timeIndex}-skip`} 
+                      className="border-r border-border/30"
+                    />
+                  );
                 }
 
                 if (event) {
@@ -245,7 +250,7 @@ export const GridTimetable = ({
                   
                   return (
                     <div
-                      key={`${venue.id}-${timeSlot}`}
+                      key={`${venue.id}-${timeIndex}-${event.id}`}
                       className="relative group border-r border-border/30"
                       style={{ 
                         gridRowEnd: `span ${slotHeight}`,
@@ -276,8 +281,8 @@ export const GridTimetable = ({
 
                 return (
                   <div 
-                    key={`${venue.id}-${timeSlot}`} 
-                    className="border-r border-border/30 min-h-[60px] bg-background/10 hover:bg-background/20 transition-colors"
+                    key={`${venue.id}-${timeIndex}-empty`} 
+                    className="border-r border-border/30 h-[60px] bg-background/10 hover:bg-background/20 transition-colors"
                   />
                 );
               })}
