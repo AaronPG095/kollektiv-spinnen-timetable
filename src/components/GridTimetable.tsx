@@ -92,19 +92,22 @@ export const GridTimetable = ({
       const [startTime] = event.time.split(' - ');
       const [startHour, startMin = '0'] = startTime.split(':');
       
-      // Calculate which hour slot this event should start in
-      const eventHourSlot = parseInt(startHour);
-      let eventStartSlot = 0;
+      // Calculate which time slot this event should start in
+      const eventHour = parseInt(startHour);
+      let expectedSlotIndex = 0;
       
       if (event.day === 'Freitag') {
-        eventStartSlot = eventHourSlot - 19;
+        // Friday: starts from slot 0 (19:00)
+        expectedSlotIndex = eventHour - 19;
       } else if (event.day === 'Samstag') {
-        eventStartSlot = eventHourSlot + 5;
+        // Saturday: starts from slot 5 (00:00)
+        expectedSlotIndex = 5 + eventHour;
       } else if (event.day === 'Sonntag') {
-        eventStartSlot = eventHourSlot + 29;
+        // Sunday: starts from slot 29 (00:00)
+        expectedSlotIndex = 29 + eventHour;
       }
       
-      return slotIndex === eventStartSlot;
+      return slotIndex === expectedSlotIndex;
     });
   };
 
@@ -153,20 +156,20 @@ export const GridTimetable = ({
     return filteredEvents.some(event => {
       if (event.venue !== venueId) return false;
       
-      const [startTime, endTime] = event.time.split(' - ');
-      const [startHour, startMin = '0'] = startTime.split(':');
+      const [startTime] = event.time.split(' - ');
+      const [startHour] = startTime.split(':');
       const span = getEventSpan(event);
       
       // Calculate event start slot index
+      const eventHour = parseInt(startHour);
       let eventStartSlot = 0;
-      const eventHourSlot = parseInt(startHour);
       
       if (event.day === 'Freitag') {
-        eventStartSlot = eventHourSlot - 19;
+        eventStartSlot = eventHour - 19;
       } else if (event.day === 'Samstag') {
-        eventStartSlot = eventHourSlot + 5;
+        eventStartSlot = 5 + eventHour;
       } else if (event.day === 'Sonntag') {
-        eventStartSlot = eventHourSlot + 29;
+        eventStartSlot = 29 + eventHour;
       }
       
       // Check if this slot is within the event span but not the start
@@ -245,35 +248,27 @@ export const GridTimetable = ({
 
                 if (event) {
                   const span = getEventSpan(event);
-                  const { topOffset, height } = getEventPosition(event);
-                  const slotHeight = Math.min(span, timeSlots.length - timeIndex);
+                  const maxSpan = timeSlots.length - timeIndex;
+                  const actualSpan = Math.min(span, maxSpan);
                   
                   return (
                     <div
                       key={`${venue.id}-${timeIndex}-${event.id}`}
-                      className="relative group border-r border-border/30"
+                      className={`
+                        group border-r border-border/30 flex items-center justify-center p-1
+                        bg-${typeConfig[event.type as keyof typeof typeConfig].color}/20 
+                        border-2 border-${typeConfig[event.type as keyof typeof typeConfig].color}
+                        hover:scale-[1.02] hover:shadow-glow hover:z-10 cursor-pointer transition-smooth
+                        rounded-md m-1
+                      `}
                       style={{ 
-                        gridRowEnd: `span ${slotHeight}`,
-                        minHeight: `${slotHeight * 60}px` 
+                        gridRowEnd: `span ${actualSpan}`,
+                        minHeight: `${actualSpan * 60 - 8}px`
                       }}
+                      onClick={() => onEventClick(event)}
                     >
-                      <div
-                        className={`
-                          absolute left-1/2 -translate-x-1/2 w-1/2 rounded-md cursor-pointer transition-smooth border-2
-                          bg-${typeConfig[event.type as keyof typeof typeConfig].color}/20 
-                          border-${typeConfig[event.type as keyof typeof typeConfig].color}
-                          hover:scale-[1.02] hover:shadow-glow hover:z-10
-                          flex flex-col items-center justify-center p-2 text-center
-                        `}
-                        style={{
-                          top: `${topOffset}%`,
-                          height: `${Math.min(height, slotHeight * 100)}%`
-                        }}
-                        onClick={() => onEventClick(event)}
-                      >
-                        <div className="font-bold text-xs sm:text-sm md:text-base text-foreground line-clamp-3 leading-tight px-1">
-                          {event.title}
-                        </div>
+                      <div className="font-bold text-xs text-foreground line-clamp-2 leading-tight text-center px-1">
+                        {event.title}
                       </div>
                     </div>
                   );
