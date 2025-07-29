@@ -18,6 +18,11 @@ const translations = {
     friday: 'Freitag',
     saturday: 'Samstag',
     sunday: 'Sonntag',
+    
+    // Days (for translation)
+    freitag: 'Freitag',
+    samstag: 'Samstag',
+    sonntag: 'Sonntag',
     filterVenues: 'Venues filtern',
     filterEventTypes: 'Event-Typen filtern',
     gridView: 'Raster',
@@ -51,7 +56,19 @@ const translations = {
     noEventsDesc: 'Versuche deine Filter oder Suchbegriffe anzupassen',
     
     // Common
-    close: 'Schließen'
+    close: 'Schließen',
+    
+    // Event descriptions (translatable)
+    welcomeDinnerDesc: 'Beginne dein Festival-Erlebnis mit köstlichem Streetfood und Community-Vibes',
+    fireshowDesc: 'Spektakuläre Feuershow, die die Nacht erleuchtet',
+    soundJourneyDesc: 'Immersive Klanglandschaft und Gespräch ab 23:00',
+    karaokeDesc: 'Sing dich aus voller Kehle mit Freunden in unserer gemütlichen Karaoke-Lounge',
+    docuMachlandDesc: 'Dokumentarfilm-Screening und Diskussion über die vier Dimensionen der Nachhaltigkeit',
+    yogaFlowDesc: 'Körper-Geist-Verbindung durch fließende Yoga-Bewegungen (11:30-12:00)',
+    aerobicTherapyDesc: 'Bewegungstherapie, die Tanz und Wellness kombiniert',
+    letterOpeningDesc: 'Interaktive Brieföffnungs-Performance-Kunst',
+    soundJourneyLiveDesc: 'Live-Looping Klanglandschaft',
+    bowling: 'Interaktives Bowling mit Sekt - Spaß und Spiele für alle'
   },
   en: {
     // Header
@@ -60,6 +77,11 @@ const translations = {
     friday: 'Friday',
     saturday: 'Saturday',
     sunday: 'Sunday',
+    
+    // Days (for translation)
+    freitag: 'Friday',
+    samstag: 'Saturday',
+    sonntag: 'Sunday',
     filterVenues: 'Filter venues',
     filterEventTypes: 'Filter event types',
     gridView: 'Grid',
@@ -93,7 +115,19 @@ const translations = {
     noEventsDesc: 'Try adjusting your filters or search query',
     
     // Common
-    close: 'Close'
+    close: 'Close',
+    
+    // Event descriptions (translatable)
+    welcomeDinnerDesc: 'Start your festival experience with delicious street food and community vibes',
+    fireshowDesc: 'Spectacular fire performance lighting up the night',
+    soundJourneyDesc: 'Immersive sound journey and conversation starting at 23:00',
+    karaokeDesc: 'Sing your heart out with friends in our cozy karaoke lounge',
+    docuMachlandDesc: 'Documentary screening and discussion about the four dimensions of sustainability',
+    yogaFlowDesc: 'Mind-body connection through flowing yoga movements (11:30-12:00)',
+    aerobicTherapyDesc: 'Movement therapy combining dance and wellness',
+    letterOpeningDesc: 'Interactive letter-opening performance art',
+    soundJourneyLiveDesc: 'Live-Looping Soundjourney',
+    bowling: 'Interactive bowling with sparkling wine - fun and games for everyone'
   }
 };
 

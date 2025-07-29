@@ -158,7 +158,7 @@ export const GridTimetable = ({
 
   return (
     <div className="bg-card/30 backdrop-blur-sm rounded-lg border border-border/50 overflow-hidden">
-      <ScrollArea className="w-full h-[600px]">
+      <ScrollArea className="w-full h-[800px]">
         <div className="min-w-[800px]">
           {/* Header with venues */}
           <div className="grid grid-cols-[100px_repeat(3,1fr)] bg-muted/50 sticky top-0 z-10">
@@ -179,7 +179,7 @@ export const GridTimetable = ({
 
           {/* Time slot rows */}
           {timeSlots.map((timeSlot, timeIndex) => (
-            <div key={timeSlot} className="grid grid-cols-[100px_repeat(3,1fr)] border-b border-border/30 min-h-[80px]">
+            <div key={timeSlot} className="grid grid-cols-[100px_repeat(3,1fr)] border-b border-border/30 min-h-[100px]">
               {/* Time label */}
               <div className="p-4 bg-muted/20 border-r border-border/30 flex items-center justify-center">
                 <span className="font-bold text-sm">
@@ -198,11 +198,16 @@ export const GridTimetable = ({
 
                 if (event) {
                   const span = getEventSpan(event);
+                  const slotHeight = Math.min(span, timeSlots.length - timeIndex);
+                  
                   return (
                     <div
                       key={`${venue.id}-${timeSlot}`}
-                      className={`relative group border-r border-border/30 ${span > 1 ? `row-span-${Math.min(span, timeSlots.length - timeIndex)}` : ''}`}
-                      style={span > 1 ? { gridRow: `span ${Math.min(span, timeSlots.length - timeIndex)}` } : {}}
+                      className="relative group border-r border-border/30"
+                      style={{ 
+                        gridRowEnd: `span ${slotHeight}`,
+                        minHeight: `${slotHeight * 100}px` 
+                      }}
                     >
                       <div
                         className={`
@@ -217,12 +222,17 @@ export const GridTimetable = ({
                         <div className="font-semibold text-xs text-foreground mb-1 line-clamp-2">
                           {event.title}
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs text-muted-foreground mb-1">
                           {event.time}
                         </div>
+                        {event.description && (
+                          <div className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                            {t(event.description) !== event.description ? t(event.description) : event.description}
+                          </div>
+                        )}
                         <Badge 
                           variant="secondary" 
-                          className={`mt-2 text-xs bg-${typeConfig[event.type as keyof typeof typeConfig].color}/30`}
+                          className={`text-xs bg-${typeConfig[event.type as keyof typeof typeConfig].color}/30`}
                         >
                           {t(event.type)}
                         </Badge>
@@ -234,7 +244,7 @@ export const GridTimetable = ({
                 return (
                   <div 
                     key={`${venue.id}-${timeSlot}`} 
-                    className="border-r border-border/30 min-h-[80px] bg-background/10 hover:bg-background/20 transition-colors"
+                    className="border-r border-border/30 min-h-[100px] bg-background/10 hover:bg-background/20 transition-colors"
                   />
                 );
               })}

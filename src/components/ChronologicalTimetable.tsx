@@ -155,7 +155,7 @@ export const ChronologicalTimetable = ({
                               {/* Description */}
                               {event.description && (
                                 <p className="text-xs text-muted-foreground line-clamp-2">
-                                  {event.description}
+                                  {t(event.description) !== event.description ? t(event.description) : event.description}
                                 </p>
                               )}
                             </div>

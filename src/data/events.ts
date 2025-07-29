@@ -9,7 +9,7 @@ export const events: Event[] = [
     venue: "oben",
     day: "Freitag",
     type: "performance",
-    description: "Start your festival experience with delicious street food and community vibes"
+    description: "welcomeDinnerDesc"
   },
   {
     id: "f2",
@@ -31,7 +31,7 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Freitag",
     type: "performance",
-    description: "Spectacular fire performance lighting up the night"
+    description: "fireshowDesc"
   },
   {
     id: "f4",
@@ -40,7 +40,7 @@ export const events: Event[] = [
     venue: "oben",
     day: "Freitag",
     type: "live",
-    description: "Immersive sound journey and conversation starting at 23:00"
+    description: "soundJourneyDesc"
   },
   {
     id: "f5",
@@ -49,7 +49,7 @@ export const events: Event[] = [
     venue: "unten",
     day: "Freitag",
     type: "interaktiv",
-    description: "Sing your heart out with friends in our cozy karaoke lounge"
+    description: "karaokeDesc"
   },
   {
     id: "f6",
@@ -58,7 +58,7 @@ export const events: Event[] = [
     venue: "oben",
     day: "Freitag",
     type: "workshop",
-    description: "Documentary screening and discussion about the four dimensions of sustainability",
+    description: "docuMachlandDesc",
     links: {
       youtube: "https://www.youtube.com/watch?v=qH-R6CL3gfQ&ab_channel=Machland"
     }
@@ -84,7 +84,7 @@ export const events: Event[] = [
     venue: "unten",
     day: "Samstag",
     type: "dj",
-    description: "Underground electronic sounds and experimental beats"
+    description: "Techno"
   },
   {
     id: "s3",
@@ -93,7 +93,7 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Samstag",
     type: "workshop",
-    description: "Mind-body connection through flowing yoga movements (11:30-12:00)"
+    description: "yogaFlowDesc"
   },
   {
     id: "s4",
@@ -128,7 +128,7 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Samstag",
     type: "performance",
-    description: "Movement therapy combining dance and wellness"
+    description: "aerobicTherapyDesc"
   },
   {
     id: "s8",
@@ -316,7 +316,7 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Sonntag",
     type: "performance",
-    description: "Interactive letter-opening performance art"
+    description: "letterOpeningDesc"
   },
   {
     id: "su10",
@@ -373,7 +373,7 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Sonntag",
     type: "interaktiv",
-    description: "Interactive bowling with sparkling wine - fun and games for everyone"
+    description: "bowling"
   },
   {
     id: "su14",
@@ -403,7 +403,7 @@ export const events: Event[] = [
     venue: "draussen",
     day: "Sonntag",
     type: "live",
-    description: "Live-Looping Soundjourney",
+    description: "soundJourneyLiveDesc",
     links: {
       instagram: "https://www.instagram.com/ayu.echoes/",
       youtube: "https://www.youtube.com/watch?v=1zHfMboqteY&t=303s"
