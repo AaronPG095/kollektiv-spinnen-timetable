@@ -27,7 +27,7 @@ export const events: Event[] = [
   {
     id: "f3",
     title: "Fireshow",
-    time: "22:30 - 00:00",
+    time: "22:30 - 23:00",
     venue: "draussen",
     day: "Freitag",
     type: "performance",
