@@ -48,58 +48,61 @@ export const GridTimetable = ({
     return matchesDay && matchesVenue && matchesEventType && matchesSearch;
   });
 
-  // Generate time slots from actual events
+  // Generate fixed time slots from Friday 19:00 to Sunday 20:00
   const generateTimeSlots = () => {
-    const times = new Set<string>();
-    filteredEvents.forEach(event => {
-      const [startTime, endTime] = event.time.split(' - ');
-      const startHour = parseInt(startTime.split(':')[0]);
-      let endHour = parseInt(endTime.split(':')[0]);
-      
-      // Handle overnight events
-      if (endHour < startHour) {
-        endHour += 24;
-      }
-      
-      // Add all hours from start to end
-      for (let hour = startHour; hour < endHour; hour++) {
-        const displayHour = hour >= 24 ? hour - 24 : hour;
-        times.add(`${displayHour.toString().padStart(2, '0')}:00`);
-      }
-    });
+    const slots = [];
     
-    // Convert to array and sort
-    const sortedTimes = Array.from(times).sort((a, b) => {
-      const hourA = parseInt(a.split(':')[0]);
-      const hourB = parseInt(b.split(':')[0]);
-      
-      // Handle day transition (put late hours at beginning)
-      const adjustedA = hourA >= 11 ? hourA : hourA + 24;
-      const adjustedB = hourB >= 11 ? hourB : hourB + 24;
-      
-      return adjustedA - adjustedB;
-    });
+    // Friday 19:00-23:00
+    for (let hour = 19; hour <= 23; hour++) {
+      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    }
     
-    return sortedTimes;
+    // Saturday 00:00-23:00
+    for (let hour = 0; hour <= 23; hour++) {
+      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    }
+    
+    // Sunday 00:00-20:00
+    for (let hour = 0; hour <= 20; hour++) {
+      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    }
+    
+    return slots;
+  };
+
+  // Get day label for time slot
+  const getDayLabel = (timeSlot: string, slotIndex: number) => {
+    if (slotIndex <= 4) return 'freitag'; // Friday 19:00-23:00
+    if (slotIndex >= 5 && slotIndex <= 28) return 'samstag'; // Saturday 00:00-23:00
+    return 'sonntag'; // Sunday 00:00-20:00
+  };
+
+  // Check if this is the first slot of a new day
+  const isNewDay = (slotIndex: number) => {
+    return slotIndex === 0 || slotIndex === 5 || slotIndex === 29;
   };
 
   const timeSlots = generateTimeSlots();
 
   // Function to get events for specific venue and time
-  const getEventForSlot = (venueId: string, timeSlot: string) => {
+  const getEventForSlot = (venueId: string, timeSlot: string, slotIndex: number) => {
     return filteredEvents.find(event => {
       const [startTime, endTime] = event.time.split(' - ');
       const slotHour = parseInt(timeSlot.split(':')[0]);
       const startHour = parseInt(startTime.split(':')[0]);
-      let endHour = parseInt(endTime.split(':')[0]);
       
-      // Handle overnight events
-      if (endHour < startHour) {
-        endHour += 24;
+      // Determine which day this event is on and adjust hours accordingly
+      let eventStartSlot = 0;
+      if (event.day === 'Freitag' && startHour >= 19) {
+        eventStartSlot = startHour - 19; // Friday 19:00-23:00 (slots 0-4)
+      } else if (event.day === 'Samstag') {
+        eventStartSlot = startHour + 5; // Saturday 00:00-23:00 (slots 5-28)
+      } else if (event.day === 'Sonntag') {
+        eventStartSlot = startHour + 29; // Sunday 00:00-20:00 (slots 29-49)
       }
       
-      // Check if this is the starting slot for the event
-      return event.venue === venueId && startHour === slotHour;
+      // Check if this slot matches the event start
+      return event.venue === venueId && slotIndex === eventStartSlot;
     });
   };
 
@@ -118,27 +121,27 @@ export const GridTimetable = ({
   };
 
   // Check if a slot should be skipped (part of a multi-hour event)
-  const shouldSkipSlot = (venueId: string, timeSlot: string) => {
-    const slotHour = parseInt(timeSlot.split(':')[0]);
-    
+  const shouldSkipSlot = (venueId: string, slotIndex: number) => {
     return filteredEvents.some(event => {
       if (event.venue !== venueId) return false;
       
       const [startTime, endTime] = event.time.split(' - ');
       const startHour = parseInt(startTime.split(':')[0]);
-      let endHour = parseInt(endTime.split(':')[0]);
+      const endHour = parseInt(endTime.split(':')[0]);
+      const span = getEventSpan(event);
       
-      // Handle overnight events
-      if (endHour < startHour) {
-        endHour += 24;
+      // Calculate event start slot index
+      let eventStartSlot = 0;
+      if (event.day === 'Freitag' && startHour >= 19) {
+        eventStartSlot = startHour - 19;
+      } else if (event.day === 'Samstag') {
+        eventStartSlot = startHour + 5;
+      } else if (event.day === 'Sonntag') {
+        eventStartSlot = startHour + 29;
       }
       
-      // Check if this slot is within the event duration but not the start
-      const adjustedSlotHour = slotHour >= 11 ? slotHour : slotHour + 24;
-      const adjustedStartHour = startHour >= 11 ? startHour : startHour + 24;
-      const adjustedEndHour = endHour >= 11 ? endHour : endHour + 24;
-      
-      return adjustedSlotHour > adjustedStartHour && adjustedSlotHour < adjustedEndHour;
+      // Check if this slot is within the event span but not the start
+      return slotIndex > eventStartSlot && slotIndex < eventStartSlot + span;
     });
   };
 
@@ -158,39 +161,49 @@ export const GridTimetable = ({
 
   return (
     <div className="bg-card/30 backdrop-blur-sm rounded-lg border border-border/50 overflow-hidden">
-      <ScrollArea className="w-full h-[800px]">
-        <div className="min-w-[800px]">
+      <ScrollArea className="w-full h-[1000px]">
+        <div className="min-w-[900px]">
           {/* Header with venues */}
-          <div className="grid grid-cols-[100px_repeat(3,1fr)] bg-muted/50 sticky top-0 z-10">
-            <div className="p-4 font-bold text-center border-r border-border/30 bg-background/80">
+          <div className="grid grid-cols-[60px_60px_repeat(3,1fr)] bg-muted/50 sticky top-0 z-10">
+            <div className="p-2 font-bold text-center border-r border-border/30 bg-background/80 text-xs">
+              {t('day')}
+            </div>
+            <div className="p-2 font-bold text-center border-r border-border/30 bg-background/80 text-xs">
               {t('time')}
             </div>
             {venues.map(venue => (
               <div 
                 key={venue.id} 
-                className={`p-4 text-center font-semibold border-r border-border/30 bg-${venue.color}/10`}
+                className={`p-2 text-center font-semibold border-r border-border/30 bg-${venue.color}/10 text-xs`}
               >
-                <span className="text-sm font-bold">
-                  {t(venue.id)}
-                </span>
+                {t(venue.id)}
               </div>
             ))}
           </div>
 
           {/* Time slot rows */}
           {timeSlots.map((timeSlot, timeIndex) => (
-            <div key={timeSlot} className="grid grid-cols-[100px_repeat(3,1fr)] border-b border-border/30 min-h-[100px]">
+            <div key={timeSlot} className="grid grid-cols-[60px_60px_repeat(3,1fr)] border-b border-border/30 min-h-[60px]">
+              {/* Day label */}
+              <div className="p-2 bg-muted/20 border-r border-border/30 flex items-center justify-center">
+                {isNewDay(timeIndex) && (
+                  <span className="font-bold text-xs text-foreground transform -rotate-90 whitespace-nowrap">
+                    {t(getDayLabel(timeSlot, timeIndex))}
+                  </span>
+                )}
+              </div>
+              
               {/* Time label */}
-              <div className="p-4 bg-muted/20 border-r border-border/30 flex items-center justify-center">
-                <span className="font-bold text-sm">
+              <div className="p-2 bg-muted/20 border-r border-border/30 flex items-center justify-center">
+                <span className="font-bold text-xs">
                   {timeSlot}
                 </span>
               </div>
 
               {/* Venue columns for this time */}
               {venues.map((venue, venueIndex) => {
-                const event = getEventForSlot(venue.id, timeSlot);
-                const shouldSkip = shouldSkipSlot(venue.id, timeSlot);
+                const event = getEventForSlot(venue.id, timeSlot, timeIndex);
+                const shouldSkip = shouldSkipSlot(venue.id, timeIndex);
 
                 if (shouldSkip) {
                   return null; // This slot is covered by a previous event
@@ -206,7 +219,7 @@ export const GridTimetable = ({
                       className="relative group border-r border-border/30"
                       style={{ 
                         gridRowEnd: `span ${slotHeight}`,
-                        minHeight: `${slotHeight * 100}px` 
+                        minHeight: `${slotHeight * 60}px` 
                       }}
                     >
                       <div
@@ -215,21 +228,13 @@ export const GridTimetable = ({
                           bg-${typeConfig[event.type as keyof typeof typeConfig].color}/20 
                           border-${typeConfig[event.type as keyof typeof typeConfig].color}
                           hover:scale-[1.02] hover:shadow-glow hover:z-10
-                          flex flex-col items-center justify-center p-3 text-center
+                          flex flex-col items-center justify-center p-2 text-center
                         `}
                         onClick={() => onEventClick(event)}
                       >
-                        <div className="font-semibold text-xs text-foreground mb-1 line-clamp-2">
+                        <div className="font-bold text-lg text-foreground mb-2 line-clamp-3 leading-tight">
                           {event.title}
                         </div>
-                        <div className="text-xs text-muted-foreground mb-1">
-                          {event.time}
-                        </div>
-                        {event.description && (
-                          <div className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                            {t(event.description) !== event.description ? t(event.description) : event.description}
-                          </div>
-                        )}
                         <Badge 
                           variant="secondary" 
                           className={`text-xs bg-${typeConfig[event.type as keyof typeof typeConfig].color}/30`}
@@ -244,7 +249,7 @@ export const GridTimetable = ({
                 return (
                   <div 
                     key={`${venue.id}-${timeSlot}`} 
-                    className="border-r border-border/30 min-h-[100px] bg-background/10 hover:bg-background/20 transition-colors"
+                    className="border-r border-border/30 min-h-[60px] bg-background/10 hover:bg-background/20 transition-colors"
                   />
                 );
               })}
