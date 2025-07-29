@@ -254,7 +254,7 @@ export const GridTimetable = ({
                     >
                       <div
                         className={`
-                          absolute inset-x-1 rounded-md cursor-pointer transition-smooth border-2
+                          absolute left-1/2 -translate-x-1/2 w-1/2 rounded-md cursor-pointer transition-smooth border-2
                           bg-${typeConfig[event.type as keyof typeof typeConfig].color}/20 
                           border-${typeConfig[event.type as keyof typeof typeConfig].color}
                           hover:scale-[1.02] hover:shadow-glow hover:z-10
