@@ -120,35 +120,38 @@ export const FestivalHeader = ({
           </div>
 
           {/* Filters and View Toggle */}
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
               {/* Day Filter */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <div className="flex gap-2">
+                <div className="flex gap-1 flex-wrap justify-center">
                   {days.map((day) => (
                     <Button
                       key={day.key}
                       variant={selectedDay === day.key ? "default" : "outline"}
                       size="sm"
                       onClick={() => onDayChange(day.key)}
-                      className="transition-smooth"
+                      className="transition-smooth min-h-[44px] px-3"
                     >
                       {day.label}
                     </Button>
                   ))}
                 </div>
               </div>
+            </div>
 
+            {/* Venue and Event Type Filters */}
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
               {/* Venue Filter */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-center gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                <div className="flex gap-2">
+                <div className="flex gap-1 flex-wrap justify-center">
                   {venues.map((venue) => (
                     <Badge
                       key={venue.id}
                       variant={selectedVenues.includes(venue.id) ? "default" : "outline"}
-                      className={`cursor-pointer transition-smooth ${
+                      className={`cursor-pointer transition-smooth min-h-[40px] px-3 text-sm ${
                         selectedVenues.includes(venue.id) 
                           ? `bg-${venue.color} hover:bg-${venue.color}/80 text-white border-${venue.color} shadow-md ring-2 ring-${venue.color}/20` 
                           : "hover:bg-accent hover:scale-105"
@@ -162,14 +165,14 @@ export const FestivalHeader = ({
               </div>
 
               {/* Event Type Filter */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-center gap-2">
                 <Music2 className="h-4 w-4 text-muted-foreground" />
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-1 flex-wrap justify-center">
                   {eventTypes.map((eventType) => (
                     <Badge
                       key={eventType.id}
                       variant={selectedEventTypes.includes(eventType.id) ? "default" : "outline"}
-                      className={`cursor-pointer transition-smooth ${
+                      className={`cursor-pointer transition-smooth min-h-[40px] px-3 text-sm ${
                         selectedEventTypes.includes(eventType.id) 
                           ? `bg-${eventType.color} hover:bg-${eventType.color}/80 text-white border-${eventType.color} shadow-md ring-2 ring-${eventType.color}/20` 
                           : "hover:bg-accent hover:scale-105"
@@ -184,7 +187,9 @@ export const FestivalHeader = ({
             </div>
 
             {/* View Toggle */}
-            <ViewToggle view={view} onViewChange={onViewChange} />
+            <div className="flex justify-center">
+              <ViewToggle view={view} onViewChange={onViewChange} />
+            </div>
           </div>
         </div>
       </div>

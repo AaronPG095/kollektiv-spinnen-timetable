@@ -57,7 +57,7 @@ export const EventCard = ({ event, onClick }: EventCardProps) => {
 
   return (
     <Card 
-      className="p-4 cursor-pointer transition-smooth hover:shadow-glow hover:scale-105 backdrop-blur-sm border-2"
+      className="p-3 md:p-4 cursor-pointer transition-smooth hover:shadow-glow hover:scale-105 backdrop-blur-sm border-2 min-h-[140px] md:min-h-[120px]"
       style={{
         backgroundColor: `hsl(var(--${type.color}) / 0.2)`,
         borderColor: `hsl(var(--${type.color}) / 0.6)`

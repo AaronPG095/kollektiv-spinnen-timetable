@@ -193,20 +193,20 @@ export const GridTimetable = ({
 
   return (
     <div className="bg-card/30 backdrop-blur-sm rounded-lg border border-border/50 overflow-hidden">
-      <ScrollArea className="w-full h-[850px]">
-        <div className="min-w-[900px]">
+      <ScrollArea className="w-full h-[500px] md:h-[850px]">
+        <div className="min-w-[320px] md:min-w-[600px] lg:min-w-[900px]">
           {/* Header with venues */}
-          <div className="grid grid-cols-[60px_60px_repeat(3,1fr)] bg-muted/50 sticky top-0 z-10">
-            <div className="p-2 font-bold text-center border-r border-border/30 bg-background/80 text-xs">
+          <div className="grid grid-cols-[50px_50px_repeat(3,1fr)] md:grid-cols-[60px_60px_repeat(3,1fr)] bg-muted/50 sticky top-0 z-10">
+            <div className="p-1 md:p-2 font-bold text-center border-r border-border/30 bg-background/80 text-xs">
               {t('day')}
             </div>
-            <div className="p-2 font-bold text-center border-r border-border/30 bg-background/80 text-xs">
+            <div className="p-1 md:p-2 font-bold text-center border-r border-border/30 bg-background/80 text-xs">
               {t('time')}
             </div>
             {venues.map(venue => (
               <div 
                 key={venue.id} 
-                className={`p-2 text-center font-semibold border-r border-border/30 bg-${venue.color}/10 text-xs`}
+                className={`p-1 md:p-2 text-center font-semibold border-r border-border/30 bg-${venue.color}/10 text-xs`}
               >
                 {t(venue.id)}
               </div>
@@ -215,9 +215,9 @@ export const GridTimetable = ({
 
           {/* Time slot rows */}
           {timeSlots.map((timeSlot, timeIndex) => (
-            <div key={timeSlot} className="grid grid-cols-[60px_60px_repeat(3,1fr)] border-b border-border/30 h-[60px]">
+            <div key={timeSlot} className="grid grid-cols-[50px_50px_repeat(3,1fr)] md:grid-cols-[60px_60px_repeat(3,1fr)] border-b border-border/30 h-[45px] md:h-[60px]">
               {/* Day label */}
-              <div className="p-2 bg-muted/20 border-r border-border/30 flex items-center justify-center">
+              <div className="p-1 md:p-2 bg-muted/20 border-r border-border/30 flex items-center justify-center">
                 {isNewDay(timeIndex) && (
                   <span className="font-bold text-xs text-foreground transform -rotate-90 whitespace-nowrap">
                     {t(getDayLabel(timeSlot, timeIndex))}
@@ -226,8 +226,8 @@ export const GridTimetable = ({
               </div>
               
               {/* Time label */}
-              <div className="p-2 bg-muted/20 border-r border-border/30 flex items-center justify-center">
-                <span className="font-bold text-xs">
+              <div className="p-1 md:p-2 bg-muted/20 border-r border-border/30 flex items-center justify-center">
+                <span className="font-bold text-[10px] md:text-xs">
                   {timeSlot}
                 </span>
               </div>
