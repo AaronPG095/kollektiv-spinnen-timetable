@@ -14,6 +14,8 @@ interface GridEvent extends Event {
   gridRow: number;
   gridColumn: number;
   gridColumnSpan: number;
+  offsetPercent?: number;
+  heightPercent?: number;
 }
 
 const venues = ['draussen', 'oben', 'unten'] as const;
@@ -51,9 +53,23 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
   const timeToMinutes = (timeStr: string, day: string) => {
     if (!timeStr) return 0;
     const [hours, minutes] = timeStr.split(':').map(Number);
-    const dayOffset = day === 'Freitag' ? 0 : day === 'Samstag' ? 24 : 48;
-    const adjustedHours = day === 'Freitag' && hours < 19 ? hours + 24 : hours;
-    return (adjustedHours + dayOffset) * 60 + minutes;
+    let totalMinutes = hours * 60 + minutes;
+    
+    // Add day offsets
+    if (day === 'Samstag') {
+      totalMinutes += 24 * 60; // Saturday starts 24 hours after Friday start
+    } else if (day === 'Sonntag') {
+      totalMinutes += 48 * 60; // Sunday starts 48 hours after Friday start
+    }
+    
+    // Adjust for Friday starting at 19:00
+    if (day === 'Freitag') {
+      totalMinutes -= 19 * 60; // Subtract 19 hours to make 19:00 = 0 minutes
+    } else {
+      totalMinutes -= 19 * 60; // All times relative to Friday 19:00
+    }
+    
+    return totalMinutes;
   };
 
   // Process events for grid positioning
@@ -68,18 +84,24 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
 
     events.forEach(event => {
       const startMinutes = timeToMinutes(event.startTime || event.time?.split(' - ')[0] || '19:00', event.day);
-      const endMinutes = timeToMinutes(event.endTime || event.time?.split(' - ')[1] || (startMinutes + 60).toString(), event.day);
-      const duration = Math.max(60, endMinutes - startMinutes); // Minimum 1 hour
+      const endTime = event.endTime || event.time?.split(' - ')[1] || `${Math.floor((startMinutes + 60) / 60)}:${(startMinutes + 60) % 60}`;
+      const endMinutes = timeToMinutes(endTime, event.day);
+      const duration = endMinutes - startMinutes;
       
-      // Calculate grid position
+      // Calculate grid position - find the hour slot this event starts in
       const startSlotIndex = timeSlots.findIndex(slot => {
         const slotMinutes = timeToMinutes(slot.time, slot.day);
         return slotMinutes <= startMinutes && slotMinutes + 60 > startMinutes;
       });
       
-      const gridRow = startSlotIndex + 2; // +2 for header rows
+      const gridRow = startSlotIndex + 2; // +2 for header row (removed sub-header)
       const gridColumn = venues.indexOf(event.venue as any) + 2; // +2 for time column
-      const gridColumnSpan = Math.ceil(duration / 60);
+      
+      // Calculate exact position within the hour cell
+      const slotStartMinutes = timeToMinutes(timeSlots[startSlotIndex]?.time || '19:00', timeSlots[startSlotIndex]?.day || 'Freitag');
+      const offsetWithinHour = startMinutes - slotStartMinutes; // Minutes from start of hour
+      const offsetPercent = (offsetWithinHour / 60) * 100; // Percentage from top of hour cell
+      const heightPercent = Math.min((duration / 60) * 100, 100); // Height as percentage, max 100%
 
       const gridEvent: GridEvent = {
         ...event,
@@ -88,7 +110,9 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         duration,
         gridRow,
         gridColumn,
-        gridColumnSpan
+        gridColumnSpan: 1, // Always span 1 column
+        offsetPercent,
+        heightPercent
       };
 
       eventsByVenue[event.venue as keyof typeof eventsByVenue].push(gridEvent);
@@ -139,56 +163,66 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         </svg>
       </div>
 
-      <div className="festival-grid relative bg-gradient-to-br from-purple-900/80 via-purple-800/70 to-indigo-900/80 
-                      backdrop-blur-sm border border-border/30 rounded-lg overflow-hidden">
+      <div className="festival-grid relative" style={{ backgroundColor: '#3100a2' }}>
         <div className="grid-container overflow-x-auto">
           <div className="grid grid-cols-[120px_repeat(3,1fr)] gap-0 min-w-[600px]"
-               style={{ gridTemplateRows: `60px 40px repeat(${timeSlots.length}, 60px)` }}>
+               style={{ gridTemplateRows: `60px repeat(${timeSlots.length}, 60px)` }}>
             
-            {/* Header - Day labels */}
-            <div className="sticky top-0 z-30 bg-purple-900/90 backdrop-blur-sm border-b border-border/30 
-                           flex items-center justify-center font-bold text-white px-4">
+            {/* Header - Time and Venue labels */}
+            <div className="sticky top-0 z-30 border-b-2 border-black 
+                           flex items-center justify-center font-bold text-white px-4"
+                 style={{ backgroundColor: '#4500e2' }}>
               Zeit
             </div>
-            {venues.map(venue => (
-              <div key={venue} 
-                   className="sticky top-0 z-30 bg-purple-900/90 backdrop-blur-sm border-b border-border/30 
-                             flex items-center justify-center font-bold text-white px-4 text-center">
-                {venueLabels[venue]}
-              </div>
-            ))}
-
-            {/* Sub-header - Venue type indicators */}
-            <div className="sticky top-[60px] z-20 bg-purple-800/80 backdrop-blur-sm border-b border-border/30 
-                           flex items-center justify-center text-xs text-white/70 px-4">
-              Uhrzeit
+            <div className="sticky top-0 z-30 border-b-2 border-black border-l-2 
+                           flex items-center justify-center font-bold text-white px-4 text-center"
+                 style={{ backgroundColor: 'hsl(195 90% 70%)' }}>
+              {venueLabels.draussen}
             </div>
-            {venues.map(venue => (
-              <div key={`${venue}-sub`} 
-                   className="sticky top-[60px] z-20 bg-purple-800/80 backdrop-blur-sm border-b border-border/30 
-                             flex items-center justify-center text-xs text-white/70 px-4 text-center">
-                {venue === 'draussen' ? 'Outdoor' : venue === 'oben' ? 'Upstairs' : 'Downstairs'}
-              </div>
-            ))}
+            <div className="sticky top-0 z-30 border-b-2 border-black border-l-2 
+                           flex items-center justify-center font-bold text-white px-4 text-center"
+                 style={{ backgroundColor: 'hsl(250 80% 60%)' }}>
+              {venueLabels.oben}
+            </div>
+            <div className="sticky top-0 z-30 border-b-2 border-black border-l-2 
+                           flex items-center justify-center font-bold text-white px-4 text-center"
+                 style={{ backgroundColor: 'hsl(280 70% 50%)' }}>
+              {venueLabels.unten}
+            </div>
 
             {/* Time slots and grid cells */}
-            {timeSlots.map((slot, index) => (
-              <React.Fragment key={`${slot.day}-${slot.hour}`}>
-                {/* Time label */}
-                <div className="sticky left-0 z-10 bg-purple-800/80 backdrop-blur-sm border-r border-border/30 
-                               flex flex-col items-center justify-center text-white text-sm px-2 py-1">
-                  <div className="font-medium">{slot.label}</div>
-                  <div className="text-xs text-white/60">{slot.day.slice(0, 2)}</div>
-                </div>
-                
-                {/* Venue cells */}
-                {venues.map(venue => (
-                  <div key={`${slot.day}-${slot.hour}-${venue}`}
-                       className="relative border-r border-b border-border/20 min-h-[60px] bg-black/10">
+            {timeSlots.map((slot, index) => {
+              const isFirstSlotOfDay = (slot.day === 'Freitag' && slot.hour === 19) || 
+                                      (slot.day === 'Samstag' && slot.hour === 0) || 
+                                      (slot.day === 'Sonntag' && slot.hour === 0);
+              const dayLabel = slot.day === 'Freitag' ? 'Freitag' : 
+                              slot.day === 'Samstag' ? 'Samstag' : 'Sonntag';
+              
+              return (
+                <React.Fragment key={`${slot.day}-${slot.hour}`}>
+                  {/* Time label with day label for first slot of each day */}
+                  <div className="sticky left-0 z-10 border-b-2 border-black 
+                                 flex flex-col items-center justify-center text-white text-sm px-2 py-1"
+                       style={{ backgroundColor: '#4500e2' }}>
+                    {isFirstSlotOfDay ? (
+                      <div className="font-bold text-xs">{dayLabel}</div>
+                    ) : (
+                      <div className="font-medium">{slot.label}</div>
+                    )}
                   </div>
-                ))}
-              </React.Fragment>
-            ))}
+                  
+                  {/* Venue cells */}
+                  {venues.map((venue, venueIndex) => (
+                    <div key={`${slot.day}-${slot.hour}-${venue}`}
+                         className={`relative border-b-2 border-black min-h-[60px] ${
+                           venueIndex > 0 ? 'border-l-2' : ''
+                         }`}
+                         style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
+                    </div>
+                  ))}
+                </React.Fragment>
+              );
+            })}
 
             {/* Event blocks */}
             {gridEvents.map(event => (
@@ -199,9 +233,12 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                            transition-all duration-200 hover:scale-105 hover:shadow-xl 
                            hover:border-white/40 p-2 m-1`}
                 style={{
-                  gridRow: `${event.gridRow} / span ${Math.max(1, Math.ceil(event.duration / 60))}`,
+                  gridRow: event.gridRow,
                   gridColumn: event.gridColumn,
-                  minHeight: `${Math.max(56, (event.duration / 60) * 60 - 8)}px`
+                  top: `${(event.offsetPercent || 0)}%`,
+                  height: `${Math.max(20, event.heightPercent || 100)}%`,
+                  left: '2px',
+                  right: '2px'
                 }}
                 onClick={() => onEventClick(event)}
               >
