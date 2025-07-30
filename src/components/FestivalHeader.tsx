@@ -1,4 +1,4 @@
-import { Search, Filter, Calendar, MapPin, Music2, Languages, LogIn, Settings } from "lucide-react";
+import { Search, Filter, Calendar, MapPin, Music2, Languages, LogIn, Settings, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +51,14 @@ export const FestivalHeader = ({
     { id: "live", label: t('live'), color: "type-live" },
     { id: "interaktiv", label: t('interaktiv'), color: "type-interaktiv" }
   ];
+
+  const clearAllFilters = () => {
+    onDayChange("Alle");
+    // Clear all venue selections
+    selectedVenues.forEach(venue => onVenueToggle(venue));
+    // Clear all event type selections  
+    selectedEventTypes.forEach(eventType => onEventTypeToggle(eventType));
+  };
   return (
     <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4 py-4 md:py-6">
@@ -119,18 +127,15 @@ export const FestivalHeader = ({
                         </div>
                         <div className="flex gap-1 flex-wrap">
                           {venues.map((venue) => (
-                            <Badge
+                            <Button
                               key={venue.id}
                               variant={selectedVenues.includes(venue.id) ? "default" : "outline"}
-                              className={`cursor-pointer text-xs ${
-                                selectedVenues.includes(venue.id) 
-                                  ? `bg-${venue.color} hover:bg-${venue.color}/80 text-white border-${venue.color}` 
-                                  : "hover:bg-accent"
-                              }`}
+                              size="sm"
                               onClick={() => onVenueToggle(venue.id)}
+                              className="text-xs transition-smooth"
                             >
                               {venue.label}
-                            </Badge>
+                            </Button>
                           ))}
                         </div>
                       </div>
@@ -143,20 +148,30 @@ export const FestivalHeader = ({
                         </div>
                         <div className="flex gap-1 flex-wrap">
                           {eventTypes.map((eventType) => (
-                            <Badge
+                            <Button
                               key={eventType.id}
                               variant={selectedEventTypes.includes(eventType.id) ? "default" : "outline"}
-                              className={`cursor-pointer text-xs ${
-                                selectedEventTypes.includes(eventType.id) 
-                                  ? `bg-${eventType.color} hover:bg-${eventType.color}/80 text-white border-${eventType.color}` 
-                                  : "hover:bg-accent"
-                              }`}
+                              size="sm"
                               onClick={() => onEventTypeToggle(eventType.id)}
+                              className="text-xs transition-smooth"
                             >
                               {eventType.label}
-                            </Badge>
+                            </Button>
                           ))}
                         </div>
+                      </div>
+
+                      {/* Clear Filters Button in Mobile */}
+                      <div className="pt-2 border-t border-border">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearAllFilters}
+                          className="w-full text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          {t('clearFilters')}
+                        </Button>
                       </div>
                     </div>
                   </PopoverContent>
@@ -238,18 +253,15 @@ export const FestivalHeader = ({
                   </div>
                   <div className="flex gap-1 flex-wrap">
                     {venues.map((venue) => (
-                      <Badge
+                      <Button
                         key={venue.id}
                         variant={selectedVenues.includes(venue.id) ? "default" : "outline"}
-                        className={`cursor-pointer transition-smooth ${
-                          selectedVenues.includes(venue.id) 
-                            ? `bg-${venue.color} hover:bg-${venue.color}/80 text-white border-${venue.color} shadow-md ring-2 ring-${venue.color}/20` 
-                            : "hover:bg-accent hover:scale-105"
-                        }`}
+                        size="sm"
                         onClick={() => onVenueToggle(venue.id)}
+                        className="transition-smooth"
                       >
                         {venue.label}
-                      </Badge>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -262,21 +274,31 @@ export const FestivalHeader = ({
                   </div>
                   <div className="flex gap-1 flex-wrap">
                     {eventTypes.map((eventType) => (
-                      <Badge
+                      <Button
                         key={eventType.id}
                         variant={selectedEventTypes.includes(eventType.id) ? "default" : "outline"}
-                        className={`cursor-pointer transition-smooth ${
-                          selectedEventTypes.includes(eventType.id) 
-                            ? `bg-${eventType.color} hover:bg-${eventType.color}/80 text-white border-${eventType.color} shadow-md ring-2 ring-${eventType.color}/20` 
-                            : "hover:bg-accent hover:scale-105"
-                        }`}
+                        size="sm"
                         onClick={() => onEventTypeToggle(eventType.id)}
+                        className="transition-smooth"
                       >
                         {eventType.label}
-                      </Badge>
+                      </Button>
                     ))}
                   </div>
                 </div>
+              </div>
+
+              {/* Clear Filters Button */}
+              <div className="flex justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  {t('clearFilters')}
+                </Button>
               </div>
             </div>
           </div>

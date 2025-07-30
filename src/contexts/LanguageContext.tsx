@@ -28,6 +28,7 @@ const translations = {
     days: 'Tage',
     venues: 'Venues',
     events: 'Events',
+    clearFilters: 'Filter zurücksetzen',
     gridView: 'Raster',
     listView: 'Liste',
     
@@ -90,6 +91,7 @@ const translations = {
     days: 'Days',
     venues: 'Venues',
     events: 'Events',
+    clearFilters: 'Clear Filters',
     gridView: 'Grid',
     listView: 'List',
     
