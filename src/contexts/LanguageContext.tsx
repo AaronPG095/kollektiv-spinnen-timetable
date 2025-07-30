@@ -25,6 +25,9 @@ const translations = {
     sonntag: 'Sonntag',
     filterVenues: 'Venues filtern',
     filterEventTypes: 'Event-Typen filtern',
+    days: 'Tage',
+    venues: 'Venues',
+    events: 'Events',
     gridView: 'Raster',
     listView: 'Liste',
     
@@ -84,6 +87,9 @@ const translations = {
     sonntag: 'Sunday',
     filterVenues: 'Filter venues',
     filterEventTypes: 'Filter event types',
+    days: 'Days',
+    venues: 'Venues',
+    events: 'Events',
     gridView: 'Grid',
     listView: 'List',
     

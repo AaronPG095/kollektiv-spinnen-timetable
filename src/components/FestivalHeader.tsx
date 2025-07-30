@@ -140,7 +140,7 @@ export const FestivalHeader = ({
                       <div>
                         <div className="flex items-center gap-2 mb-2">
                           <Music2 className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">{t('eventTypes')}</span>
+                          <span className="text-sm font-medium">{t('events')}</span>
                         </div>
                         <div className="flex gap-1 flex-wrap">
                           {eventTypes.map((eventType) => (
@@ -208,8 +208,11 @@ export const FestivalHeader = ({
             <div className="hidden md:flex flex-col gap-4">
               <div className="flex flex-col lg:flex-row gap-4 items-center justify-center">
                 {/* Day Filter */}
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-muted-foreground">{t('days')}</span>
+                  </div>
                   <div className="flex gap-1">
                     {days.map((day) => (
                       <Button
@@ -229,8 +232,11 @@ export const FestivalHeader = ({
               {/* Venue and Event Type Filters */}
               <div className="flex flex-col lg:flex-row gap-4 items-center justify-center">
                 {/* Venue Filter */}
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-muted-foreground">{t('venues')}</span>
+                  </div>
                   <div className="flex gap-1 flex-wrap">
                     {venues.map((venue) => (
                       <Badge
@@ -250,8 +256,11 @@ export const FestivalHeader = ({
                 </div>
 
                 {/* Event Type Filter */}
-                <div className="flex items-center gap-2">
-                  <Music2 className="h-4 w-4 text-muted-foreground" />
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Music2 className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-muted-foreground">{t('events')}</span>
+                  </div>
                   <div className="flex gap-1 flex-wrap">
                     {eventTypes.map((eventType) => (
                       <Badge
