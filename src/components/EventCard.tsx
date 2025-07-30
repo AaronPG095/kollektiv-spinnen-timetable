@@ -70,9 +70,10 @@ export const EventCard = ({ event, onClick }: EventCardProps) => {
       // Not valid JSON, continue
     }
     
-    // Check if it's a translation key
+    // Check if it's a translation key that exists in our translations
     const translated = t(description);
-    return translated !== description ? translated : description;
+    // If the translation exists (not the same as the key), use it, otherwise use original
+    return translated;
   };
 
   return (
