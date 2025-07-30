@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Event } from '@/components/EventCard';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -22,6 +23,8 @@ interface GridEvent extends Event {
 }
 
 const venues = ['draussen', 'oben', 'unten'] as const;
+type VenueType = typeof venues[number];
+
 const venueLabels = {
   draussen: 'NEUE UFER',
   oben: 'SALON', 
@@ -85,7 +88,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
   };
 
   // Normalize venue names to match our venues array
-  const normalizeVenue = (venue: string): string => {
+  const normalizeVenue = (venue: string): VenueType => {
     const venueLower = venue.toLowerCase();
     if (venueLower.includes('draussen') || venueLower.includes('neue') || venueLower.includes('ufer')) {
       return 'draussen';
@@ -94,8 +97,8 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
     } else if (venueLower.includes('unten') || venueLower.includes('flora')) {
       return 'unten';
     }
-    // Default fallback based on exact match
-    return venues.includes(venue as any) ? venue : 'draussen';
+    // Default fallback
+    return 'draussen';
   };
 
   // Process events for grid positioning with conflict detection
@@ -289,7 +292,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
   };
 
   return (
-    <div className="festival-grid-container relative">
+    <div className="festival-grid-container relative w-3/4 mx-auto">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -306,7 +309,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
 
       <div className="festival-grid relative overflow-hidden rounded-lg" style={{ backgroundColor: '#3100a2' }}>
         <div className="grid-container overflow-auto max-h-[80vh]">
-          <div className="festival-grid-main grid grid-cols-[100px_repeat(3,minmax(250px,1fr))] gap-0"
+          <div className="festival-grid-main grid grid-cols-[100px_repeat(3,minmax(180px,1fr))] gap-0"
                style={{ gridTemplateRows: `60px repeat(${timeSlots.length}, 80px)` }}>
             
             {/* Header - Time and Venue labels */}
@@ -389,20 +392,23 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                   }}
                   onClick={() => onEventClick(event)}
                 >
-                  <div className="p-2 h-full flex flex-col">
+                  <div className="h-full flex items-center justify-center text-center">
                     <div className="text-white">
-                      <div className={`font-semibold leading-tight ${
-                        event.title.length > 20 ? 'text-xs' : 'text-sm'
-                      }`}>
-                        {event.title}
-                      </div>
-                      {heightPixels > 50 && (
+                      {event.exactDurationMinutes <= 30 ? (
+                        <div className={`font-semibold leading-tight ${
+                          event.title.length > 20 ? 'text-xs' : 'text-sm'
+                        }`}>
+                          {event.title} - {event.time}
+                        </div>
+                      ) : (
                         <>
-                          <div className="text-xs text-white/90 font-medium mt-1">
-                            {getEventTypeLabel(event.type)}
+                          <div className={`font-semibold leading-tight mb-2 ${
+                            event.title.length > 20 ? 'text-xs' : 'text-sm'
+                          }`}>
+                            {event.title}
                           </div>
                           {heightPixels > 70 && (
-                            <div className="text-xs text-white/80 mt-auto">
+                            <div className="text-xs text-white/80">
                               {event.time}
                             </div>
                           )}
