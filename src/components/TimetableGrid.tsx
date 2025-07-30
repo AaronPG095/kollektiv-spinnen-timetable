@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin, Calendar } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface TimetableGridProps {
   events: Event[];
@@ -13,6 +14,7 @@ interface TimetableGridProps {
 
 export const TimetableGrid = ({ events, selectedDay, selectedVenues, searchQuery }: TimetableGridProps) => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const { t, language } = useLanguage();
 
   // Filter events based on criteria
   const filteredEvents = events.filter(event => {
@@ -112,7 +114,23 @@ export const TimetableGrid = ({ events, selectedDay, selectedVenues, searchQuery
                 </div>
                 {selectedEvent.description && (
                   <p className="text-muted-foreground leading-relaxed">
-                    {selectedEvent.description}
+                    {(() => {
+                      const desc = selectedEvent.description;
+                      
+                      // Try to parse as JSON first
+                      try {
+                        const parsed = JSON.parse(desc);
+                        if (typeof parsed === 'object' && parsed !== null && (parsed.en || parsed.de)) {
+                          return parsed[language] || parsed.de || parsed.en || desc;
+                        }
+                      } catch {
+                        // Not valid JSON, continue
+                      }
+                      
+                      // Check if it's a translation key
+                      const translated = t(desc);
+                      return translated !== desc ? translated : desc;
+                    })()}
                   </p>
                 )}
               </div>

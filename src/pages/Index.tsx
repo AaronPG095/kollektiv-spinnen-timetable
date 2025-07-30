@@ -94,21 +94,28 @@ const Index = () => {
                 {selectedEvent.description && (
                   <p className="text-muted-foreground leading-relaxed">
                      {(() => {
-                       // Try to parse as JSON first (new format)
+                       const desc = selectedEvent.description;
+                       
+                       // Try to parse as JSON first (format: {"en": "text", "de": "text"})
                        try {
-                         const parsed = JSON.parse(selectedEvent.description);
-                         if (typeof parsed === 'object' && (parsed.en || parsed.de)) {
-                           return parsed[language] || parsed.de || parsed.en || selectedEvent.description;
+                         const parsed = JSON.parse(desc);
+                         if (typeof parsed === 'object' && parsed !== null && (parsed.en || parsed.de)) {
+                           // Return the current language version, fallback to other language or original
+                           return parsed[language] || parsed.de || parsed.en || desc;
                          }
                        } catch {
-                         // If not JSON, handle as before
+                         // Not valid JSON, continue with other checks
                        }
-                      
-                      // Check if description is a translation key or plain text
-                      return selectedEvent.description.endsWith('Desc') || t(selectedEvent.description) !== selectedEvent.description 
-                        ? t(selectedEvent.description) 
-                        : selectedEvent.description;
-                    })()}
+                       
+                       // Check if it's a translation key (ends with 'Desc' or exists in translations)
+                       const translated = t(desc);
+                       if (translated !== desc) {
+                         return translated;
+                       }
+                       
+                       // Return as plain text
+                       return desc;
+                     })()}
                   </p>
                 )}
                 

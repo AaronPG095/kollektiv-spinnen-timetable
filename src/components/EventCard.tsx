@@ -1,6 +1,7 @@
 import { Clock, MapPin, Music, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export interface Event {
   id: string;
@@ -24,36 +25,55 @@ interface EventCardProps {
   onClick: (event: Event) => void;
 }
 
-const venueConfig = {
-  draussen: { 
-    label: "Draußen", 
-    color: "venue-draussen",
-    icon: Music
-  },
-  oben: { 
-    label: "Oben", 
-    color: "venue-oben",
-    icon: Users
-  },
-  unten: { 
-    label: "Unten", 
-    color: "venue-unten",
-    icon: Music
-  }
-};
-
-const typeConfig = {
-  performance: { label: "Performance", color: "type-performance" },
-  dj: { label: "DJ", color: "type-dj" },
-  workshop: { label: "Workshop", color: "type-workshop" },
-  live: { label: "Live-Konzert", color: "type-live" },
-  interaktiv: { label: "Interaktiv", color: "type-interaktiv" }
-};
-
 export const EventCard = ({ event, onClick }: EventCardProps) => {
+  const { t, language } = useLanguage();
+  
+  const venueConfig = {
+    draussen: { 
+      label: t('draussen'), 
+      color: "venue-draussen",
+      icon: Music
+    },
+    oben: { 
+      label: t('oben'), 
+      color: "venue-oben",
+      icon: Users
+    },
+    unten: { 
+      label: t('unten'), 
+      color: "venue-unten",
+      icon: Music
+    }
+  };
+
+  const typeConfig = {
+    performance: { label: t('performance'), color: "type-performance" },
+    dj: { label: t('dj'), color: "type-dj" },
+    workshop: { label: t('workshop'), color: "type-workshop" },
+    live: { label: t('live'), color: "type-live" },
+    interaktiv: { label: t('interaktiv'), color: "type-interaktiv" }
+  };
+
   const venue = venueConfig[event.venue];
   const type = typeConfig[event.type];
   const VenueIcon = venue.icon;
+  
+  // Handle description translation
+  const getTranslatedDescription = (description: string) => {
+    // Try to parse as JSON first
+    try {
+      const parsed = JSON.parse(description);
+      if (typeof parsed === 'object' && parsed !== null && (parsed.en || parsed.de)) {
+        return parsed[language] || parsed.de || parsed.en || description;
+      }
+    } catch {
+      // Not valid JSON, continue
+    }
+    
+    // Check if it's a translation key
+    const translated = t(description);
+    return translated !== description ? translated : description;
+  };
 
   return (
     <Card 
@@ -107,7 +127,7 @@ export const EventCard = ({ event, onClick }: EventCardProps) => {
         {/* Description */}
         {event.description && (
           <p className="text-xs text-muted-foreground line-clamp-2">
-            {event.description}
+            {getTranslatedDescription(event.description)}
           </p>
         )}
       </div>

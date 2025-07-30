@@ -21,7 +21,7 @@ export const ChronologicalTimetable = ({
   searchQuery, 
   onEventClick 
 }: ChronologicalTimetableProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const venueConfig = {
     draussen: { 
@@ -155,7 +155,23 @@ export const ChronologicalTimetable = ({
                               {/* Description */}
                               {event.description && (
                                 <p className="text-xs text-muted-foreground line-clamp-2">
-                                  {t(event.description) !== event.description ? t(event.description) : event.description}
+                                  {(() => {
+                                    const desc = event.description;
+                                    
+                                     // Try to parse as JSON first
+                                     try {
+                                       const parsed = JSON.parse(desc);
+                                       if (typeof parsed === 'object' && parsed !== null && (parsed.en || parsed.de)) {
+                                         return parsed[language] || parsed.de || parsed.en || desc;
+                                       }
+                                     } catch {
+                                       // Not valid JSON, continue
+                                     }
+                                    
+                                    // Check if it's a translation key
+                                    const translated = t(desc);
+                                    return translated !== desc ? translated : desc;
+                                  })()}
                                 </p>
                               )}
                             </div>
