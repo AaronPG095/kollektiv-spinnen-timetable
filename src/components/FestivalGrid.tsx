@@ -235,7 +235,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
 
       <div className="festival-grid relative overflow-hidden rounded-lg" style={{ backgroundColor: '#3100a2' }}>
         <div className="grid-container overflow-auto max-h-[80vh]">
-          <div className="festival-grid-main grid grid-cols-[80px_100px_repeat(3,minmax(200px,1fr))] gap-0"
+          <div className="festival-grid-main grid grid-cols-[60px_75px_repeat(3,minmax(150px,1fr))] gap-0"
                style={{ gridTemplateRows: `60px repeat(${timeSlots.length}, 80px)` }}>
             
             {/* Header - Day, Time and Venue labels */}
@@ -341,26 +341,16 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                   }}
                   onClick={() => onEventClick(event)}
                 >
-                  <div className={`h-full flex items-center justify-center text-center ${event.duration <= 30 ? 'p-0' : 'p-2'}`}>
+                  <div className="h-full flex items-center justify-center text-center">
                     <div className="text-white">
-                      {event.duration <= 30 ? (
-                        <div className={`font-semibold leading-tight ${
-                          event.title.length > 25 ? 'text-sm' : 'text-base'
-                        }`}>
-                          {event.title} - {event.time}
-                        </div>
-                      ) : (
-                        <>
-                          <div className={`font-semibold leading-tight mb-2 ${
-                            event.title.length > 25 ? 'text-sm' : 'text-base'
-                          }`}>
-                            {event.title}
-                          </div>
-                          <div className="text-sm text-white/80">
-                            {event.time}
-                          </div>
-                        </>
-                      )}
+                      <div className={`font-semibold leading-tight ${
+                        event.title.length > 25 ? 'text-sm' : 'text-base'
+                      }`}>
+                        {event.title}
+                      </div>
+                      <div className="text-sm text-white/80 mt-1">
+                        {event.time}
+                      </div>
                     </div>
                   </div>
                 </div>
