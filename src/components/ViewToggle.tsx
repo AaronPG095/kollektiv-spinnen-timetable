@@ -21,7 +21,15 @@ export const ViewToggle = ({ view, onViewChange }: ViewToggleProps) => {
         <List className="h-4 w-4" />
         {t('listView')}
       </Button>
-      {/* Grid view temporarily disabled */}
+      <Button
+        variant={view === "grid" ? "default" : "ghost"}
+        size="sm"
+        onClick={() => onViewChange("grid")}
+        className="gap-2"
+      >
+        <Grid className="h-4 w-4" />
+        {t('gridView')}
+      </Button>
     </div>
   );
 };

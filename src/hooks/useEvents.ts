@@ -23,6 +23,8 @@ export const useEvents = () => {
         id: event.id,
         title: event.title,
         time: event.time,
+        startTime: event.start_time || event.time?.split(' - ')[0] || '',
+        endTime: event.end_time || event.time?.split(' - ')[1] || '',
         venue: event.venue as "draussen" | "oben" | "unten",
         day: event.day as "Freitag" | "Samstag" | "Sonntag",
         type: event.type as "performance" | "dj" | "workshop" | "live" | "interaktiv",

@@ -19,8 +19,10 @@ export type Database = {
           created_at: string
           day: string
           description: string | null
+          end_time: string | null
           id: string
           links: Json | null
+          start_time: string | null
           time: string
           title: string
           type: string
@@ -31,8 +33,10 @@ export type Database = {
           created_at?: string
           day: string
           description?: string | null
+          end_time?: string | null
           id?: string
           links?: Json | null
+          start_time?: string | null
           time: string
           title: string
           type: string
@@ -43,8 +47,10 @@ export type Database = {
           created_at?: string
           day?: string
           description?: string | null
+          end_time?: string | null
           id?: string
           links?: Json | null
+          start_time?: string | null
           time?: string
           title?: string
           type?: string

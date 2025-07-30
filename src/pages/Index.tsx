@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FestivalHeader } from "@/components/FestivalHeader";
 import { ChronologicalTimetable } from "@/components/ChronologicalTimetable";
+import FestivalGrid from "@/components/FestivalGrid";
 import { useEvents } from "@/hooks/useEvents";
 import { Event } from "@/components/EventCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -16,6 +17,7 @@ const Index = () => {
   const [selectedVenues, setSelectedVenues] = useState<string[]>([]);
   const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [view, setView] = useState<"grid" | "list">("list");
 
   const handleVenueToggle = (venue: string) => {
     setSelectedVenues(prev => 
@@ -39,6 +41,17 @@ const Index = () => {
     unten: { label: t('unten'), color: "venue-unten" }
   };
 
+  // Filter events for both views
+  const filteredEvents = events.filter((event) => {
+    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesDay = selectedDay === "Alle" || event.day === selectedDay;
+    const matchesVenue = selectedVenues.length === 0 || selectedVenues.includes(event.venue);
+    const matchesEventType = selectedEventTypes.length === 0 || selectedEventTypes.includes(event.type);
+    
+    return matchesSearch && matchesDay && matchesVenue && matchesEventType;
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <FestivalHeader
@@ -50,6 +63,8 @@ const Index = () => {
         onVenueToggle={handleVenueToggle}
         selectedEventTypes={selectedEventTypes}
         onEventTypeToggle={handleEventTypeToggle}
+        view={view}
+        onViewChange={setView}
       />
       
       {/* Mobile Day Filter Label */}
@@ -65,14 +80,21 @@ const Index = () => {
       )}
       
       <main className="container mx-auto px-4 py-8">
-        <ChronologicalTimetable
-          events={events}
-          selectedDay={selectedDay}
-          selectedVenues={selectedVenues}
-          selectedEventTypes={selectedEventTypes}
-          searchQuery={searchQuery}
-          onEventClick={setSelectedEvent}
-        />
+        {view === "list" ? (
+          <ChronologicalTimetable
+            events={events}
+            selectedDay={selectedDay}
+            selectedVenues={selectedVenues}
+            selectedEventTypes={selectedEventTypes}
+            searchQuery={searchQuery}
+            onEventClick={setSelectedEvent}
+          />
+        ) : (
+          <FestivalGrid
+            events={filteredEvents}
+            onEventClick={setSelectedEvent}
+          />
+        )}
       </main>
 
       {/* Event Detail Modal for Grid View */}

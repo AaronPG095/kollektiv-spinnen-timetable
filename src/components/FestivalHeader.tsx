@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ViewToggle } from "@/components/ViewToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +17,8 @@ interface FestivalHeaderProps {
   onVenueToggle: (venue: string) => void;
   selectedEventTypes: string[];
   onEventTypeToggle: (eventType: string) => void;
+  view?: "grid" | "list";
+  onViewChange?: (view: "grid" | "list") => void;
 }
 
 export const FestivalHeader = ({
@@ -26,7 +29,9 @@ export const FestivalHeader = ({
   selectedVenues,
   onVenueToggle,
   selectedEventTypes,
-  onEventTypeToggle
+  onEventTypeToggle,
+  view,
+  onViewChange
 }: FestivalHeaderProps) => {
   const { language, setLanguage, t } = useLanguage();
   const { user, isAdmin } = useAuth();
@@ -65,18 +70,22 @@ export const FestivalHeader = ({
         <div className="flex flex-col gap-4 md:gap-6">
           {/* Header */}
           <div className="text-center">
-            <h1 className="text-3xl md:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
+            <h1 className="text-3xl md:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent">
               Kollektiv Spinnen
             </h1>
-            <h2 className="text-lg md:text-2xl text-muted-foreground">
-              Timetable
-            </h2>
           </div>
 
           {/* Top Controls: Search + Filters + Language/Auth */}
           <div className="flex flex-col gap-4">
             {/* Search and Controls Row */}
             <div className="flex items-center justify-center gap-3">
+              {/* View Toggle - Desktop only, positioned left */}
+              {view && onViewChange && (
+                <div className="hidden md:block">
+                  <ViewToggle view={view} onViewChange={onViewChange} />
+                </div>
+              )}
+              
               {/* Search */}
               <div className="relative flex-1 md:max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -98,6 +107,17 @@ export const FestivalHeader = ({
                   </PopoverTrigger>
                   <PopoverContent className="w-80 p-4" align="end">
                     <div className="space-y-4">
+                      {/* View Toggle in Mobile */}
+                      {view && onViewChange && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Filter className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">View</span>
+                          </div>
+                          <ViewToggle view={view} onViewChange={onViewChange} />
+                        </div>
+                      )}
+                      
                       {/* Day Filter in Mobile */}
                       <div>
                         <div className="flex items-center gap-2 mb-2">
@@ -221,25 +241,38 @@ export const FestivalHeader = ({
             {/* Desktop Filters */}
             <div className="hidden md:flex flex-col gap-4">
               <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-center">
-                {/* Day Filter */}
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 min-w-fit">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-muted-foreground">{t('days')}</span>
+                {/* Day Filter and Clear Filters */}
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 min-w-fit">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-muted-foreground">{t('days')}</span>
+                    </div>
+                    <div className="flex gap-1">
+                      {days.map((day) => (
+                        <Button
+                          key={day.key}
+                          variant={selectedDay === day.key ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => onDayChange(day.key)}
+                          className="transition-smooth"
+                        >
+                          {day.label}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex gap-1">
-                    {days.map((day) => (
-                      <Button
-                        key={day.key}
-                        variant={selectedDay === day.key ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => onDayChange(day.key)}
-                        className="transition-smooth"
-                      >
-                        {day.label}
-                      </Button>
-                    ))}
-                  </div>
+                  
+                  {/* Clear Filters Button inline with Days */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearAllFilters}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    {t('clearFilters')}
+                  </Button>
                 </div>
               </div>
 
@@ -288,18 +321,6 @@ export const FestivalHeader = ({
                 </div>
               </div>
 
-              {/* Clear Filters Button */}
-              <div className="flex justify-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearAllFilters}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  {t('clearFilters')}
-                </Button>
-              </div>
             </div>
           </div>
         </div>
