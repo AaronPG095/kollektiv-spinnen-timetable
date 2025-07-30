@@ -11,7 +11,7 @@ import { Clock, Calendar, MapPin, Instagram, Youtube, ExternalLink, Music } from
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { events } = useEvents();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDay, setSelectedDay] = useState("Alle");
@@ -109,10 +109,22 @@ const Index = () => {
                 </div>
                 {selectedEvent.description && (
                   <p className="text-muted-foreground leading-relaxed">
-                    {/* Check if description is a translation key or plain text */}
-                    {selectedEvent.description.endsWith('Desc') || t(selectedEvent.description) !== selectedEvent.description 
-                      ? t(selectedEvent.description) 
-                      : selectedEvent.description}
+                     {(() => {
+                       // Try to parse as JSON first (new format)
+                       try {
+                         const parsed = JSON.parse(selectedEvent.description);
+                         if (typeof parsed === 'object' && (parsed.en || parsed.de)) {
+                           return parsed[language] || parsed.de || parsed.en || selectedEvent.description;
+                         }
+                       } catch {
+                         // If not JSON, handle as before
+                       }
+                      
+                      // Check if description is a translation key or plain text
+                      return selectedEvent.description.endsWith('Desc') || t(selectedEvent.description) !== selectedEvent.description 
+                        ? t(selectedEvent.description) 
+                        : selectedEvent.description;
+                    })()}
                   </p>
                 )}
                 

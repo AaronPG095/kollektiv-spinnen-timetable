@@ -221,9 +221,24 @@ const Admin = () => {
                       {event.day} • {event.time} • {event.venue} • {event.type}
                     </p>
                     {event.description && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {event.description}
-                      </p>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        {(() => {
+                          try {
+                            const parsed = JSON.parse(event.description);
+                            if (typeof parsed === 'object' && (parsed.en || parsed.de)) {
+                              return (
+                                <div className="space-y-1">
+                                  {parsed.de && <div><strong>DE:</strong> {parsed.de}</div>}
+                                  {parsed.en && <div><strong>EN:</strong> {parsed.en}</div>}
+                                </div>
+                              );
+                            }
+                          } catch {
+                            // If not JSON, display as is
+                          }
+                          return <div>{event.description}</div>;
+                        })()}
+                      </div>
                     )}
                   </div>
                   <div className="flex gap-2">
@@ -271,19 +286,48 @@ interface EventFormProps {
 }
 
 const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
+  // Parse description to get separate language versions
+  const parseDescription = (desc: string | null) => {
+    if (!desc) return { en: '', de: '' };
+    
+    try {
+      // Try to parse as JSON first
+      const parsed = JSON.parse(desc);
+      if (typeof parsed === 'object' && parsed.en !== undefined && parsed.de !== undefined) {
+        return { en: parsed.en || '', de: parsed.de || '' };
+      }
+    } catch {
+      // If not JSON, treat as plain text (legacy format)
+    }
+    
+    // For legacy events or plain text, put in German field
+    return { en: '', de: desc || '' };
+  };
+
+  const initialDescriptions = parseDescription(initialEvent?.description);
+
   const [formData, setFormData] = useState({
     title: initialEvent?.title || '',
     time: initialEvent?.time || '',
     venue: initialEvent?.venue || '',
     day: initialEvent?.day || '',
     type: initialEvent?.type || '',
-    description: initialEvent?.description || '',
+    description_en: initialDescriptions.en,
+    description_de: initialDescriptions.de,
     links: initialEvent?.links || {}
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    
+    // Combine descriptions into JSON format
+    const description = JSON.stringify({
+      en: formData.description_en,
+      de: formData.description_de
+    });
+    
+    const { description_en, description_de, ...eventData } = formData;
+    onSave({ ...eventData, description });
   };
 
   return (
@@ -363,14 +407,27 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          rows={3}
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="description_de">Description (German)</Label>
+          <Textarea
+            id="description_de"
+            value={formData.description_de}
+            onChange={(e) => setFormData({ ...formData, description_de: e.target.value })}
+            rows={3}
+            placeholder="German description..."
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="description_en">Description (English)</Label>
+          <Textarea
+            id="description_en"
+            value={formData.description_en}
+            onChange={(e) => setFormData({ ...formData, description_en: e.target.value })}
+            rows={3}
+            placeholder="English description..."
+          />
+        </div>
       </div>
 
       <Button type="submit" className="w-full">
