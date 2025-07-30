@@ -16,7 +16,9 @@ interface GridEvent extends Event {
   gridColumn: number;
   conflictIndex: number;
   totalConflicts: number;
-  minuteOffset: number;
+  startMinuteOffset: number;
+  endMinuteOffset: number;
+  exactDurationMinutes: number;
 }
 
 const venues = ['draussen', 'oben', 'unten'] as const;
@@ -82,6 +84,20 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
     return -1;
   };
 
+  // Normalize venue names to match our venues array
+  const normalizeVenue = (venue: string): string => {
+    const venueLower = venue.toLowerCase();
+    if (venueLower.includes('draussen') || venueLower.includes('neue') || venueLower.includes('ufer')) {
+      return 'draussen';
+    } else if (venueLower.includes('oben') || venueLower.includes('salon')) {
+      return 'oben';
+    } else if (venueLower.includes('unten') || venueLower.includes('flora')) {
+      return 'unten';
+    }
+    // Default fallback based on exact match
+    return venues.includes(venue as any) ? venue : 'draussen';
+  };
+
   // Process events for grid positioning with conflict detection
   const gridEvents = useMemo(() => {
     // Group events by venue for conflict detection
@@ -97,44 +113,57 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       const [startHour, startMin = 0] = startTimeStr.split(':').map(Number);
       const [endHour, endMin = 0] = endTimeStr.split(':').map(Number);
       
+      // Normalize venue name
+      const normalizedVenue = normalizeVenue(event.venue);
+      
       // Get slot indices
       const startSlotIndex = getSlotIndex(startHour, event.day);
       let endSlotIndex = getSlotIndex(endHour, event.day);
       
       // Handle cross-day events
-      if (endHour < startHour && event.day === 'Freitag') {
-        endSlotIndex = getSlotIndex(endHour, 'Samstag');
-      } else if (endHour < startHour && event.day === 'Samstag') {
-        endSlotIndex = getSlotIndex(endHour, 'Sonntag');
+      if (endHour < startHour) {
+        if (event.day === 'Freitag') {
+          endSlotIndex = getSlotIndex(endHour, 'Samstag');
+        } else if (event.day === 'Samstag') {
+          endSlotIndex = getSlotIndex(endHour, 'Sonntag');
+        }
       }
       
-      // If event ends with minutes > 0, it extends into the next hour
-      if (endMin > 0) {
-        endSlotIndex++;
+      // Calculate exact duration in minutes
+      let totalStartMinutes = startSlotIndex * 60 + startMin;
+      let totalEndMinutes = endSlotIndex * 60 + endMin;
+      
+      // If end time is 00:00, it means the end of the previous hour
+      if (endMin === 0 && endHour !== 0) {
+        // Event ends at the hour boundary
+        totalEndMinutes = endSlotIndex * 60;
+      } else if (endMin > 0) {
+        // Event extends into the next hour
+        totalEndMinutes = endSlotIndex * 60 + endMin;
       }
+      
+      const exactDurationMinutes = totalEndMinutes - totalStartMinutes;
       
       // Ensure valid slot indices
-      if (startSlotIndex === -1 || endSlotIndex === -1) {
+      if (startSlotIndex === -1) {
         console.warn(`Invalid time for event ${event.title}: ${event.time} on ${event.day}`);
         return null;
       }
       
-      // Calculate total minutes for duration
-      const startTotalMinutes = startSlotIndex * 60 + startMin;
-      const endTotalMinutes = endSlotIndex * 60 + endMin;
-      const duration = endTotalMinutes - startTotalMinutes;
-      
       const gridEvent: GridEvent = {
         ...event,
-        startMinutes: startTotalMinutes,
-        endMinutes: endTotalMinutes,
-        duration,
-        gridRowStart: startSlotIndex + 2, // +2 for header row (1-indexed + 1 for header)
-        gridRowEnd: endSlotIndex + 2, // This will make the event span to the correct row
-        gridColumn: venues.indexOf(event.venue as any) + 3, // +3 for day and time columns
+        venue: normalizedVenue, // Use normalized venue
+        startMinutes: totalStartMinutes,
+        endMinutes: totalEndMinutes,
+        duration: exactDurationMinutes,
+        gridRowStart: startSlotIndex + 2, // +2 for header row
+        gridRowEnd: endSlotIndex + 2 + (endMin > 0 ? 1 : 0), // Include partial hour if needed
+        gridColumn: venues.indexOf(normalizedVenue as any) + 2, // +2 for time column
         conflictIndex: 0,
         totalConflicts: 1,
-        minuteOffset: startMin
+        startMinuteOffset: startMin,
+        endMinuteOffset: endMin,
+        exactDurationMinutes
       };
       
       return gridEvent;
@@ -142,47 +171,89 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
 
     // Second pass: detect conflicts and assign lanes
     processedEvents.forEach(event => {
-      eventsByVenue[event.venue as keyof typeof eventsByVenue].push(event);
+      const venue = event.venue as keyof typeof eventsByVenue;
+      if (eventsByVenue[venue]) {
+        eventsByVenue[venue].push(event);
+      }
     });
 
     // For each venue, detect overlapping events and assign lanes
     Object.keys(eventsByVenue).forEach(venue => {
       const venueEvents = eventsByVenue[venue as keyof typeof eventsByVenue];
       
-      // Sort by start time
-      venueEvents.sort((a, b) => a.startMinutes - b.startMinutes);
+      if (venueEvents.length === 0) return;
       
-      // Create lanes for non-overlapping events
-      const lanes: GridEvent[][] = [];
+      // Sort by start time, then by duration (longer events first)
+      venueEvents.sort((a, b) => {
+        if (a.startMinutes !== b.startMinutes) {
+          return a.startMinutes - b.startMinutes;
+        }
+        return b.duration - a.duration;
+      });
+      
+      // Find all overlapping groups
+      const overlapGroups: GridEvent[][] = [];
       
       venueEvents.forEach(event => {
-        // Find the first lane where this event can fit
-        let placed = false;
+        // Find which overlap group this event belongs to
+        let assigned = false;
         
-        for (let laneIndex = 0; laneIndex < lanes.length; laneIndex++) {
-          const lane = lanes[laneIndex];
-          const lastEventInLane = lane[lane.length - 1];
+        for (const group of overlapGroups) {
+          // Check if this event overlaps with any event in the group
+          const overlapsWithGroup = group.some(groupEvent => 
+            event.startMinutes < groupEvent.endMinutes && 
+            event.endMinutes > groupEvent.startMinutes
+          );
           
-          // Check if this event can fit in this lane (no overlap)
-          if (lastEventInLane.endMinutes <= event.startMinutes) {
-            lane.push(event);
-            event.conflictIndex = laneIndex;
-            placed = true;
+          if (overlapsWithGroup) {
+            group.push(event);
+            assigned = true;
             break;
           }
         }
         
-        // If no existing lane works, create a new one
-        if (!placed) {
-          lanes.push([event]);
-          event.conflictIndex = lanes.length - 1;
+        if (!assigned) {
+          overlapGroups.push([event]);
         }
       });
       
-      // Update total conflicts for all events in this venue
-      const maxLanes = lanes.length;
-      venueEvents.forEach(event => {
-        event.totalConflicts = maxLanes;
+      // Assign lanes within each overlap group
+      overlapGroups.forEach(group => {
+        // Sort group by start time
+        group.sort((a, b) => a.startMinutes - b.startMinutes);
+        
+        // Assign lanes using a greedy algorithm
+        const lanes: GridEvent[][] = [];
+        
+        group.forEach(event => {
+          let placed = false;
+          
+          for (let laneIndex = 0; laneIndex < lanes.length; laneIndex++) {
+            const lane = lanes[laneIndex];
+            const canFitInLane = lane.every(laneEvent => 
+              event.startMinutes >= laneEvent.endMinutes || 
+              event.endMinutes <= laneEvent.startMinutes
+            );
+            
+            if (canFitInLane) {
+              lane.push(event);
+              event.conflictIndex = laneIndex;
+              placed = true;
+              break;
+            }
+          }
+          
+          if (!placed) {
+            lanes.push([event]);
+            event.conflictIndex = lanes.length - 1;
+          }
+        });
+        
+        // Update total conflicts for all events in the group
+        const totalLanes = lanes.length;
+        group.forEach(event => {
+          event.totalConflicts = totalLanes;
+        });
       });
     });
 
@@ -235,23 +306,18 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
 
       <div className="festival-grid relative overflow-hidden rounded-lg" style={{ backgroundColor: '#3100a2' }}>
         <div className="grid-container overflow-auto max-h-[80vh]">
-          <div className="festival-grid-main grid grid-cols-[60px_75px_repeat(3,minmax(150px,1fr))] gap-0"
+          <div className="festival-grid-main grid grid-cols-[100px_repeat(3,minmax(250px,1fr))] gap-0"
                style={{ gridTemplateRows: `60px repeat(${timeSlots.length}, 80px)` }}>
             
-            {/* Header - Day, Time and Venue labels */}
-            <div className="sticky top-0 z-30 border-b-2 border-black border-r-2 
-                           flex items-center justify-center font-bold text-white px-2"
-                 style={{ backgroundColor: '#4500e2' }}>
-              Tag
-            </div>
-            <div className="sticky top-0 z-30 border-b-2 border-black border-r-2
+            {/* Header - Time and Venue labels */}
+            <div className="sticky top-0 z-30 border-b-2 border-black 
                            flex items-center justify-center font-bold text-white px-2"
                  style={{ backgroundColor: '#4500e2' }}>
               Zeit
             </div>
             {venues.map((venue, index) => (
               <div key={venue}
-                   className="sticky top-0 z-30 border-b-2 border-black border-r-2 
+                   className="sticky top-0 z-30 border-b-2 border-black border-l-2 
                              flex items-center justify-center font-bold text-white px-4 text-center"
                    style={{ 
                      backgroundColor: index === 0 ? 'hsl(195 90% 70%)' : 
@@ -268,47 +334,22 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                                       (slot.day === 'Samstag' && slot.hour === 0) || 
                                       (slot.day === 'Sonntag' && slot.hour === 0);
               
-              // Calculate how many slots this day spans
-              let daySpan = 1;
-              if (isFirstSlotOfDay) {
-                if (slot.day === 'Freitag') {
-                  daySpan = 5; // 19:00-23:59 (5 hours)
-                } else if (slot.day === 'Samstag') {
-                  daySpan = 24; // 00:00-23:59 (24 hours)
-                } else if (slot.day === 'Sonntag') {
-                  daySpan = 21; // 00:00-20:00 (21 hours)
-                }
-              }
-              
               return (
                 <React.Fragment key={`${slot.day}-${slot.hour}`}>
-                  {/* Day label (only for first slot of each day) */}
-                  {isFirstSlotOfDay ? (
-                    <div className="sticky left-0 z-20 border-b border-gray-600 border-r-2
-                                   flex items-center justify-center text-white font-bold text-lg px-2"
-                         style={{ 
-                           backgroundColor: '#4500e2',
-                           gridRowEnd: `span ${daySpan}`,
-                           writingMode: 'vertical-rl',
-                           textOrientation: 'mixed'
-                         }}>
-                      {slot.day.toUpperCase()}
-                    </div>
-                  ) : (
-                    <div style={{ display: 'none' }}></div>
-                  )}
-                  
                   {/* Time label */}
-                  <div className="sticky left-0 z-20 border-b border-gray-600 border-r-2
-                                 flex items-center justify-center text-white text-sm px-2"
+                  <div className="sticky left-0 z-20 border-b border-gray-600 
+                                 flex flex-col items-center justify-center text-white text-sm px-2"
                        style={{ backgroundColor: '#4500e2' }}>
+                    {isFirstSlotOfDay && (
+                      <div className="font-bold text-xs mb-1">{slot.day}</div>
+                    )}
                     <div className="font-medium">{slot.label}</div>
                   </div>
                   
                   {/* Venue cells */}
                   {venues.map((venue, venueIndex) => (
                     <div key={`${slot.day}-${slot.hour}-${venue}`}
-                         className="relative border-b border-gray-600 border-r"
+                         className="relative border-b border-gray-600 border-l"
                          style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
                       {/* Empty cells - events are positioned on top */}
                     </div>
@@ -319,9 +360,17 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
             
             {/* Event blocks - positioned within the grid */}
             {gridEvents.map(event => {
-              const widthPercent = event.totalConflicts > 1 ? (100 / event.totalConflicts) : 100;
-              const leftPercent = event.conflictIndex * widthPercent;
-              const topOffset = (event.minuteOffset / 60) * 80; // 80px per hour cell
+              // Calculate column width and position based on conflicts
+              const columnWidth = 100 / event.totalConflicts;
+              const leftOffset = event.conflictIndex * columnWidth;
+              
+              // Calculate precise top and height based on minutes
+              const topOffsetPixels = (event.startMinuteOffset / 60) * 80;
+              
+              // Calculate height: full hours * 80px + partial end hour
+              const fullHours = Math.floor(event.exactDurationMinutes / 60);
+              const remainingMinutes = event.exactDurationMinutes % 60;
+              const heightPixels = (fullHours * 80) + ((remainingMinutes / 60) * 80) - topOffsetPixels;
               
               return (
                 <div
@@ -332,25 +381,33 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                              hover:border-white/50 hover:z-30 overflow-hidden`}
                   style={{
                     gridColumn: event.gridColumn,
-                    gridRow: `${event.gridRowStart} / ${event.gridRowEnd}`,
-                    width: `calc(${widthPercent}% - 8px)`,
-                    marginLeft: `calc(${leftPercent}% + 4px)`,
-                    marginTop: `${topOffset + 4}px`,
-                    marginRight: '4px',
-                    height: `calc(100% - ${topOffset + 8}px)`
+                    gridRow: `${event.gridRowStart} / span ${Math.ceil(event.exactDurationMinutes / 60)}`,
+                    width: `calc(${columnWidth}% - 6px)`,
+                    left: `calc(${leftOffset}% + 3px)`,
+                    top: `${topOffsetPixels + 3}px`,
+                    height: `${Math.max(30, heightPixels - 6)}px`
                   }}
                   onClick={() => onEventClick(event)}
                 >
-                  <div className="h-full flex items-center justify-center text-center">
+                  <div className="p-2 h-full flex flex-col">
                     <div className="text-white">
                       <div className={`font-semibold leading-tight ${
-                        event.title.length > 25 ? 'text-sm' : 'text-base'
+                        event.title.length > 20 ? 'text-xs' : 'text-sm'
                       }`}>
                         {event.title}
                       </div>
-                      <div className="text-sm text-white/80 mt-1">
-                        {event.time}
-                      </div>
+                      {heightPixels > 50 && (
+                        <>
+                          <div className="text-xs text-white/90 font-medium mt-1">
+                            {getEventTypeLabel(event.type)}
+                          </div>
+                          {heightPixels > 70 && (
+                            <div className="text-xs text-white/80 mt-auto">
+                              {event.time}
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
