@@ -1,9 +1,11 @@
-import { Search, Filter, Calendar, MapPin, Music2, Languages } from "lucide-react";
+import { Search, Filter, Calendar, MapPin, Music2, Languages, LogIn, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ViewToggle } from "./ViewToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface FestivalHeaderProps {
   searchQuery: string;
@@ -32,6 +34,8 @@ export const FestivalHeader = ({
   onViewChange
 }: FestivalHeaderProps) => {
   const { language, setLanguage, t } = useLanguage();
+  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   const days = [
     { key: "Alle", label: t('allDays') },
@@ -57,9 +61,9 @@ export const FestivalHeader = ({
     <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col gap-6">
-          {/* Header with Language Toggle */}
+          {/* Header with Language and Auth Toggle */}
           <div className="text-center relative">
-            <div className="absolute top-0 right-0">
+            <div className="absolute top-0 right-0 flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -69,6 +73,32 @@ export const FestivalHeader = ({
                 <Languages className="h-4 w-4" />
                 {language.toUpperCase()}
               </Button>
+              
+              {user ? (
+                <>
+                  {isAdmin && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/admin')}
+                      className="flex items-center gap-2"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Admin
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/auth')}
+                  className="flex items-center gap-2"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Login
+                </Button>
+              )}
             </div>
             <h1 className="text-4xl md:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
               Kollektiv Spinnen

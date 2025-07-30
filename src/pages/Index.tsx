@@ -3,7 +3,7 @@ import { FestivalHeader } from "@/components/FestivalHeader";
 import { TimetableGrid } from "@/components/TimetableGrid";
 import { GridTimetable } from "@/components/GridTimetable";
 import { ChronologicalTimetable } from "@/components/ChronologicalTimetable";
-import { events } from "@/data/events";
+import { useEvents } from "@/hooks/useEvents";
 import { Event } from "@/components/EventCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
   const { t } = useLanguage();
+  const { events } = useEvents();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDay, setSelectedDay] = useState("Alle");
   const [selectedVenues, setSelectedVenues] = useState<string[]>([]);
