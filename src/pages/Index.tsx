@@ -1,388 +1,236 @@
-import React, { useMemo } from 'react';
-import { Event } from '@/components/EventCard';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useState } from "react";
+import { FestivalHeader } from "@/components/FestivalHeader";
+import { ChronologicalTimetable } from "@/components/ChronologicalTimetable";
+import FestivalGrid from "@/components/FestivalGrid";
+import { useEvents } from "@/hooks/useEvents";
+import { Event } from "@/components/EventCard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Clock, Calendar, MapPin, Instagram, Youtube, ExternalLink, Music } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-interface FestivalGridProps {
-  events: Event[];
-  onEventClick: (event: Event) => void;
-}
+const Index = () => {
+  const { t, language } = useLanguage();
+  const { events } = useEvents();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDay, setSelectedDay] = useState("Alle");
+  const [selectedVenues, setSelectedVenues] = useState<string[]>([]);
+  const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [view, setView] = useState<"grid" | "list">("list");
 
-interface GridEvent extends Event {
-  startMinutes: number;
-  endMinutes: number;
-  duration: number;
-  gridRowStart: number;
-  gridRowEnd: number;
-  gridColumn: number;
-  conflictIndex: number;
-  totalConflicts: number;
-  startMinuteOffset: number;
-  endMinuteOffset: number;
-}
-
-const venues = ['draussen', 'oben', 'unten'] as const;
-const venueLabels = {
-  draussen: 'NEUE UFER',
-  oben: 'SALON', 
-  unten: 'FLORA'
-};
-
-const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => {
-  const { t } = useLanguage();
-
-  // Generate time slots from Friday 19:00 to Sunday 20:00
-  const timeSlots = useMemo(() => {
-    const slots = [];
-    let slotIndex = 0;
-    
-    // Friday 19:00-23:59
-    for (let hour = 19; hour < 24; hour++) {
-      slots.push({
-        day: 'Freitag',
-        hour,
-        time: `${hour.toString().padStart(2, '0')}:00`,
-        label: `${hour.toString().padStart(2, '0')}:00`,
-        slotIndex: slotIndex++
-      });
-    }
-    
-    // Saturday 00:00-23:59
-    for (let hour = 0; hour < 24; hour++) {
-      slots.push({
-        day: 'Samstag',
-        hour,
-        time: `${hour.toString().padStart(2, '0')}:00`,
-        label: `${hour.toString().padStart(2, '0')}:00`,
-        slotIndex: slotIndex++
-      });
-    }
-    
-    // Sunday 00:00-20:00
-    for (let hour = 0; hour <= 20; hour++) {
-      slots.push({
-        day: 'Sonntag',
-        hour,
-        time: `${hour.toString().padStart(2, '0')}:00`,
-        label: `${hour.toString().padStart(2, '0')}:00`,
-        slotIndex: slotIndex++
-      });
-    }
-    
-    return slots;
-  }, []);
-
-  // Helper function to get slot index for a given time and day
-  const getSlotIndex = (hour: number, day: string): number => {
-    if (day === 'Freitag') {
-      return hour >= 19 ? hour - 19 : -1;
-    } else if (day === 'Samstag') {
-      return 5 + hour; // 5 slots for Friday (19-23)
-    } else if (day === 'Sonntag') {
-      return 29 + hour; // 5 + 24 slots for Friday + Saturday
-    }
-    return -1;
+  const handleVenueToggle = (venue: string) => {
+    setSelectedVenues(prev => 
+      prev.includes(venue) 
+        ? prev.filter(v => v !== venue)
+        : [...prev, venue]
+    );
   };
 
-  // Process events for grid positioning with conflict detection
-  const gridEvents = useMemo(() => {
-    // Group events by venue for conflict detection
-    const eventsByVenue: Record<string, GridEvent[]> = {
-      draussen: [],
-      oben: [],
-      unten: []
-    };
-
-    // First pass: calculate basic positioning
-    const processedEvents = events.map(event => {
-      const [startTimeStr, endTimeStr] = (event.time || '19:00 - 20:00').split(' - ');
-      const [startHour, startMin = 0] = startTimeStr.split(':').map(Number);
-      const [endHour, endMin = 0] = endTimeStr.split(':').map(Number);
-      
-      // Get slot indices
-      const startSlotIndex = getSlotIndex(startHour, event.day);
-      let endSlotIndex = getSlotIndex(endHour, event.day);
-      
-      // Handle cross-day events
-      if (endHour < startHour && event.day === 'Freitag') {
-        endSlotIndex = getSlotIndex(endHour, 'Samstag');
-      } else if (endHour < startHour && event.day === 'Samstag') {
-        endSlotIndex = getSlotIndex(endHour, 'Sonntag');
-      }
-      
-      // Ensure valid slot indices
-      if (startSlotIndex === -1 || endSlotIndex === -1) {
-        console.warn(`Invalid time for event ${event.title}: ${event.time} on ${event.day}`);
-        return null;
-      }
-      
-      // Calculate total minutes
-      const startTotalMinutes = startSlotIndex * 60 + startMin;
-      const endTotalMinutes = endSlotIndex * 60 + endMin;
-      const duration = endTotalMinutes - startTotalMinutes;
-      
-      // Grid positioning
-      let gridRowEnd = endSlotIndex + 2; // Base end position
-      if (endMin > 0) {
-        gridRowEnd += 1; // Event extends into next hour
-      }
-      
-      // Get correct venue column
-      const venueIndex = venues.indexOf(event.venue.toLowerCase() as any);
-      if (venueIndex === -1) {
-        console.warn(`Unknown venue "${event.venue}" for event ${event.title}`);
-        return null;
-      }
-      
-      const gridEvent: GridEvent = {
-        ...event,
-        startMinutes: startTotalMinutes,
-        endMinutes: endTotalMinutes,
-        duration,
-        gridRowStart: startSlotIndex + 2, // +2 for header row
-        gridRowEnd: gridRowEnd,
-        gridColumn: venueIndex + 2, // +2 for time column
-        conflictIndex: 0,
-        totalConflicts: 1,
-        startMinuteOffset: startMin,
-        endMinuteOffset: endMin
-      };
-      
-      return gridEvent;
-    }).filter(Boolean) as GridEvent[];
-
-    // Second pass: group by venue and detect conflicts
-    processedEvents.forEach(event => {
-      const venue = event.venue.toLowerCase() as keyof typeof eventsByVenue;
-      if (eventsByVenue[venue]) {
-        eventsByVenue[venue].push(event);
-      }
-    });
-
-    // For each venue, detect overlapping events
-    Object.keys(eventsByVenue).forEach(venue => {
-      const venueEvents = eventsByVenue[venue as keyof typeof eventsByVenue];
-      
-      if (venueEvents.length === 0) return;
-      
-      // Sort by start time
-      venueEvents.sort((a, b) => a.startMinutes - b.startMinutes);
-      
-      // Simple overlap detection: check each event against all others
-      venueEvents.forEach(event => {
-        // Find all events that overlap with this one
-        const overlappingEvents = venueEvents.filter(other => 
-          other.id !== event.id &&
-          other.startMinutes < event.endMinutes && 
-          other.endMinutes > event.startMinutes
-        );
-        
-        // If there are overlapping events, distribute them horizontally
-        if (overlappingEvents.length > 0) {
-          // Include this event in the overlap group
-          const overlapGroup = [event, ...overlappingEvents];
-          
-          // Sort by start time for consistent ordering
-          overlapGroup.sort((a, b) => a.startMinutes - b.startMinutes);
-          
-          // Assign indices based on position in sorted group
-          overlapGroup.forEach((groupEvent, index) => {
-            const targetEvent = venueEvents.find(e => e.id === groupEvent.id);
-            if (targetEvent) {
-              targetEvent.conflictIndex = index;
-              targetEvent.totalConflicts = overlapGroup.length;
-            }
-          });
-        }
-      });
-    });
-
-    return processedEvents;
-  }, [events, venues]);
-
-  const getEventTypeColor = (type: string) => {
-    switch (type) {
-      case 'dj':
-        return 'bg-[#4A90E2]';
-      case 'live':
-        return 'bg-[#E74C3C]';
-      case 'performance':
-        return 'bg-[#9B59B6]';
-      case 'workshop':
-        return 'bg-[#2ECC71]';
-      case 'interaktiv':
-        return 'bg-[#F39C12]';
-      default:
-        return 'bg-[#B8860B]';
-    }
+  const handleEventTypeToggle = (eventType: string) => {
+    setSelectedEventTypes(prev => 
+      prev.includes(eventType) 
+        ? prev.filter(t => t !== eventType)
+        : [...prev, eventType]
+    );
   };
 
-  const getEventTypeLabel = (type: string) => {
-    const typeLabels = {
-      dj: 'DJ',
-      live: 'Live',
-      performance: 'Performance',
-      workshop: 'Workshop',
-      interaktiv: 'Interaktiv'
-    };
-    return typeLabels[type as keyof typeof typeLabels] || type;
+  const venueConfig = {
+    draussen: { label: t('draussen'), color: "venue-draussen" },
+    oben: { label: t('oben'), color: "venue-oben" },
+    unten: { label: t('unten'), color: "venue-unten" }
   };
+
+  // Filter events for both views
+  const filteredEvents = events.filter((event) => {
+    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesDay = selectedDay === "Alle" || event.day === selectedDay;
+    const matchesVenue = selectedVenues.length === 0 || selectedVenues.includes(event.venue);
+    const matchesEventType = selectedEventTypes.length === 0 || selectedEventTypes.includes(event.type);
+    
+    return matchesSearch && matchesDay && matchesVenue && matchesEventType;
+  });
 
   return (
-    <div className="festival-grid-container relative">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="spider-web" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
-              <path d="M50 0 L50 100 M0 50 L100 50 M15 15 L85 85 M85 15 L15 85" 
-                    stroke="currentColor" strokeWidth="0.5" opacity="0.3"/>
-              <circle cx="50" cy="50" r="2" fill="currentColor" opacity="0.4"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#spider-web)"/>
-        </svg>
-      </div>
+    <div className="min-h-screen bg-background">
+      <FestivalHeader
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedDay={selectedDay}
+        onDayChange={setSelectedDay}
+        selectedVenues={selectedVenues}
+        onVenueToggle={handleVenueToggle}
+        selectedEventTypes={selectedEventTypes}
+        onEventTypeToggle={handleEventTypeToggle}
+        view={view}
+        onViewChange={setView}
+      />
+      
+      {/* Mobile Day Filter Label */}
+      {selectedDay !== "Alle" && (
+        <div className="md:hidden bg-card border-b border-border px-4 py-3">
+          <div className="flex items-center justify-center">
+            <Badge variant="secondary" className="bg-festival-light/10 border-festival-light/30 text-festival-light">
+              <Calendar className="h-3 w-3 mr-1" />
+              {t(selectedDay.toLowerCase())}
+            </Badge>
+          </div>
+        </div>
+      )}
+      
+      <main className="container mx-auto px-4 py-8">
+        {view === "list" ? (
+          <ChronologicalTimetable
+            events={events}
+            selectedDay={selectedDay}
+            selectedVenues={selectedVenues}
+            selectedEventTypes={selectedEventTypes}
+            searchQuery={searchQuery}
+            onEventClick={setSelectedEvent}
+          />
+        ) : (
+          <FestivalGrid
+            events={filteredEvents}
+            onEventClick={setSelectedEvent}
+          />
+        )}
+      </main>
 
-      <div className="festival-grid relative overflow-hidden rounded-lg" style={{ backgroundColor: '#3100a2' }}>
-        <div className="grid-container overflow-auto max-h-[80vh]">
-          <div className="festival-grid-main grid grid-cols-[100px_repeat(3,minmax(200px,1fr))] gap-0"
-               style={{ gridTemplateRows: `60px repeat(${timeSlots.length}, 80px)` }}>
-            
-            {/* Header - Time and Venue labels */}
-            <div className="sticky top-0 z-30 border-b-2 border-black 
-                           flex items-center justify-center font-bold text-white px-2"
-                 style={{ backgroundColor: '#4500e2' }}>
-              Zeit
-            </div>
-            {venues.map((venue, index) => (
-              <div key={venue}
-                   className="sticky top-0 z-30 border-b-2 border-black border-l-2 
-                             flex items-center justify-center font-bold text-white px-4 text-center"
-                   style={{ 
-                     backgroundColor: index === 0 ? 'hsl(195 90% 70%)' : 
-                                      index === 1 ? 'hsl(250 80% 60%)' : 
-                                      'hsl(280 70% 50%)' 
-                   }}>
-                {venueLabels[venue as keyof typeof venueLabels]}
-              </div>
-            ))}
-
-            {/* Time slots and grid cells */}
-            {timeSlots.map((slot, index) => {
-              const isFirstSlotOfDay = (slot.day === 'Freitag' && slot.hour === 19) || 
-                                      (slot.day === 'Samstag' && slot.hour === 0) || 
-                                      (slot.day === 'Sonntag' && slot.hour === 0);
-              
-              return (
-                <React.Fragment key={`${slot.day}-${slot.hour}`}>
-                  {/* Time label */}
-                  <div className="sticky left-0 z-20 border-b border-gray-600 
-                                 flex flex-col items-center justify-center text-white text-sm px-2"
-                       style={{ backgroundColor: '#4500e2' }}>
-                    {isFirstSlotOfDay && (
-                      <div className="font-bold text-xs mb-1">{slot.day}</div>
-                    )}
-                    <div className="font-medium">{slot.label}</div>
-                  </div>
-                  
-                  {/* Venue cells */}
-                  {venues.map((venue, venueIndex) => (
-                    <div key={`${slot.day}-${slot.hour}-${venue}`}
-                         className="relative border-b border-gray-600 border-l"
-                         style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
-                      {/* Empty cells - events are positioned on top */}
-                    </div>
-                  ))}
-                </React.Fragment>
-              );
-            })}
-            
-            {/* Event blocks - positioned within the grid */}
-            {gridEvents.map(event => {
-              // Calculate width and position for overlapping events
-              const columnWidth = event.totalConflicts > 1 ? (100 / event.totalConflicts) : 100;
-              const leftOffset = event.conflictIndex * columnWidth;
-              
-              // Calculate precise positioning
-              const topOffset = (event.startMinuteOffset / 60) * 80; // 80px per hour
-              
-              // Calculate height based on duration
-              const hoursDuration = event.duration / 60;
-              const pixelHeight = hoursDuration * 80 - topOffset;
-              
-              return (
-                <div
-                  key={event.id}
-                  className={`absolute z-20 ${getEventTypeColor(event.type)} 
-                             rounded-md border-2 border-white/30 shadow-lg cursor-pointer 
-                             transition-all duration-200 hover:scale-[1.02] hover:shadow-xl 
-                             hover:border-white/50 hover:z-30 overflow-hidden`}
-                  style={{
-                    gridColumn: event.gridColumn,
-                    gridRow: `${event.gridRowStart} / ${event.gridRowEnd}`,
-                    width: `calc(${columnWidth}% - 8px)`,
-                    left: `calc(${leftOffset}% + 4px)`,
-                    marginTop: `${topOffset + 4}px`,
-                    height: `calc(100% - ${topOffset + 8}px)`
-                  }}
-                  onClick={() => onEventClick(event)}
-                >
-                  <div className="p-2 h-full flex flex-col">
-                    <div className="text-white">
-                      <div className={`font-semibold leading-tight mb-1 ${
-                        event.title.length > 25 ? 'text-xs' : 'text-sm'
-                      }`}>
-                        {event.title}
-                      </div>
-                      {pixelHeight > 50 && (
-                        <>
-                          <div className="text-xs text-white/90 font-medium">
-                            {getEventTypeLabel(event.type)}
-                          </div>
-                          {pixelHeight > 70 && (
-                            <div className="text-xs text-white/80 mt-auto">
-                              {event.time}
-                            </div>
-                          )}
-                        </>
+      {/* Event Detail Modal for Grid View */}
+      <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
+        <DialogContent className="bg-card border-border">
+          {selectedEvent && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                  {selectedEvent.title}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {selectedEvent.time}
+                  </Badge>
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {t(selectedEvent.day.toLowerCase())}
+                  </Badge>
+                  <Badge 
+                    variant="outline" 
+                    className={`flex items-center gap-1 bg-${venueConfig[selectedEvent.venue].color}/10 border-${venueConfig[selectedEvent.venue].color}/20`}
+                  >
+                    <MapPin className="h-3 w-3" />
+                    {venueConfig[selectedEvent.venue].label}
+                  </Badge>
+                </div>
+                {selectedEvent.description && (
+                  <p className="text-muted-foreground leading-relaxed">
+                     {(() => {
+                       const desc = selectedEvent.description;
+                       
+                       // Try to parse as JSON first (format: {"en": "text", "de": "text"})
+                       try {
+                         const parsed = JSON.parse(desc);
+                         if (typeof parsed === 'object' && parsed !== null && (parsed.en || parsed.de)) {
+                           // Return the current language version, fallback to other language or original
+                           return parsed[language] || parsed.de || parsed.en || desc;
+                         }
+                       } catch {
+                         // Not valid JSON, continue with other checks
+                       }
+                       
+                       // Check if it's a translation key (ends with 'Desc' or exists in translations)
+                       const translated = t(desc);
+                       if (translated !== desc) {
+                         return translated;
+                       }
+                       
+                       // Return as plain text
+                       return desc;
+                     })()}
+                  </p>
+                )}
+                
+                {/* Social Media Links */}
+                {selectedEvent.links && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-foreground">{t('links')}:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedEvent.links.instagram && (
+                        <a
+                          href={selectedEvent.links.instagram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
+                        >
+                          <Instagram className="h-3 w-3" />
+                          Instagram
+                        </a>
+                      )}
+                      {selectedEvent.links.spotify && (
+                        <a
+                          href={selectedEvent.links.spotify}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
+                        >
+                          <Music className="h-3 w-3" />
+                          Spotify
+                        </a>
+                      )}
+                      {selectedEvent.links.youtube && (
+                        <a
+                          href={selectedEvent.links.youtube}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
+                        >
+                          <Youtube className="h-3 w-3" />
+                          YouTube
+                        </a>
+                      )}
+                      {selectedEvent.links.soundcloud && (
+                        <a
+                          href={selectedEvent.links.soundcloud}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          SoundCloud
+                        </a>
+                      )}
+                      {selectedEvent.links.bandcamp && (
+                        <a
+                          href={selectedEvent.links.bandcamp}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Bandcamp
+                        </a>
                       )}
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
       
-      <style>{`
-        .festival-grid-container {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        }
-        .festival-grid-main {
-          position: relative;
-        }
-        .grid-container::-webkit-scrollbar {
-          width: 10px;
-          height: 10px;
-        }
-        .grid-container::-webkit-scrollbar-track {
-          background: rgba(0, 0, 0, 0.2);
-          border-radius: 5px;
-        }
-        .grid-container::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.3);
-          border-radius: 5px;
-        }
-        .grid-container::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.5);
-        }
-        .grid-container::-webkit-scrollbar-corner {
-          background: rgba(0, 0, 0, 0.2);
-        }
-      `}</style>
+      {/* Background Effects */}
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-festival-light/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-festival-medium/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-3/4 left-1/2 w-80 h-80 bg-festival-deep/20 rounded-full blur-3xl animate-pulse delay-2000" />
+        <div className="absolute inset-0 bg-gradient-hero opacity-5" />
+      </div>
     </div>
   );
 };
 
-export default FestivalGrid;
+export default Index;
