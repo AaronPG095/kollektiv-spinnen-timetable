@@ -16,6 +16,8 @@ interface DatabaseEvent {
   id: string;
   title: string;
   time: string;
+  start_time: string | null;
+  end_time: string | null;
   venue: string;
   day: string;
   type: string;
@@ -309,6 +311,8 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
   const [formData, setFormData] = useState({
     title: initialEvent?.title || '',
     time: initialEvent?.time || '',
+    start_time: initialEvent?.start_time || '',
+    end_time: initialEvent?.end_time || '',
     venue: initialEvent?.venue || '',
     day: initialEvent?.day || '',
     type: initialEvent?.type || '',
@@ -350,6 +354,27 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
             onChange={(e) => setFormData({ ...formData, time: e.target.value })}
             placeholder="19:00 - 20:00"
             required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="start_time">Start Time</Label>
+          <Input
+            id="start_time"
+            value={formData.start_time}
+            onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+            placeholder="19:00"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="end_time">End Time</Label>
+          <Input
+            id="end_time"
+            value={formData.end_time}
+            onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+            placeholder="20:00"
           />
         </div>
       </div>
