@@ -131,7 +131,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         duration,
         gridRowStart: startSlotIndex + 2, // +2 for header row (1-indexed + 1 for header)
         gridRowEnd: endSlotIndex + 2, // This will make the event span to the correct row
-        gridColumn: venues.indexOf(event.venue as any) + 2, // +2 for time column
+        gridColumn: venues.indexOf(event.venue as any) + 3, // +3 for day and time columns
         conflictIndex: 0,
         totalConflicts: 1,
         minuteOffset: startMin
@@ -235,18 +235,23 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
 
       <div className="festival-grid relative overflow-hidden rounded-lg" style={{ backgroundColor: '#3100a2' }}>
         <div className="grid-container overflow-auto max-h-[80vh]">
-          <div className="festival-grid-main grid grid-cols-[100px_repeat(3,minmax(200px,1fr))] gap-0"
+          <div className="festival-grid-main grid grid-cols-[80px_100px_repeat(3,minmax(200px,1fr))] gap-0"
                style={{ gridTemplateRows: `60px repeat(${timeSlots.length}, 80px)` }}>
             
-            {/* Header - Time and Venue labels */}
-            <div className="sticky top-0 z-30 border-b-2 border-black 
+            {/* Header - Day, Time and Venue labels */}
+            <div className="sticky top-0 z-30 border-b-2 border-black border-r-2 
+                           flex items-center justify-center font-bold text-white px-2"
+                 style={{ backgroundColor: '#4500e2' }}>
+              Tag
+            </div>
+            <div className="sticky top-0 z-30 border-b-2 border-black border-r-2
                            flex items-center justify-center font-bold text-white px-2"
                  style={{ backgroundColor: '#4500e2' }}>
               Zeit
             </div>
             {venues.map((venue, index) => (
               <div key={venue}
-                   className="sticky top-0 z-30 border-b-2 border-black border-l-2 
+                   className="sticky top-0 z-30 border-b-2 border-black border-r-2 
                              flex items-center justify-center font-bold text-white px-4 text-center"
                    style={{ 
                      backgroundColor: index === 0 ? 'hsl(195 90% 70%)' : 
@@ -263,22 +268,47 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                                       (slot.day === 'Samstag' && slot.hour === 0) || 
                                       (slot.day === 'Sonntag' && slot.hour === 0);
               
+              // Calculate how many slots this day spans
+              let daySpan = 1;
+              if (isFirstSlotOfDay) {
+                if (slot.day === 'Freitag') {
+                  daySpan = 5; // 19:00-23:59 (5 hours)
+                } else if (slot.day === 'Samstag') {
+                  daySpan = 24; // 00:00-23:59 (24 hours)
+                } else if (slot.day === 'Sonntag') {
+                  daySpan = 21; // 00:00-20:00 (21 hours)
+                }
+              }
+              
               return (
                 <React.Fragment key={`${slot.day}-${slot.hour}`}>
+                  {/* Day label (only for first slot of each day) */}
+                  {isFirstSlotOfDay ? (
+                    <div className="sticky left-0 z-20 border-b border-gray-600 border-r-2
+                                   flex items-center justify-center text-white font-bold text-lg px-2"
+                         style={{ 
+                           backgroundColor: '#4500e2',
+                           gridRowEnd: `span ${daySpan}`,
+                           writingMode: 'vertical-rl',
+                           textOrientation: 'mixed'
+                         }}>
+                      {slot.day.toUpperCase()}
+                    </div>
+                  ) : (
+                    <div style={{ display: 'none' }}></div>
+                  )}
+                  
                   {/* Time label */}
-                  <div className="sticky left-0 z-20 border-b border-gray-600 
-                                 flex flex-col items-center justify-center text-white text-sm px-2"
+                  <div className="sticky left-0 z-20 border-b border-gray-600 border-r-2
+                                 flex items-center justify-center text-white text-sm px-2"
                        style={{ backgroundColor: '#4500e2' }}>
-                    {isFirstSlotOfDay && (
-                      <div className="font-bold text-xs mb-1">{slot.day}</div>
-                    )}
                     <div className="font-medium">{slot.label}</div>
                   </div>
                   
                   {/* Venue cells */}
                   {venues.map((venue, venueIndex) => (
                     <div key={`${slot.day}-${slot.hour}-${venue}`}
-                         className="relative border-b border-gray-600 border-l"
+                         className="relative border-b border-gray-600 border-r"
                          style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
                       {/* Empty cells - events are positioned on top */}
                     </div>
@@ -311,19 +341,19 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                   }}
                   onClick={() => onEventClick(event)}
                 >
-                  <div className="p-2 h-full flex flex-col">
-                    <div className="text-white">
+                  <div className={`h-full flex flex-col ${event.duration <= 30 ? 'p-0' : 'p-2'}`}>
+                    <div className="text-white text-center">
                       <div className={`font-semibold leading-tight mb-1 ${
-                        event.title.length > 25 ? 'text-xs' : 'text-sm'
+                        event.title.length > 25 ? 'text-sm' : 'text-base'
                       }`}>
                         {event.title}
                       </div>
                       {event.duration >= 60 && (
                         <>
-                          <div className="text-xs text-white/90 font-medium">
+                          <div className="text-sm text-white/90 font-medium">
                             {getEventTypeLabel(event.type)}
                           </div>
-                          <div className="text-xs text-white/80 mt-auto">
+                          <div className="text-sm text-white/80 mt-auto">
                             {event.time}
                           </div>
                         </>
