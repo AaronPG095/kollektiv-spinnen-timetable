@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Plus, Edit, Trash2, LogOut } from 'lucide-react';
+import { Loader2, Plus, Edit, Trash2, LogOut, Search } from 'lucide-react';
 
 interface DatabaseEvent {
   id: string;
@@ -31,6 +31,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [editingEvent, setEditingEvent] = useState<DatabaseEvent | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -131,6 +132,18 @@ const Admin = () => {
     navigate('/');
   };
 
+  // Filter events based on search query
+  const filteredEvents = events.filter(event => {
+    const query = searchQuery.toLowerCase();
+    return (
+      event.title.toLowerCase().includes(query) ||
+      event.venue.toLowerCase().includes(query) ||
+      event.day.toLowerCase().includes(query) ||
+      event.type.toLowerCase().includes(query) ||
+      (event.description && event.description.toLowerCase().includes(query))
+    );
+  });
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -179,8 +192,26 @@ const Admin = () => {
           </Dialog>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search events by title, venue, day, type, or description..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Showing {filteredEvents.length} of {events.length} events
+            </p>
+          )}
+        </div>
+
         <div className="grid gap-4">
-          {events.map((event) => (
+          {filteredEvents.map((event) => (
             <Card key={event.id}>
               <CardContent className="p-4">
                 <div className="flex justify-between items-start">
