@@ -57,7 +57,7 @@ export const events: Event[] = [
     time: "23:00 - 01:00",
     venue: "oben",
     day: "Freitag",
-    type: "workshop",
+    type: "interaktiv",
     description: "docuMachlandDesc",
     links: {
       youtube: "https://www.youtube.com/watch?v=qH-R6CL3gfQ&ab_channel=Machland"
@@ -92,7 +92,7 @@ export const events: Event[] = [
     time: "11:00 - 14:00",
     venue: "draussen",
     day: "Samstag",
-    type: "workshop",
+    type: "interaktiv",
     description: "yogaFlowDesc"
   },
   {

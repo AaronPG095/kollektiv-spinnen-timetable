@@ -46,7 +46,6 @@ export const FestivalHeader = ({
   ];
 
   const eventTypes = [
-    { id: "workshop", label: t('workshop'), color: "type-workshop" },
     { id: "performance", label: t('performance'), color: "type-performance" },
     { id: "dj", label: t('dj'), color: "type-dj" },
     { id: "live", label: t('live'), color: "type-live" },
@@ -206,10 +205,10 @@ export const FestivalHeader = ({
 
             {/* Desktop Filters */}
             <div className="hidden md:flex flex-col gap-4">
-              <div className="flex flex-col lg:flex-row gap-4 items-center justify-center">
+              <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-center">
                 {/* Day Filter */}
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 min-w-fit">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium text-muted-foreground">{t('days')}</span>
                   </div>
@@ -230,10 +229,10 @@ export const FestivalHeader = ({
               </div>
 
               {/* Venue and Event Type Filters */}
-              <div className="flex flex-col lg:flex-row gap-4 items-center justify-center">
+              <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-center">
                 {/* Venue Filter */}
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 min-w-fit">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium text-muted-foreground">{t('venues')}</span>
                   </div>
@@ -256,8 +255,8 @@ export const FestivalHeader = ({
                 </div>
 
                 {/* Event Type Filter */}
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 min-w-fit">
                     <Music2 className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium text-muted-foreground">{t('events')}</span>
                   </div>
