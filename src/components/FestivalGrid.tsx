@@ -32,7 +32,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
   // Generate time slots from Friday 19:00 to Sunday 20:00
   const timeSlots = useMemo(() => {
     const slots = [];
-    const days = ['Freitag', 'Samstag', 'Sonntag'];
+    let slotIndex = 0;
     
     // Friday 19:00-23:59
     for (let hour = 19; hour < 24; hour++) {
@@ -41,7 +41,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         hour,
         time: `${hour.toString().padStart(2, '0')}:00`,
         label: `${hour.toString().padStart(2, '0')}:00`,
-        absoluteHour: hour - 19 // 0-based from Friday 19:00
+        slotIndex: slotIndex++
       });
     }
     
@@ -52,7 +52,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         hour,
         time: `${hour.toString().padStart(2, '0')}:00`,
         label: `${hour.toString().padStart(2, '0')}:00`,
-        absoluteHour: hour + 5 // Continue from Friday
+        slotIndex: slotIndex++
       });
     }
     
@@ -63,34 +63,28 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         hour,
         time: `${hour.toString().padStart(2, '0')}:00`,
         label: `${hour.toString().padStart(2, '0')}:00`,
-        absoluteHour: hour + 29 // Continue from Saturday
+        slotIndex: slotIndex++
       });
     }
     
     return slots;
   }, []);
 
-  // Convert time string and day to absolute minutes from festival start
-  const timeToAbsoluteMinutes = (timeStr: string, day: string) => {
-    if (!timeStr) return 0;
-    const [hours, minutes = 0] = timeStr.split(':').map(Number);
-    
-    let dayOffset = 0;
-    if (day === 'Samstag') {
-      dayOffset = 5 * 60; // 5 hours from Friday 19:00 to Saturday 00:00
+  // Helper function to get slot index for a given time and day
+  const getSlotIndex = (hour: number, day: string): number => {
+    if (day === 'Freitag') {
+      return hour >= 19 ? hour - 19 : -1;
+    } else if (day === 'Samstag') {
+      return 5 + hour; // 5 slots for Friday (19-23)
     } else if (day === 'Sonntag') {
-      dayOffset = 29 * 60; // 29 hours from Friday 19:00 to Sunday 00:00
+      return 29 + hour; // 5 + 24 slots for Friday + Saturday
     }
-    
-    // For Friday, subtract 19 hours to make 19:00 = 0
-    const adjustedHours = day === 'Freitag' ? hours - 19 : hours;
-    
-    return dayOffset + (adjustedHours * 60) + minutes;
+    return -1;
   };
 
   // Process events for grid positioning with conflict detection
   const gridEvents = useMemo(() => {
-    // Group events by venue
+    // Group events by venue for conflict detection
     const eventsByVenue: Record<string, GridEvent[]> = {
       draussen: [],
       oben: [],
@@ -100,101 +94,100 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
     // First pass: calculate basic positioning
     const processedEvents = events.map(event => {
       const [startTimeStr, endTimeStr] = (event.time || '19:00 - 20:00').split(' - ');
-      const startMinutes = timeToAbsoluteMinutes(startTimeStr, event.day);
-      const endMinutes = timeToAbsoluteMinutes(endTimeStr, event.day);
+      const [startHour, startMin = 0] = startTimeStr.split(':').map(Number);
+      const [endHour, endMin = 0] = endTimeStr.split(':').map(Number);
+      
+      // Get slot indices
+      const startSlotIndex = getSlotIndex(startHour, event.day);
+      let endSlotIndex = getSlotIndex(endHour, event.day);
       
       // Handle cross-day events
-      let adjustedEndMinutes = endMinutes;
-      if (endMinutes < startMinutes) {
-        // Event crosses midnight
-        if (event.day === 'Freitag') {
-          adjustedEndMinutes = timeToAbsoluteMinutes(endTimeStr, 'Samstag');
-        } else if (event.day === 'Samstag') {
-          adjustedEndMinutes = timeToAbsoluteMinutes(endTimeStr, 'Sonntag');
-        }
+      if (endHour < startHour && event.day === 'Freitag') {
+        endSlotIndex = getSlotIndex(endHour, 'Samstag');
+      } else if (endHour < startHour && event.day === 'Samstag') {
+        endSlotIndex = getSlotIndex(endHour, 'Sonntag');
       }
       
-      const duration = adjustedEndMinutes - startMinutes;
+      // If event ends with minutes > 0, it extends into the next hour
+      if (endMin > 0) {
+        endSlotIndex++;
+      }
       
-      // Find grid row positions
-      const startSlotIndex = timeSlots.findIndex(slot => {
-        const slotMinutes = slot.absoluteHour * 60;
-        return slotMinutes <= startMinutes && slotMinutes + 60 > startMinutes;
-      });
+      // Ensure valid slot indices
+      if (startSlotIndex === -1 || endSlotIndex === -1) {
+        console.warn(`Invalid time for event ${event.title}: ${event.time} on ${event.day}`);
+        return null;
+      }
       
-      const endSlotIndex = timeSlots.findIndex(slot => {
-        const slotMinutes = slot.absoluteHour * 60;
-        return slotMinutes < adjustedEndMinutes && slotMinutes + 60 >= adjustedEndMinutes;
-      });
-      
-      // Calculate minute offset within the start hour
-      const startSlotMinutes = timeSlots[startSlotIndex]?.absoluteHour * 60 || 0;
-      const minuteOffset = startMinutes - startSlotMinutes;
+      // Calculate total minutes for duration
+      const startTotalMinutes = startSlotIndex * 60 + startMin;
+      const endTotalMinutes = endSlotIndex * 60 + endMin;
+      const duration = endTotalMinutes - startTotalMinutes;
       
       const gridEvent: GridEvent = {
         ...event,
-        startMinutes,
-        endMinutes: adjustedEndMinutes,
+        startMinutes: startTotalMinutes,
+        endMinutes: endTotalMinutes,
         duration,
-        gridRowStart: startSlotIndex + 2, // +2 for header
-        gridRowEnd: Math.max(startSlotIndex + 2, endSlotIndex + 3), // +3 to include the end slot
+        gridRowStart: startSlotIndex + 2, // +2 for header row (1-indexed + 1 for header)
+        gridRowEnd: endSlotIndex + 2, // This will make the event span to the correct row
         gridColumn: venues.indexOf(event.venue as any) + 2, // +2 for time column
         conflictIndex: 0,
         totalConflicts: 1,
-        minuteOffset
+        minuteOffset: startMin
       };
       
       return gridEvent;
-    });
+    }).filter(Boolean) as GridEvent[];
 
     // Second pass: detect conflicts and assign lanes
     processedEvents.forEach(event => {
       eventsByVenue[event.venue as keyof typeof eventsByVenue].push(event);
     });
 
-    // For each venue, detect overlapping events
+    // For each venue, detect overlapping events and assign lanes
     Object.keys(eventsByVenue).forEach(venue => {
       const venueEvents = eventsByVenue[venue as keyof typeof eventsByVenue];
       
       // Sort by start time
       venueEvents.sort((a, b) => a.startMinutes - b.startMinutes);
       
-      // Assign conflict lanes
-      venueEvents.forEach((event, i) => {
-        const overlappingEvents = venueEvents.filter((other, j) => {
-          if (i === j) return false;
-          // Check if events overlap
-          return (
-            (other.startMinutes < event.endMinutes && other.endMinutes > event.startMinutes)
-          );
-        });
+      // Create lanes for non-overlapping events
+      const lanes: GridEvent[][] = [];
+      
+      venueEvents.forEach(event => {
+        // Find the first lane where this event can fit
+        let placed = false;
         
-        // Find available lane
-        const usedLanes = overlappingEvents
-          .filter(other => other.startMinutes < event.startMinutes)
-          .map(other => other.conflictIndex);
-        
-        let lane = 0;
-        while (usedLanes.includes(lane)) {
-          lane++;
+        for (let laneIndex = 0; laneIndex < lanes.length; laneIndex++) {
+          const lane = lanes[laneIndex];
+          const lastEventInLane = lane[lane.length - 1];
+          
+          // Check if this event can fit in this lane (no overlap)
+          if (lastEventInLane.endMinutes <= event.startMinutes) {
+            lane.push(event);
+            event.conflictIndex = laneIndex;
+            placed = true;
+            break;
+          }
         }
         
-        event.conflictIndex = lane;
-        event.totalConflicts = Math.max(
-          lane + 1,
-          ...overlappingEvents.map(e => e.conflictIndex + 1),
-          event.totalConflicts
-        );
-        
-        // Update total conflicts for all overlapping events
-        overlappingEvents.forEach(other => {
-          other.totalConflicts = Math.max(other.totalConflicts, event.totalConflicts);
-        });
+        // If no existing lane works, create a new one
+        if (!placed) {
+          lanes.push([event]);
+          event.conflictIndex = lanes.length - 1;
+        }
+      });
+      
+      // Update total conflicts for all events in this venue
+      const maxLanes = lanes.length;
+      venueEvents.forEach(event => {
+        event.totalConflicts = maxLanes;
       });
     });
 
     return processedEvents;
-  }, [events, timeSlots]);
+  }, [events, venues]);
 
   const getEventTypeColor = (type: string) => {
     switch (type) {
@@ -242,7 +235,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
 
       <div className="festival-grid relative overflow-hidden rounded-lg" style={{ backgroundColor: '#3100a2' }}>
         <div className="grid-container overflow-auto max-h-[80vh]">
-          <div className="grid grid-cols-[100px_repeat(3,minmax(200px,1fr))] gap-0"
+          <div className="festival-grid-main grid grid-cols-[100px_repeat(3,minmax(200px,1fr))] gap-0"
                style={{ gridTemplateRows: `60px repeat(${timeSlots.length}, 80px)` }}>
             
             {/* Header - Time and Venue labels */}
@@ -287,18 +280,18 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                     <div key={`${slot.day}-${slot.hour}-${venue}`}
                          className="relative border-b border-gray-600 border-l"
                          style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
-                      {/* Events are rendered separately */}
+                      {/* Empty cells - events are positioned on top */}
                     </div>
                   ))}
                 </React.Fragment>
               );
             })}
             
-            {/* Event blocks - rendered on top of grid */}
+            {/* Event blocks - positioned within the grid */}
             {gridEvents.map(event => {
               const widthPercent = event.totalConflicts > 1 ? (100 / event.totalConflicts) : 100;
               const leftPercent = event.conflictIndex * widthPercent;
-              const topOffset = (event.minuteOffset / 60) * 80; // 80px per hour
+              const topOffset = (event.minuteOffset / 60) * 80; // 80px per hour cell
               
               return (
                 <div
@@ -309,13 +302,12 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                              hover:border-white/50 hover:z-30 overflow-hidden`}
                   style={{
                     gridColumn: event.gridColumn,
-                    gridRowStart: event.gridRowStart,
-                    gridRowEnd: event.gridRowEnd,
-                    width: `calc(${widthPercent}% - 6px)`,
-                    left: `calc(${leftPercent}% + 3px)`,
-                    top: `${topOffset}px`,
-                    marginTop: '3px',
-                    marginBottom: '3px'
+                    gridRow: `${event.gridRowStart} / ${event.gridRowEnd}`,
+                    width: `calc(${widthPercent}% - 8px)`,
+                    marginLeft: `calc(${leftPercent}% + 4px)`,
+                    marginTop: `${topOffset + 4}px`,
+                    marginRight: '4px',
+                    height: `calc(100% - ${topOffset + 8}px)`
                   }}
                   onClick={() => onEventClick(event)}
                 >
@@ -326,7 +318,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                       }`}>
                         {event.title}
                       </div>
-                      {event.duration > 45 && (
+                      {event.duration >= 60 && (
                         <>
                           <div className="text-xs text-white/90 font-medium">
                             {getEventTypeLabel(event.type)}
@@ -348,6 +340,9 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       <style>{`
         .festival-grid-container {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .festival-grid-main {
+          position: relative;
         }
         .grid-container::-webkit-scrollbar {
           width: 10px;
