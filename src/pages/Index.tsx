@@ -52,6 +52,18 @@ const Index = () => {
         onEventTypeToggle={handleEventTypeToggle}
       />
       
+      {/* Mobile Day Filter Label */}
+      {selectedDay !== "Alle" && (
+        <div className="md:hidden bg-card border-b border-border px-4 py-3">
+          <div className="flex items-center justify-center">
+            <Badge variant="secondary" className="bg-festival-light/10 border-festival-light/30 text-festival-light">
+              <Calendar className="h-3 w-3 mr-1" />
+              {t(selectedDay.toLowerCase())}
+            </Badge>
+          </div>
+        </div>
+      )}
+      
       <main className="container mx-auto px-4 py-8">
         <ChronologicalTimetable
           events={events}
