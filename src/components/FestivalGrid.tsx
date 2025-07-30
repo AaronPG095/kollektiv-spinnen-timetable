@@ -341,19 +341,22 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                   }}
                   onClick={() => onEventClick(event)}
                 >
-                  <div className={`h-full flex flex-col ${event.duration <= 30 ? 'p-0' : 'p-2'}`}>
-                    <div className="text-white text-center">
-                      <div className={`font-semibold leading-tight mb-1 ${
-                        event.title.length > 25 ? 'text-sm' : 'text-base'
-                      }`}>
-                        {event.title}
-                      </div>
-                      {event.duration >= 60 && (
+                  <div className={`h-full flex items-center justify-center text-center ${event.duration <= 30 ? 'p-0' : 'p-2'}`}>
+                    <div className="text-white">
+                      {event.duration <= 30 ? (
+                        <div className={`font-semibold leading-tight ${
+                          event.title.length > 25 ? 'text-sm' : 'text-base'
+                        }`}>
+                          {event.title} - {event.time}
+                        </div>
+                      ) : (
                         <>
-                          <div className="text-sm text-white/90 font-medium">
-                            {getEventTypeLabel(event.type)}
+                          <div className={`font-semibold leading-tight mb-2 ${
+                            event.title.length > 25 ? 'text-sm' : 'text-base'
+                          }`}>
+                            {event.title}
                           </div>
-                          <div className="text-sm text-white/80 mt-auto">
+                          <div className="text-sm text-white/80">
                             {event.time}
                           </div>
                         </>
