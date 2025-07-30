@@ -2,7 +2,6 @@ import { Search, Filter, Calendar, MapPin, Music2, Languages, LogIn, Settings } 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ViewToggle } from "./ViewToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -16,10 +15,7 @@ interface FestivalHeaderProps {
   onVenueToggle: (venue: string) => void;
   selectedEventTypes: string[];
   onEventTypeToggle: (eventType: string) => void;
-  view: "grid" | "list";
-  onViewChange: (view: "grid" | "list") => void;
 }
-
 
 export const FestivalHeader = ({
   searchQuery,
@@ -29,9 +25,7 @@ export const FestivalHeader = ({
   selectedVenues,
   onVenueToggle,
   selectedEventTypes,
-  onEventTypeToggle,
-  view,
-  onViewChange
+  onEventTypeToggle
 }: FestivalHeaderProps) => {
   const { language, setLanguage, t } = useLanguage();
   const { user, isAdmin } = useAuth();
@@ -184,11 +178,6 @@ export const FestivalHeader = ({
                   ))}
                 </div>
               </div>
-            </div>
-
-            {/* View Toggle */}
-            <div className="flex justify-center">
-              <ViewToggle view={view} onViewChange={onViewChange} />
             </div>
           </div>
         </div>

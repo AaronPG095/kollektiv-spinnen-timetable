@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { FestivalHeader } from "@/components/FestivalHeader";
-import { TimetableGrid } from "@/components/TimetableGrid";
-import { GridTimetable } from "@/components/GridTimetable";
 import { ChronologicalTimetable } from "@/components/ChronologicalTimetable";
 import { useEvents } from "@/hooks/useEvents";
 import { Event } from "@/components/EventCard";
@@ -17,7 +15,6 @@ const Index = () => {
   const [selectedDay, setSelectedDay] = useState("Alle");
   const [selectedVenues, setSelectedVenues] = useState<string[]>([]);
   const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([]);
-  const [view, setView] = useState<"grid" | "list">("list");
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const handleVenueToggle = (venue: string) => {
@@ -53,30 +50,17 @@ const Index = () => {
         onVenueToggle={handleVenueToggle}
         selectedEventTypes={selectedEventTypes}
         onEventTypeToggle={handleEventTypeToggle}
-        view={view}
-        onViewChange={setView}
       />
       
       <main className="container mx-auto px-4 py-8">
-        {view === "list" ? (
-          <ChronologicalTimetable
-            events={events}
-            selectedDay={selectedDay}
-            selectedVenues={selectedVenues}
-            selectedEventTypes={selectedEventTypes}
-            searchQuery={searchQuery}
-            onEventClick={setSelectedEvent}
-          />
-        ) : (
-          <GridTimetable
-            events={events}
-            selectedDay={selectedDay}
-            selectedVenues={selectedVenues}
-            selectedEventTypes={selectedEventTypes}
-            searchQuery={searchQuery}
-            onEventClick={setSelectedEvent}
-          />
-        )}
+        <ChronologicalTimetable
+          events={events}
+          selectedDay={selectedDay}
+          selectedVenues={selectedVenues}
+          selectedEventTypes={selectedEventTypes}
+          searchQuery={searchQuery}
+          onEventClick={setSelectedEvent}
+        />
       </main>
 
       {/* Event Detail Modal for Grid View */}
