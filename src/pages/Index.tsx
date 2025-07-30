@@ -109,7 +109,10 @@ const Index = () => {
                 </div>
                 {selectedEvent.description && (
                   <p className="text-muted-foreground leading-relaxed">
-                    {selectedEvent.description}
+                    {/* Check if description is a translation key or plain text */}
+                    {selectedEvent.description.endsWith('Desc') || t(selectedEvent.description) !== selectedEvent.description 
+                      ? t(selectedEvent.description) 
+                      : selectedEvent.description}
                   </p>
                 )}
                 
