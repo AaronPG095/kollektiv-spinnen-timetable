@@ -69,7 +69,7 @@ export const FestivalHeader = ({
           {/* Top Controls: Search + Filters + Language/Auth */}
           <div className="flex flex-col gap-4">
             {/* Search and Controls Row */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center gap-3">
               {/* Search */}
               <div className="relative flex-1 md:max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
