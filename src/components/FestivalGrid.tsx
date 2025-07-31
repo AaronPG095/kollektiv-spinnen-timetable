@@ -340,7 +340,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .festival-grid-container {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
