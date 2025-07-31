@@ -306,7 +306,18 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
     return { en: '', de: desc || '' };
   };
 
+  // Parse links to array format for editing
+  const parseLinksToArray = (links: any) => {
+    if (!links || typeof links !== 'object') return [];
+    return Object.entries(links).map(([platform, url], index) => ({
+      id: `${platform}-${index}`,
+      platform,
+      url: url as string
+    }));
+  };
+
   const initialDescriptions = parseDescription(initialEvent?.description);
+  const initialLinks = parseLinksToArray(initialEvent?.links);
 
   const [formData, setFormData] = useState({
     title: initialEvent?.title || '',
@@ -321,6 +332,31 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
     links: initialEvent?.links || {}
   });
 
+  const [linksArray, setLinksArray] = useState(initialLinks);
+  const [newLink, setNewLink] = useState({ platform: '', url: '' });
+
+  const addLink = () => {
+    if (newLink.platform.trim() && newLink.url.trim()) {
+      const linkObj = {
+        id: `${newLink.platform}-${Date.now()}`,
+        platform: newLink.platform.trim(),
+        url: newLink.url.trim()
+      };
+      setLinksArray([...linksArray, linkObj]);
+      setNewLink({ platform: '', url: '' });
+    }
+  };
+
+  const removeLink = (id: string) => {
+    setLinksArray(linksArray.filter(link => link.id !== id));
+  };
+
+  const updateLink = (id: string, field: 'platform' | 'url', value: string) => {
+    setLinksArray(linksArray.map(link => 
+      link.id === id ? { ...link, [field]: value } : link
+    ));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -329,9 +365,15 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
       en: formData.description_en,
       de: formData.description_de
     });
+
+    // Convert links array back to object format
+    const linksObject = linksArray.reduce((acc, link) => {
+      acc[link.platform] = link.url;
+      return acc;
+    }, {} as Record<string, string>);
     
     const { description_en, description_de, ...eventData } = formData;
-    onSave({ ...eventData, description });
+    onSave({ ...eventData, description, links: linksObject });
   };
 
   return (
@@ -452,6 +494,67 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
             rows={3}
             placeholder="English description..."
           />
+        </div>
+      </div>
+
+      {/* Links Management */}
+      <div className="space-y-4">
+        <Label className="text-lg font-semibold">Links</Label>
+        
+        {/* Existing Links */}
+        {linksArray.length > 0 && (
+          <div className="space-y-3">
+            {linksArray.map((link) => (
+              <div key={link.id} className="flex gap-2 items-center p-3 border rounded-md bg-muted/50">
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Platform (e.g., Instagram, Spotify)"
+                    value={link.platform}
+                    onChange={(e) => updateLink(link.id, 'platform', e.target.value)}
+                  />
+                  <Input
+                    placeholder="URL"
+                    value={link.url}
+                    onChange={(e) => updateLink(link.id, 'url', e.target.value)}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => removeLink(link.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Add New Link */}
+        <div className="p-3 border-2 border-dashed rounded-md">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+            <Input
+              placeholder="Platform (e.g., Instagram, Spotify)"
+              value={newLink.platform}
+              onChange={(e) => setNewLink({ ...newLink, platform: e.target.value })}
+            />
+            <Input
+              placeholder="URL"
+              value={newLink.url}
+              onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addLink}
+            disabled={!newLink.platform.trim() || !newLink.url.trim()}
+            className="w-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Link
+          </Button>
         </div>
       </div>
 
