@@ -14,9 +14,10 @@ interface GridEvent extends Event {
   gridRowStart: number;
   gridRowEnd: number;
   gridColumn: number;
-  conflictIndex: number;
-  totalConflicts: number;
-  minuteOffset: number;
+  lane: number;
+  totalLanes: number;
+  pixelTop: number;
+  pixelHeight: number;
 }
 
 const venues = ['draussen', 'oben', 'unten'] as const;
@@ -26,13 +27,19 @@ const venueLabels = {
   unten: 'FLORA'
 };
 
+// Constants for precise positioning
+const HOUR_HEIGHT = 60; // pixels per hour
+const HEADER_HEIGHT = 50;
+const TIME_COLUMN_WIDTH = 60;
+const VENUE_COLUMN_WIDTH = 200;
+
 const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => {
   const { t } = useLanguage();
 
-  // Generate time slots from Friday 19:00 to Sunday 20:00
+  // Generate time slots with more granular control
   const timeSlots = useMemo(() => {
     const slots = [];
-    let slotIndex = 0;
+    let totalMinutes = 0;
     
     // Friday 19:00-23:59
     for (let hour = 19; hour < 24; hour++) {
@@ -41,8 +48,10 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         hour,
         time: `${hour.toString().padStart(2, '0')}:00`,
         label: `${hour.toString().padStart(2, '0')}:00`,
-        slotIndex: slotIndex++
+        totalMinutes: totalMinutes,
+        dayStart: hour === 19
       });
+      totalMinutes += 60;
     }
     
     // Saturday 00:00-23:59
@@ -52,8 +61,10 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         hour,
         time: `${hour.toString().padStart(2, '0')}:00`,
         label: `${hour.toString().padStart(2, '0')}:00`,
-        slotIndex: slotIndex++
+        totalMinutes: totalMinutes,
+        dayStart: hour === 0
       });
+      totalMinutes += 60;
     }
     
     // Sunday 00:00-20:00
@@ -63,327 +74,290 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         hour,
         time: `${hour.toString().padStart(2, '0')}:00`,
         label: `${hour.toString().padStart(2, '0')}:00`,
-        slotIndex: slotIndex++
+        totalMinutes: totalMinutes,
+        dayStart: hour === 0
       });
+      totalMinutes += 60;
     }
     
     return slots;
   }, []);
 
-  // Helper function to get slot index for a given time and day
-  const getSlotIndex = (hour: number, day: string): number => {
+  // Helper function to convert time to total minutes from start
+  const timeToMinutes = (timeStr: string, day: string): number => {
+    const [hour, min = 0] = timeStr.split(':').map(Number);
+    
+    let baseMinutes = 0;
     if (day === 'Freitag') {
-      return hour >= 19 ? hour - 19 : -1;
+      baseMinutes = (hour >= 19) ? (hour - 19) * 60 : -1;
     } else if (day === 'Samstag') {
-      return 5 + hour; // 5 slots for Friday (19-23)
+      baseMinutes = 5 * 60 + hour * 60; // 5 hours of Friday + Saturday hours
     } else if (day === 'Sonntag') {
-      return 29 + hour; // 5 + 24 slots for Friday + Saturday
+      baseMinutes = 29 * 60 + hour * 60; // 5 + 24 hours + Sunday hours
     }
-    return -1;
+    
+    return baseMinutes >= 0 ? baseMinutes + min : -1;
   };
 
-  // Process events for grid positioning with conflict detection
-  const gridEvents = useMemo(() => {
-    // Group events by venue for conflict detection
+  // Advanced conflict detection and lane assignment
+  const processEventsForGrid = (rawEvents: Event[]): GridEvent[] => {
+    // Group events by venue
     const eventsByVenue: Record<string, GridEvent[]> = {
       draussen: [],
       oben: [],
       unten: []
     };
 
-    // First pass: calculate basic positioning
-    const processedEvents = events.map(event => {
+    // First pass: convert events to grid events with time calculations
+    const gridEvents = rawEvents.map(event => {
       const [startTimeStr, endTimeStr] = (event.time || '19:00 - 20:00').split(' - ');
-      const [startHour, startMin = 0] = startTimeStr.split(':').map(Number);
-      const [endHour, endMin = 0] = endTimeStr.split(':').map(Number);
       
-      // Get slot indices
-      const startSlotIndex = getSlotIndex(startHour, event.day);
-      let endSlotIndex = getSlotIndex(endHour, event.day);
+      const startMinutes = timeToMinutes(startTimeStr.trim(), event.day);
+      const endMinutes = timeToMinutes(endTimeStr.trim(), event.day);
       
-      // Handle cross-day events
-      if (endHour < startHour && event.day === 'Freitag') {
-        endSlotIndex = getSlotIndex(endHour, 'Samstag');
-      } else if (endHour < startHour && event.day === 'Samstag') {
-        endSlotIndex = getSlotIndex(endHour, 'Sonntag');
-      }
-      
-      // If event ends with minutes > 0, it extends into the next hour
-      if (endMin > 0) {
-        endSlotIndex++;
-      }
-      
-      // Ensure valid slot indices
-      if (startSlotIndex === -1 || endSlotIndex === -1) {
+      if (startMinutes === -1 || endMinutes === -1) {
         console.warn(`Invalid time for event ${event.title}: ${event.time} on ${event.day}`);
         return null;
       }
-      
-      // Calculate total minutes for duration
-      const startTotalMinutes = startSlotIndex * 60 + startMin;
-      const endTotalMinutes = endSlotIndex * 60 + endMin;
-      const duration = endTotalMinutes - startTotalMinutes;
-      
-      const gridEvent: GridEvent = {
+
+      // Handle cross-day events
+      let adjustedEndMinutes = endMinutes;
+      if (endMinutes < startMinutes) {
+        // Event crosses midnight
+        if (event.day === 'Freitag') {
+          adjustedEndMinutes = timeToMinutes(endTimeStr.trim(), 'Samstag');
+        } else if (event.day === 'Samstag') {
+          adjustedEndMinutes = timeToMinutes(endTimeStr.trim(), 'Sonntag');
+        }
+      }
+
+      const duration = adjustedEndMinutes - startMinutes;
+      const pixelTop = HEADER_HEIGHT + (startMinutes / 60) * HOUR_HEIGHT;
+      const pixelHeight = (duration / 60) * HOUR_HEIGHT;
+
+      return {
         ...event,
-        startMinutes: startTotalMinutes,
-        endMinutes: endTotalMinutes,
+        startMinutes,
+        endMinutes: adjustedEndMinutes,
         duration,
-        gridRowStart: startSlotIndex + 2, // +2 for header row (1-indexed + 1 for header)
-        gridRowEnd: endSlotIndex + 2, // This will make the event span to the correct row
-        gridColumn: venues.indexOf(event.venue as any) + 3, // +3 for day and time columns
-        conflictIndex: 0,
-        totalConflicts: 1,
-        minuteOffset: startMin
-      };
-      
-      return gridEvent;
+        gridRowStart: Math.floor(startMinutes / 60) + 2,
+        gridRowEnd: Math.ceil(adjustedEndMinutes / 60) + 2,
+        gridColumn: venues.indexOf(event.venue as any) + 1,
+        lane: 0,
+        totalLanes: 1,
+        pixelTop,
+        pixelHeight
+      } as GridEvent;
     }).filter(Boolean) as GridEvent[];
 
-    // Second pass: detect conflicts and assign lanes
-    processedEvents.forEach(event => {
+    // Group by venue for conflict resolution
+    gridEvents.forEach(event => {
       eventsByVenue[event.venue as keyof typeof eventsByVenue].push(event);
     });
 
-    // For each venue, detect overlapping events and assign lanes
-    Object.keys(eventsByVenue).forEach(venue => {
-      const venueEvents = eventsByVenue[venue as keyof typeof eventsByVenue];
-      
-      // Sort by start time
+    // Second pass: resolve conflicts using interval scheduling algorithm
+    Object.entries(eventsByVenue).forEach(([venue, venueEvents]) => {
+      if (venueEvents.length === 0) return;
+
+      // Sort events by start time
       venueEvents.sort((a, b) => a.startMinutes - b.startMinutes);
-      
-      // Create lanes for non-overlapping events
+
+      // Use interval scheduling to assign lanes
       const lanes: GridEvent[][] = [];
-      
+
       venueEvents.forEach(event => {
-        // Find the first lane where this event can fit
-        let placed = false;
-        
+        let assignedLane = -1;
+
+        // Find the first available lane
         for (let laneIndex = 0; laneIndex < lanes.length; laneIndex++) {
           const lane = lanes[laneIndex];
-          const lastEventInLane = lane[lane.length - 1];
-          
-          // Check if this event can fit in this lane (no overlap)
-          if (lastEventInLane.endMinutes <= event.startMinutes) {
+          const lastEvent = lane[lane.length - 1];
+
+          // Check if there's enough gap (minimum 15 minutes between events)
+          if (lastEvent.endMinutes + 15 <= event.startMinutes) {
             lane.push(event);
-            event.conflictIndex = laneIndex;
-            placed = true;
+            assignedLane = laneIndex;
             break;
           }
         }
-        
-        // If no existing lane works, create a new one
-        if (!placed) {
+
+        // If no lane available, create a new one
+        if (assignedLane === -1) {
           lanes.push([event]);
-          event.conflictIndex = lanes.length - 1;
+          assignedLane = lanes.length - 1;
         }
+
+        event.lane = assignedLane;
       });
-      
-      // Update total conflicts for all events in this venue
-      const maxLanes = lanes.length;
+
+      // Update total lanes for all events in this venue
+      const totalLanes = lanes.length;
       venueEvents.forEach(event => {
-        event.totalConflicts = maxLanes;
+        event.totalLanes = totalLanes;
       });
     });
 
-    return processedEvents;
-  }, [events, venues]);
+    return gridEvents;
+  };
+
+  const gridEvents = useMemo(() => processEventsForGrid(events), [events]);
 
   const getEventTypeColor = (type: string) => {
-    switch (type) {
-      case 'dj':
-        return 'bg-[#4A90E2]';
-      case 'live':
-        return 'bg-[#E74C3C]';
-      case 'performance':
-        return 'bg-[#9B59B6]';
-      case 'workshop':
-        return 'bg-[#2ECC71]';
-      case 'interaktiv':
-        return 'bg-[#F39C12]';
-      default:
-        return 'bg-[#B8860B]';
-    }
+    const colors = {
+      dj: 'bg-blue-500',
+      live: 'bg-red-500',
+      performance: 'bg-purple-500',
+      workshop: 'bg-green-500',
+      interaktiv: 'bg-orange-500',
+      default: 'bg-amber-600'
+    };
+    return colors[type as keyof typeof colors] || colors.default;
   };
 
-  const getEventTypeLabel = (type: string) => {
-    const typeLabels = {
-      dj: 'DJ',
-      live: 'Live',
-      performance: 'Performance',
-      workshop: 'Workshop',
-      interaktiv: 'Interaktiv'
-    };
-    return typeLabels[type as keyof typeof typeLabels] || type;
-  };
+  const totalGridHeight = timeSlots.length * HOUR_HEIGHT + HEADER_HEIGHT;
 
   return (
-    <div className="festival-grid-container relative">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="spider-web" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
-              <path d="M50 0 L50 100 M0 50 L100 50 M15 15 L85 85 M85 15 L15 85" 
-                    stroke="currentColor" strokeWidth="0.5" opacity="0.3"/>
-              <circle cx="50" cy="50" r="2" fill="currentColor" opacity="0.4"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#spider-web)"/>
-        </svg>
+    <div className="festival-grid-container bg-slate-900 text-white rounded-lg overflow-hidden">
+      {/* Header */}
+      <div className="flex sticky top-0 z-50 bg-indigo-800 border-b-2 border-indigo-600">
+        <div className="w-20 h-12 flex items-center justify-center font-bold border-r border-indigo-600">
+          Tag
+        </div>
+        <div className="w-16 h-12 flex items-center justify-center font-bold border-r border-indigo-600">
+          Zeit
+        </div>
+        {venues.map((venue, index) => (
+          <div 
+            key={venue}
+            className="flex-1 min-w-48 h-12 flex items-center justify-center font-bold border-r border-indigo-600"
+            style={{ 
+              backgroundColor: index === 0 ? '#3b82f6' : 
+                               index === 1 ? '#8b5cf6' : 
+                               '#ec4899' 
+            }}
+          >
+            {venueLabels[venue as keyof typeof venueLabels]}
+          </div>
+        ))}
       </div>
 
-      <div className="festival-grid relative overflow-hidden rounded-lg" style={{ backgroundColor: '#3100a2' }}>
-        <div className="grid-container overflow-auto max-h-[80vh]">
-          <div className="festival-grid-main grid grid-cols-[60px_75px_repeat(3,minmax(150px,1fr))] gap-0"
-               style={{ gridTemplateRows: `60px repeat(${timeSlots.length}, 80px)` }}>
+      {/* Scrollable content */}
+      <div className="overflow-auto max-h-[80vh] relative">
+        <div className="relative" style={{ height: totalGridHeight }}>
+          {/* Time grid lines and labels */}
+          {timeSlots.map((slot, index) => {
+            const yPosition = HEADER_HEIGHT + (slot.totalMinutes / 60) * HOUR_HEIGHT;
             
-            {/* Header - Day, Time and Venue labels */}
-            <div className="sticky top-0 z-30 border-b-2 border-black border-r-2 
-                           flex items-center justify-center font-bold text-white px-2"
-                 style={{ backgroundColor: '#4500e2' }}>
-              Tag
-            </div>
-            <div className="sticky top-0 z-30 border-b-2 border-black border-r-2
-                           flex items-center justify-center font-bold text-white px-2"
-                 style={{ backgroundColor: '#4500e2' }}>
-              Zeit
-            </div>
-            {venues.map((venue, index) => (
-              <div key={venue}
-                   className="sticky top-0 z-30 border-b-2 border-black border-r-2 
-                             flex items-center justify-center font-bold text-white px-4 text-center"
-                   style={{ 
-                     backgroundColor: index === 0 ? 'hsl(195 90% 70%)' : 
-                                      index === 1 ? 'hsl(250 80% 60%)' : 
-                                      'hsl(280 70% 50%)' 
-                   }}>
-                {venueLabels[venue as keyof typeof venueLabels]}
-              </div>
-            ))}
-
-            {/* Time slots and grid cells */}
-            {timeSlots.map((slot, index) => {
-              const isFirstSlotOfDay = (slot.day === 'Freitag' && slot.hour === 19) || 
-                                      (slot.day === 'Samstag' && slot.hour === 0) || 
-                                      (slot.day === 'Sonntag' && slot.hour === 0);
-              
-              // Calculate how many slots this day spans
-              let daySpan = 1;
-              if (isFirstSlotOfDay) {
-                if (slot.day === 'Freitag') {
-                  daySpan = 5; // 19:00-23:59 (5 hours)
-                } else if (slot.day === 'Samstag') {
-                  daySpan = 24; // 00:00-23:59 (24 hours)
-                } else if (slot.day === 'Sonntag') {
-                  daySpan = 21; // 00:00-20:00 (21 hours)
-                }
-              }
-              
-              return (
-                <React.Fragment key={`${slot.day}-${slot.hour}`}>
-                  {/* Day label (only for first slot of each day) */}
-                  {isFirstSlotOfDay ? (
-                    <div className="sticky left-0 z-20 border-b border-gray-600 border-r-2
-                                   flex items-center justify-center text-white font-bold text-lg px-2"
-                         style={{ 
-                           backgroundColor: '#4500e2',
-                           gridRowEnd: `span ${daySpan}`,
-                           writingMode: 'vertical-rl',
-                           textOrientation: 'mixed'
-                         }}>
-                      {slot.day.toUpperCase()}
-                    </div>
-                  ) : (
-                    <div style={{ display: 'none' }}></div>
-                  )}
-                  
-                  {/* Time label */}
-                  <div className="sticky left-0 z-20 border-b border-gray-600 border-r-2
-                                 flex items-center justify-center text-white text-sm px-2"
-                       style={{ backgroundColor: '#4500e2' }}>
-                    <div className="font-medium">{slot.label}</div>
+            return (
+              <div key={`${slot.day}-${slot.hour}`}>
+                {/* Day label */}
+                {slot.dayStart && (
+                  <div 
+                    className="absolute left-0 w-20 bg-indigo-800 border-r border-indigo-600 flex items-center justify-center font-bold text-sm z-10"
+                    style={{ 
+                      top: yPosition,
+                      height: slot.day === 'Freitag' ? HOUR_HEIGHT * 5 :
+                              slot.day === 'Samstag' ? HOUR_HEIGHT * 24 :
+                              HOUR_HEIGHT * 21,
+                      writingMode: 'vertical-rl',
+                      textOrientation: 'mixed'
+                    }}
+                  >
+                    {slot.day.toUpperCase()}
                   </div>
-                  
-                  {/* Venue cells */}
-                  {venues.map((venue, venueIndex) => (
-                    <div key={`${slot.day}-${slot.hour}-${venue}`}
-                         className="relative border-b border-gray-600 border-r"
-                         style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
-                      {/* Empty cells - events are positioned on top */}
-                    </div>
-                  ))}
-                </React.Fragment>
-              );
-            })}
-            
-            {/* Event blocks - positioned within the grid */}
-            {gridEvents.map(event => {
-              const widthPercent = event.totalConflicts > 1 ? (100 / event.totalConflicts) : 100;
-              const leftPercent = event.conflictIndex * widthPercent;
-              const topOffset = (event.minuteOffset / 60) * 80; // 80px per hour cell
-              
-              return (
-                <div
-                  key={event.id}
-                  className={`absolute z-20 ${getEventTypeColor(event.type)} 
-                             rounded-md border-2 border-white/30 shadow-lg cursor-pointer 
-                             transition-all duration-200 hover:scale-[1.02] hover:shadow-xl 
-                             hover:border-white/50 hover:z-30 overflow-hidden`}
-                  style={{
-                    gridColumn: event.gridColumn,
-                    gridRow: `${event.gridRowStart} / ${event.gridRowEnd}`,
-                    width: `calc(${widthPercent}% - 8px)`,
-                    marginLeft: `calc(${leftPercent}% + 4px)`,
-                    marginTop: `${topOffset + 4}px`,
-                    marginRight: '4px',
-                    height: `calc(100% - ${topOffset + 8}px)`
+                )}
+                
+                {/* Time label */}
+                <div 
+                  className="absolute left-20 w-16 bg-indigo-800 border-r border-indigo-600 flex items-center justify-center text-xs font-medium z-10"
+                  style={{ 
+                    top: yPosition,
+                    height: HOUR_HEIGHT
                   }}
-                  onClick={() => onEventClick(event)}
                 >
-                  <div className="h-full flex items-center justify-center text-center">
-                    <div className="text-white">
-                      <div className={`font-semibold leading-tight ${
-                        event.title.length > 25 ? 'text-sm' : 'text-base'
-                      }`}>
-                        {event.title}
-                      </div>
-                      <div className="text-sm text-white/80 mt-1">
-                        {event.time}
-                      </div>
-                    </div>
-                  </div>
+                  {slot.label}
                 </div>
-              );
-            })}
-          </div>
+
+                {/* Grid line */}
+                <div 
+                  className="absolute left-36 right-0 border-t border-slate-700"
+                  style={{ top: yPosition }}
+                />
+
+                {/* Venue columns background */}
+                {venues.map((venue, venueIndex) => (
+                  <div
+                    key={`${slot.day}-${slot.hour}-${venue}`}
+                    className="absolute border-r border-slate-700 bg-slate-800/30"
+                    style={{
+                      left: 144 + venueIndex * VENUE_COLUMN_WIDTH,
+                      width: VENUE_COLUMN_WIDTH,
+                      top: yPosition,
+                      height: HOUR_HEIGHT
+                    }}
+                  />
+                ))}
+              </div>
+            );
+          })}
+
+          {/* Event blocks */}
+          {gridEvents.map(event => {
+            const venueIndex = venues.indexOf(event.venue as any);
+            const leftPosition = 144 + venueIndex * VENUE_COLUMN_WIDTH;
+            const width = VENUE_COLUMN_WIDTH / event.totalLanes;
+            const leftOffset = event.lane * width;
+
+            return (
+              <div
+                key={event.id}
+                className={`absolute ${getEventTypeColor(event.type)} rounded-md border border-white/30 
+                           shadow-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] 
+                           hover:shadow-xl hover:border-white/50 hover:z-40 overflow-hidden z-30`}
+                style={{
+                  left: leftPosition + leftOffset + 4,
+                  width: width - 8,
+                  top: event.pixelTop + 2,
+                  height: Math.max(event.pixelHeight - 4, 30) // Minimum height
+                }}
+                onClick={() => onEventClick(event)}
+              >
+                <div className="h-full p-2 flex flex-col justify-center text-center">
+                  <div className={`font-semibold leading-tight text-white ${
+                    event.title.length > 20 ? 'text-xs' : 'text-sm'
+                  }`}>
+                    {event.title}
+                  </div>
+                  {event.pixelHeight > 40 && (
+                    <div className="text-xs text-white/80 mt-1">
+                      {event.time}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
-      
-      <style>{`
+
+      <style jsx>{`
         .festival-grid-container {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
-        .festival-grid-main {
-          position: relative;
+        .festival-grid-container::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
         }
-        .grid-container::-webkit-scrollbar {
-          width: 10px;
-          height: 10px;
-        }
-        .grid-container::-webkit-scrollbar-track {
+        .festival-grid-container::-webkit-scrollbar-track {
           background: rgba(0, 0, 0, 0.2);
-          border-radius: 5px;
+          border-radius: 4px;
         }
-        .grid-container::-webkit-scrollbar-thumb {
+        .festival-grid-container::-webkit-scrollbar-thumb {
           background: rgba(255, 255, 255, 0.3);
-          border-radius: 5px;
+          border-radius: 4px;
         }
-        .grid-container::-webkit-scrollbar-thumb:hover {
+        .festival-grid-container::-webkit-scrollbar-thumb:hover {
           background: rgba(255, 255, 255, 0.5);
-        }
-        .grid-container::-webkit-scrollbar-corner {
-          background: rgba(0, 0, 0, 0.2);
         }
       `}</style>
     </div>
