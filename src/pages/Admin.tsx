@@ -390,9 +390,9 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
               <SelectValue placeholder="Select day" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Friday">Friday</SelectItem>
-              <SelectItem value="Saturday">Saturday</SelectItem>
-              <SelectItem value="Sunday">Sunday</SelectItem>
+              <SelectItem value="Freitag">Freitag</SelectItem>
+              <SelectItem value="Samstag">Samstag</SelectItem>
+              <SelectItem value="Sonntag">Sonntag</SelectItem>
             </SelectContent>
           </Select>
         </div>
