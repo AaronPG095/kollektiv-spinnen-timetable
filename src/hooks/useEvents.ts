@@ -29,7 +29,8 @@ export const useEvents = () => {
         day: event.day as "Freitag" | "Samstag" | "Sonntag",
         type: event.type as "performance" | "dj" | "workshop" | "live" | "interaktiv",
         description: event.description || '',
-        links: event.links ? JSON.parse(JSON.stringify(event.links)) : {}
+        links: event.links ? JSON.parse(JSON.stringify(event.links)) : {},
+        is_visible: event.is_visible
       }));
 
       setEvents(transformedEvents);

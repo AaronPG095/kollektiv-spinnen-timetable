@@ -14,12 +14,9 @@ export interface Event {
   type: "performance" | "dj" | "workshop" | "live" | "interaktiv";
   description?: string;
   links?: {
-    youtube?: string;
-    instagram?: string;
-    spotify?: string;
-    soundcloud?: string;
-    bandcamp?: string;
+    [platform: string]: string;
   };
+  is_visible?: boolean;
 }
 
 interface EventCardProps {

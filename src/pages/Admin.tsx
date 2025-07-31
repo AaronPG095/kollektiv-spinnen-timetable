@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Plus, Edit, Trash2, LogOut, Search } from 'lucide-react';
+import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff } from 'lucide-react';
 
 interface DatabaseEvent {
   id: string;
@@ -23,6 +23,7 @@ interface DatabaseEvent {
   type: string;
   description: string | null;
   links: any;
+  is_visible?: boolean;
 }
 
 const Admin = () => {
@@ -34,6 +35,7 @@ const Admin = () => {
   const [editingEvent, setEditingEvent] = useState<DatabaseEvent | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showHiddenMode, setShowHiddenMode] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -129,6 +131,27 @@ const Admin = () => {
     }
   };
 
+  const handleToggleVisibility = async (id: string, currentVisibility: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({ is_visible: !currentVisibility })
+        .eq('id', id);
+      
+      if (error) throw error;
+      toast({ 
+        title: currentVisibility ? "Event hidden from public" : "Event made visible to public" 
+      });
+      loadEvents();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update event visibility",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
@@ -178,20 +201,39 @@ const Admin = () => {
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
           <h2 className="text-lg md:text-xl font-semibold">Events Management</h2>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button className="min-h-[44px]">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Event
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl mx-4 sm:mx-auto">
-              <DialogHeader>
-                <DialogTitle>Create New Event</DialogTitle>
-              </DialogHeader>
-              <EventForm onSave={handleSaveEvent} />
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Button
+              variant={showHiddenMode ? "default" : "outline"}
+              onClick={() => setShowHiddenMode(!showHiddenMode)}
+              className="min-h-[44px]"
+            >
+              {showHiddenMode ? (
+                <>
+                  <EyeOff className="h-4 w-4 mr-2" />
+                  Hidden Mode
+                </>
+              ) : (
+                <>
+                  <Eye className="h-4 w-4 mr-2" />
+                  Show All
+                </>
+              )}
+            </Button>
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button className="min-h-[44px]">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Event
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl mx-4 sm:mx-auto">
+                <DialogHeader>
+                  <DialogTitle>Create New Event</DialogTitle>
+                </DialogHeader>
+                <EventForm onSave={handleSaveEvent} />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -214,11 +256,19 @@ const Admin = () => {
 
         <div className="grid gap-4">
           {filteredEvents.map((event) => (
-            <Card key={event.id}>
+            <Card key={event.id} className={event.is_visible === false ? "border-destructive/50 bg-destructive/5" : ""}>
               <CardContent className="p-4">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg">{event.title}</h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-lg">{event.title}</h3>
+                      {event.is_visible === false && (
+                        <div className="flex items-center text-destructive text-xs">
+                          <EyeOff className="h-3 w-3 mr-1" />
+                          Hidden
+                        </div>
+                      )}
+                    </div>
                     <p className="text-muted-foreground">
                       {event.day} • {event.time} • {event.venue} • {event.type}
                     </p>
@@ -244,6 +294,14 @@ const Admin = () => {
                     )}
                   </div>
                   <div className="flex gap-2">
+                    <Button
+                      variant={event.is_visible === false ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleToggleVisibility(event.id, event.is_visible !== false)}
+                      title={event.is_visible === false ? "Make visible to public" : "Hide from public"}
+                    >
+                      {event.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                    </Button>
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button 

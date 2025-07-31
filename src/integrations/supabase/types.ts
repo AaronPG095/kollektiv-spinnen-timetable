@@ -21,6 +21,7 @@ export type Database = {
           description: string | null
           end_time: string | null
           id: string
+          is_visible: boolean
           links: Json | null
           start_time: string | null
           time: string
@@ -35,6 +36,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: string
+          is_visible?: boolean
           links?: Json | null
           start_time?: string | null
           time: string
@@ -49,6 +51,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: string
+          is_visible?: boolean
           links?: Json | null
           start_time?: string | null
           time?: string
