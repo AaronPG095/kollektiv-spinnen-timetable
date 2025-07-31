@@ -6,7 +6,7 @@ import { useEvents } from "@/hooks/useEvents";
 import { Event } from "@/components/EventCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, MapPin, Instagram, Youtube, ExternalLink, Music } from "lucide-react";
+import { Clock, Calendar, MapPin, Instagram, Youtube, ExternalLink, Music, Headphones } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
@@ -153,66 +153,47 @@ const Index = () => {
                   </p>
                 )}
                 
-                {/* Social Media Links */}
-                {selectedEvent.links && (
+                {/* Dynamic Links */}
+                {selectedEvent.links && Object.keys(selectedEvent.links).length > 0 && (
                   <div className="space-y-2">
                     <h4 className="font-medium text-foreground">{t('links')}:</h4>
                     <div className="flex flex-wrap gap-2">
-                      {selectedEvent.links.instagram && (
-                        <a
-                          href={selectedEvent.links.instagram}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
-                        >
-                          <Instagram className="h-3 w-3" />
-                          Instagram
-                        </a>
-                      )}
-                      {selectedEvent.links.spotify && (
-                        <a
-                          href={selectedEvent.links.spotify}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
-                        >
-                          <Music className="h-3 w-3" />
-                          Spotify
-                        </a>
-                      )}
-                      {selectedEvent.links.youtube && (
-                        <a
-                          href={selectedEvent.links.youtube}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
-                        >
-                          <Youtube className="h-3 w-3" />
-                          YouTube
-                        </a>
-                      )}
-                      {selectedEvent.links.soundcloud && (
-                        <a
-                          href={selectedEvent.links.soundcloud}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          SoundCloud
-                        </a>
-                      )}
-                      {selectedEvent.links.bandcamp && (
-                        <a
-                          href={selectedEvent.links.bandcamp}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          Bandcamp
-                        </a>
-                      )}
+                      {Object.entries(selectedEvent.links).map(([platform, url]) => {
+                        // Icon mapping for known platforms (case-insensitive)
+                        const getIcon = (platformName: string) => {
+                          const normalizedPlatform = platformName.toLowerCase();
+                          
+                          switch (normalizedPlatform) {
+                            case 'instagram':
+                              return Instagram;
+                            case 'youtube':
+                              return Youtube;
+                            case 'spotify':
+                              return Music;
+                            case 'soundcloud':
+                              return Headphones;
+                            case 'bandcamp':
+                              return Music;
+                            default:
+                              return ExternalLink;
+                          }
+                        };
+                        
+                        const Icon = getIcon(platform);
+                        
+                        return (
+                          <a
+                            key={platform}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-type-live/10 border border-type-live/30 text-type-live hover:bg-type-live/20 transition-smooth text-sm"
+                          >
+                            <Icon className="h-3 w-3" />
+                            {platform}
+                          </a>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
