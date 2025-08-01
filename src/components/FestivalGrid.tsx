@@ -283,6 +283,19 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
     }
   };
 
+  const getDayBackgroundColor = (day: string) => {
+    switch (day) {
+      case 'Freitag':
+        return 'rgba(255, 255, 255, 0.05)'; // Default
+      case 'Samstag':
+        return 'rgba(255, 255, 255, 0.07)'; // Slightly lighter
+      case 'Sonntag':
+        return 'rgba(255, 255, 255, 0.09)'; // Even lighter
+      default:
+        return 'rgba(255, 255, 255, 0.05)';
+    }
+  };
+
   // Group events by their grid cell for easier rendering
   const eventsByCell = useMemo(() => {
     const cellMap = new Map<string, GridEvent[]>();
@@ -316,7 +329,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       </div>
 
       <div className="festival-grid relative overflow-hidden rounded-lg max-w-[1200px] mx-auto" style={{ backgroundColor: '#3100a2' }}>
-        <div className="grid-container overflow-auto max-h-[60vh]">
+        <div className="grid-container overflow-auto max-h-[70vh]">
           <div className="festival-grid-main grid gap-0"
                style={{ 
                  gridTemplateColumns: '80px 60px repeat(3, minmax(200px, 1fr))',
@@ -373,7 +386,9 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                     <div className="sticky left-0 z-20 border-b border-gray-600 border-r-2
                                    flex items-center justify-center text-white font-bold text-lg px-2"
                          style={{ 
-                           backgroundColor: '#4500e2',
+                           backgroundColor: slot.day === 'Freitag' ? '#4500e2' : 
+                                           slot.day === 'Samstag' ? '#4000d8' : 
+                                           '#3a00ce',
                            gridRowEnd: `span ${daySpan}`,
                            writingMode: 'vertical-rl',
                            textOrientation: 'mixed'
@@ -385,22 +400,42 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                   )}
                   
                   {/* Time label */}
-                  <div className="sticky left-0 z-20 border-b border-gray-600 border-r-2
-                                 flex items-center justify-center text-white text-sm px-2"
-                       style={{ backgroundColor: '#4500e2' }}>
-                    <div className="font-medium">{slot.label}</div>
-                  </div>
+                  {/* Add a stronger border between days */}
+                  {(() => {
+                    const isLastSlotOfDay = (slot.day === 'Freitag' && slot.hour === 23) || 
+                                           (slot.day === 'Samstag' && slot.hour === 23);
+                    
+                    return (
+                      <div className={`sticky left-0 z-20 border-b border-gray-600 border-r-2
+                                     flex items-center justify-center text-white text-sm px-2 ${
+                                     isLastSlotOfDay ? 'border-b-2 border-b-gray-400' : ''
+                                   }`}
+                           style={{ 
+                             backgroundColor: slot.day === 'Freitag' ? '#4500e2' : 
+                                             slot.day === 'Samstag' ? '#4000d8' : 
+                                             '#3a00ce'
+                           }}>
+                        <div className="font-medium">{slot.label}</div>
+                      </div>
+                    );
+                  })()}
                   
                   {/* Venue cells */}
                   {venues.map((venue, venueIndex) => {
                     const cellKey = `${venueIndex + 3}-${index + 2}`;
                     const cellEvents = eventsByCell.get(cellKey) || [];
                     
+                    // Add a stronger border between days
+                    const isLastSlotOfDay = (slot.day === 'Freitag' && slot.hour === 23) || 
+                                           (slot.day === 'Samstag' && slot.hour === 23);
+                    
                     return (
                       <div key={`${slot.day}-${slot.hour}-${venue}`}
-                           className="relative border-b border-gray-600 border-r"
+                           className={`relative border-b border-gray-600 border-r ${
+                             isLastSlotOfDay ? 'border-b-2 border-b-gray-400' : ''
+                           }`}
                            style={{ 
-                             backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                             backgroundColor: getDayBackgroundColor(slot.day),
                              overflow: 'visible'
                            }}>
                         {/* Render events that start in this cell */}
