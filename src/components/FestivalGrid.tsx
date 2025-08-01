@@ -131,6 +131,13 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       const startTotalMinutes = startSlotIndex * 60 + startMin;
       const endTotalMinutes = endSlotIndex * 60 + endMin;
       
+      // Determine correct venue column with fallback
+      const venueIndex = venues.indexOf(event.venue as any);
+      if (venueIndex === -1) {
+        console.warn(`Unknown venue "${event.venue}" for event "${event.title}". Available venues:`, venues);
+        return null;
+      }
+      
       const gridEvent: GridEvent = {
         ...event,
         startMinutes: startTotalMinutes,
@@ -138,7 +145,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         duration: endTotalMinutes - startTotalMinutes,
         gridRowStart: startSlotIndex + 2, // +2 for header row (1-indexed + 1 for header)
         gridRowEnd: endSlotIndex + 2,
-        gridColumn: venues.indexOf(event.venue as any) + 3, // +3 for day and time columns
+        gridColumn: venueIndex + 3, // +3 for day and time columns
         lane: 0,
         totalLanes: 1,
         minuteOffset: startMin
@@ -149,7 +156,10 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
 
     // Second pass: group by venue
     processedEvents.forEach(event => {
-      eventsByVenue[event.venue as keyof typeof eventsByVenue].push(event);
+      const venue = event.venue as keyof typeof eventsByVenue;
+      if (venue in eventsByVenue) {
+        eventsByVenue[venue].push(event);
+      }
     });
 
     // Third pass: detect actual overlaps and assign lanes
@@ -229,7 +239,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
             }
             
             event.lane = assignedLane;
-            event.totalLanes = Math.max(lanes.length, group.length > 2 ? group.length : lanes.length);
+            event.totalLanes = lanes.length;
           });
           
           // Ensure all events in group have same totalLanes
@@ -260,6 +270,22 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         return 'bg-[#B8860B]';
     }
   };
+
+  // Group events by their grid cell for easier rendering
+  const eventsByCell = useMemo(() => {
+    const cellMap = new Map<string, GridEvent[]>();
+    
+    gridEvents.forEach(event => {
+      // Create a key for each starting cell
+      const cellKey = `${event.gridColumn}-${event.gridRowStart}`;
+      if (!cellMap.has(cellKey)) {
+        cellMap.set(cellKey, []);
+      }
+      cellMap.get(cellKey)!.push(event);
+    });
+    
+    return cellMap;
+  }, [gridEvents]);
 
   return (
     <div className="festival-grid-container relative">
@@ -353,63 +379,59 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                   </div>
                   
                   {/* Venue cells */}
-                  {venues.map((venue, venueIndex) => (
-                    <div key={`${slot.day}-${slot.hour}-${venue}`}
-                         className="relative border-b border-gray-600 border-r"
-                         style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
-                      {/* Empty cells - events are positioned on top */}
-                    </div>
-                  ))}
-                </React.Fragment>
-              );
-            })}
-            
-            {/* Event blocks - positioned using grid placement */}
-            {gridEvents.map(event => {
-              // Calculate width and position based on lanes
-              const widthPercent = event.totalLanes > 1 ? (100 / event.totalLanes) : 100;
-              const leftPercent = event.totalLanes > 1 ? (event.lane * widthPercent) : 0;
-              const topOffset = (event.minuteOffset / 60) * 80; // 80px per hour cell
-              
-              return (
-                <div
-                  key={event.id}
-                  className={`relative ${getEventTypeColor(event.type)} 
-                             rounded-md border-2 border-white/30 shadow-lg cursor-pointer 
-                             transition-all duration-200 hover:scale-[1.02] hover:shadow-xl 
-                             hover:border-white/50 hover:z-30 overflow-hidden`}
-                  style={{
-                    gridColumn: event.gridColumn,
-                    gridRow: `${event.gridRowStart} / ${event.gridRowEnd}`,
-                  }}
-                  onClick={() => onEventClick(event)}
-                >
-                  {/* Inner positioned container for lane management */}
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      width: `${widthPercent}%`,
-                      left: `${leftPercent}%`,
-                      top: `${topOffset}px`,
-                      height: `calc(100% - ${topOffset}px)`
-                    }}
-                  >
-                    <div className="h-full flex items-center justify-center text-center p-2">
-                      <div className="text-white">
-                        <div className={`font-semibold leading-tight ${
-                          event.title.length > 25 ? 'text-sm' : 'text-base'
-                        }`}>
-                          {event.title}
-                        </div>
-                        {event.duration >= 60 && (
-                          <div className="text-sm text-white/80 mt-1">
-                            {event.time}
-                          </div>
-                        )}
+                  {venues.map((venue, venueIndex) => {
+                    const cellKey = `${venueIndex + 3}-${index + 2}`;
+                    const cellEvents = eventsByCell.get(cellKey) || [];
+                    
+                    return (
+                      <div key={`${slot.day}-${slot.hour}-${venue}`}
+                           className="relative border-b border-gray-600 border-r"
+                           style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+                        {/* Render events that start in this cell */}
+                        {cellEvents.map(event => {
+                          const widthPercent = event.totalLanes > 1 ? (100 / event.totalLanes) : 100;
+                          const leftPercent = event.totalLanes > 1 ? (event.lane * widthPercent) : 0;
+                          const topOffset = (event.minuteOffset / 60) * 100; // percentage of cell height
+                          const heightInCells = event.gridRowEnd - event.gridRowStart;
+                          const heightPercent = ((heightInCells * 80 - (event.minuteOffset / 60) * 80) / 80) * 100;
+                          
+                          return (
+                            <div
+                              key={event.id}
+                              className={`absolute z-10 ${getEventTypeColor(event.type)} 
+                                         rounded-md border-2 border-white/30 shadow-lg cursor-pointer 
+                                         transition-all duration-200 hover:scale-[1.02] hover:shadow-xl 
+                                         hover:border-white/50 hover:z-30 overflow-hidden`}
+                              style={{
+                                width: `${widthPercent}%`,
+                                left: `${leftPercent}%`,
+                                top: `${topOffset}%`,
+                                height: `${heightPercent}%`,
+                                minHeight: `${(heightInCells - 1) * 80 + (80 - (event.minuteOffset / 60) * 80)}px`
+                              }}
+                              onClick={() => onEventClick(event)}
+                            >
+                              <div className="h-full flex items-center justify-center text-center p-2">
+                                <div className="text-white">
+                                  <div className={`font-semibold leading-tight ${
+                                    event.title.length > 25 ? 'text-sm' : 'text-base'
+                                  }`}>
+                                    {event.title}
+                                  </div>
+                                  {event.duration >= 60 && (
+                                    <div className="text-sm text-white/80 mt-1">
+                                      {event.time}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    </div>
-                  </div>
-                </div>
+                    );
+                  })}
+                </React.Fragment>
               );
             })}
           </div>
