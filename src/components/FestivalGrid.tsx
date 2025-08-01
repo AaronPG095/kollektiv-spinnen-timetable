@@ -217,23 +217,23 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
   const totalGridHeight = timeSlots.length * HOUR_HEIGHT + HEADER_HEIGHT;
 
   return (
-    <div className="festival-grid-container bg-slate-900 text-white rounded-lg overflow-hidden">
+    <div className="festival-grid-container bg-background text-foreground rounded-lg overflow-hidden border border-border">
       {/* Header */}
-      <div className="flex sticky top-0 z-50 bg-indigo-800 border-b-2 border-indigo-600">
-        <div className="w-20 h-12 flex items-center justify-center font-bold border-r border-indigo-600">
+      <div className="grid sticky top-0 z-50 bg-card border-b border-border" style={{ gridTemplateColumns: '80px 80px 1fr 1fr 1fr' }}>
+        <div className="h-12 flex items-center justify-center font-bold border-r border-border text-sm">
           Tag
         </div>
-        <div className="w-16 h-12 flex items-center justify-center font-bold border-r border-indigo-600">
+        <div className="h-12 flex items-center justify-center font-bold border-r border-border text-sm">
           Zeit
         </div>
         {venues.map((venue, index) => (
           <div 
             key={venue}
-            className="flex-1 min-w-48 h-12 flex items-center justify-center font-bold border-r border-indigo-600"
+            className="h-12 flex items-center justify-center font-bold border-r border-border text-sm"
             style={{ 
-              backgroundColor: index === 0 ? '#3b82f6' : 
-                               index === 1 ? '#8b5cf6' : 
-                               '#ec4899' 
+              backgroundColor: index === 0 ? 'hsl(var(--venue-draussen))' : 
+                               index === 1 ? 'hsl(var(--venue-oben))' : 
+                               'hsl(var(--venue-unten))'
             }}
           >
             {venueLabels[venue as keyof typeof venueLabels]}
@@ -242,99 +242,91 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       </div>
 
       {/* Scrollable content */}
-      <div className="overflow-auto max-h-[80vh] relative">
-        <div className="relative" style={{ height: totalGridHeight }}>
-          {/* Time grid lines and labels */}
+      <div className="overflow-auto max-h-[80vh]">
+        <div className="grid relative" style={{ gridTemplateColumns: '80px 80px 1fr 1fr 1fr', minHeight: `${totalGridHeight}px` }}>
+          {/* Time grid and content */}
           {timeSlots.map((slot, index) => {
-            const yPosition = HEADER_HEIGHT + (slot.totalMinutes / 60) * HOUR_HEIGHT;
-            
             return (
-              <div key={`${slot.day}-${slot.hour}`}>
+              <React.Fragment key={`${slot.day}-${slot.hour}`}>
                 {/* Day label */}
-                {slot.dayStart && (
+                {slot.dayStart ? (
                   <div 
-                    className="absolute left-0 w-20 bg-indigo-800 border-r border-indigo-600 flex items-center justify-center font-bold text-sm z-10"
+                    className="bg-card border-r border-border flex items-center justify-center font-bold text-sm"
                     style={{ 
-                      top: yPosition,
-                      height: slot.day === 'Freitag' ? HOUR_HEIGHT * 5 :
-                              slot.day === 'Samstag' ? HOUR_HEIGHT * 24 :
-                              HOUR_HEIGHT * 21,
+                      gridRowEnd: `span ${slot.day === 'Freitag' ? 5 : slot.day === 'Samstag' ? 24 : 21}`,
                       writingMode: 'vertical-rl',
                       textOrientation: 'mixed'
                     }}
                   >
                     {slot.day.toUpperCase()}
                   </div>
+                ) : (
+                  <div></div>
                 )}
                 
                 {/* Time label */}
                 <div 
-                  className="absolute left-20 w-16 bg-indigo-800 border-r border-indigo-600 flex items-center justify-center text-xs font-medium z-10"
-                  style={{ 
-                    top: yPosition,
-                    height: HOUR_HEIGHT
-                  }}
+                  className="bg-card border-r border-border border-b border-border flex items-center justify-center text-xs font-medium"
+                  style={{ height: HOUR_HEIGHT }}
                 >
                   {slot.label}
                 </div>
 
-                {/* Grid line */}
-                <div 
-                  className="absolute left-36 right-0 border-t border-slate-700"
-                  style={{ top: yPosition }}
-                />
-
-                {/* Venue columns background */}
+                {/* Venue columns */}
                 {venues.map((venue, venueIndex) => (
                   <div
                     key={`${slot.day}-${slot.hour}-${venue}`}
-                    className="absolute border-r border-slate-700 bg-slate-800/30"
-                    style={{
-                      left: 144 + venueIndex * VENUE_COLUMN_WIDTH,
-                      width: VENUE_COLUMN_WIDTH,
-                      top: yPosition,
-                      height: HOUR_HEIGHT
-                    }}
-                  />
-                ))}
-              </div>
-            );
-          })}
+                    className="relative border-r border-border border-b border-border bg-card/50"
+                    style={{ height: HOUR_HEIGHT }}
+                  >
+                    {/* Events for this time slot and venue */}
+                    {gridEvents
+                      .filter(event => {
+                        const eventVenueIndex = venues.indexOf(event.venue as any);
+                        const eventStartHour = Math.floor(event.startMinutes / 60);
+                        const slotHour = slot.totalMinutes / 60;
+                        return eventVenueIndex === venueIndex && 
+                               eventStartHour === slotHour;
+                      })
+                      .map(event => {
+                        const width = 100 / event.totalLanes;
+                        const leftOffset = event.lane * width;
+                        const minuteOffset = event.startMinutes % 60;
+                        const topOffset = (minuteOffset / 60) * HOUR_HEIGHT;
+                        const height = (event.duration / 60) * HOUR_HEIGHT;
 
-          {/* Event blocks */}
-          {gridEvents.map(event => {
-            const venueIndex = venues.indexOf(event.venue as any);
-            const leftPosition = 144 + venueIndex * VENUE_COLUMN_WIDTH;
-            const width = VENUE_COLUMN_WIDTH / event.totalLanes;
-            const leftOffset = event.lane * width;
-
-            return (
-              <div
-                key={event.id}
-                className={`absolute ${getEventTypeColor(event.type)} rounded-md border border-white/30 
-                           shadow-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] 
-                           hover:shadow-xl hover:border-white/50 hover:z-40 overflow-hidden z-30`}
-                style={{
-                  left: leftPosition + leftOffset + 4,
-                  width: width - 8,
-                  top: event.pixelTop + 2,
-                  height: Math.max(event.pixelHeight - 4, 30) // Minimum height
-                }}
-                onClick={() => onEventClick(event)}
-              >
-                <div className="h-full p-2 flex flex-col justify-center text-center">
-                  <div className={`font-semibold leading-tight text-white ${
-                    event.title.length > 20 ? 'text-xs' : 'text-sm'
-                  }`}>
-                    {event.title}
+                        return (
+                          <div
+                            key={event.id}
+                            className={`absolute ${getEventTypeColor(event.type)} rounded-md border border-white/30 
+                                       shadow-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] 
+                                       hover:shadow-xl hover:border-white/50 hover:z-40 overflow-hidden z-30`}
+                            style={{
+                              left: `${leftOffset}%`,
+                              width: `${width - 2}%`,
+                              top: topOffset,
+                              height: Math.max(height - 4, 30)
+                            }}
+                            onClick={() => onEventClick(event)}
+                          >
+                            <div className="h-full p-2 flex flex-col justify-center text-center">
+                              <div className={`font-semibold leading-tight text-white ${
+                                event.title.length > 20 ? 'text-xs' : 'text-sm'
+                              }`}>
+                                {event.title}
+                              </div>
+                              {height > 40 && (
+                                <div className="text-xs text-white/80 mt-1">
+                                  {event.time}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                   </div>
-                  {event.pixelHeight > 40 && (
-                    <div className="text-xs text-white/80 mt-1">
-                      {event.time}
-                    </div>
-                  )}
-                </div>
-              </div>
+                ))}
+              </React.Fragment>
             );
           })}
         </div>
