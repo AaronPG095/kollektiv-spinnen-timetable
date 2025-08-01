@@ -364,46 +364,49 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
               );
             })}
             
-            {/* Event blocks - positioned within the grid */}
+            {/* Event blocks - positioned using grid placement */}
             {gridEvents.map(event => {
               // Calculate width and position based on lanes
               const widthPercent = event.totalLanes > 1 ? (100 / event.totalLanes) : 100;
               const leftPercent = event.totalLanes > 1 ? (event.lane * widthPercent) : 0;
               const topOffset = (event.minuteOffset / 60) * 80; // 80px per hour cell
               
-              // Ensure event stays within its designated venue column
-              const venueIndex = venues.indexOf(event.venue as any);
-              const correctGridColumn = venueIndex + 3; // +3 for day and time columns
-              
               return (
                 <div
                   key={event.id}
-                  className={`absolute z-20 ${getEventTypeColor(event.type)} 
+                  className={`relative ${getEventTypeColor(event.type)} 
                              rounded-md border-2 border-white/30 shadow-lg cursor-pointer 
                              transition-all duration-200 hover:scale-[1.02] hover:shadow-xl 
                              hover:border-white/50 hover:z-30 overflow-hidden`}
                   style={{
-                    gridColumn: correctGridColumn,
+                    gridColumn: event.gridColumn,
                     gridRow: `${event.gridRowStart} / ${event.gridRowEnd}`,
-                    width: `${widthPercent}%`,
-                    left: `${leftPercent}%`,
-                    top: `${topOffset}px`,
-                    height: `calc(100% - ${topOffset}px)`
                   }}
                   onClick={() => onEventClick(event)}
                 >
-                  <div className="h-full flex items-center justify-center text-center p-2">
-                    <div className="text-white">
-                      <div className={`font-semibold leading-tight ${
-                        event.title.length > 25 ? 'text-sm' : 'text-base'
-                      }`}>
-                        {event.title}
-                      </div>
-                      {event.duration >= 60 && (
-                        <div className="text-sm text-white/80 mt-1">
-                          {event.time}
+                  {/* Inner positioned container for lane management */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      width: `${widthPercent}%`,
+                      left: `${leftPercent}%`,
+                      top: `${topOffset}px`,
+                      height: `calc(100% - ${topOffset}px)`
+                    }}
+                  >
+                    <div className="h-full flex items-center justify-center text-center p-2">
+                      <div className="text-white">
+                        <div className={`font-semibold leading-tight ${
+                          event.title.length > 25 ? 'text-sm' : 'text-base'
+                        }`}>
+                          {event.title}
                         </div>
-                      )}
+                        {event.duration >= 60 && (
+                          <div className="text-sm text-white/80 mt-1">
+                            {event.time}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
