@@ -143,11 +143,6 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         durationMinutes = (24 - startHour + endHour) * 60 - startMin + endMin;
       }
       
-      // Debug log for duration calculation
-      if (event.title === 'Ricky Shark' || event.title === 'Regentag') {
-        console.log(`${event.title}: ${startHour}:${startMin} - ${endHour}:${endMin} = ${durationMinutes} minutes`);
-      }
-      
       // Determine correct venue column with fallback
       const venueIndex = venues.indexOf(event.venue as any);
       if (venueIndex === -1) {
@@ -320,12 +315,12 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         </svg>
       </div>
 
-      <div className="festival-grid relative overflow-hidden rounded-lg" style={{ backgroundColor: '#3100a2' }}>
-        <div className="grid-container overflow-auto max-h-[80vh]">
+      <div className="festival-grid relative overflow-hidden rounded-lg max-w-[1200px] mx-auto" style={{ backgroundColor: '#3100a2' }}>
+        <div className="grid-container overflow-auto max-h-[60vh]">
           <div className="festival-grid-main grid gap-0"
                style={{ 
-                 gridTemplateColumns: '80px 60px repeat(3, 1fr)',
-                 gridTemplateRows: `60px repeat(${timeSlots.length}, 80px)`,
+                 gridTemplateColumns: '80px 60px repeat(3, minmax(200px, 1fr))',
+                 gridTemplateRows: `60px repeat(${timeSlots.length}, 70px)`,
                  overflow: 'visible'
                }}>
             
@@ -416,7 +411,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                           
                           // Calculate actual height based on duration in minutes
                           const durationInMinutes = event.duration;
-                          const pixelsPerMinute = 80 / 60; // 80px per hour = 1.333px per minute
+                          const pixelsPerMinute = 70 / 60; // 70px per hour = 1.167px per minute
                           const heightInPixels = durationInMinutes * pixelsPerMinute;
                           
                           return (
