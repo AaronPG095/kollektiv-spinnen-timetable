@@ -102,8 +102,13 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
     // First pass: calculate basic positioning
     const processedEvents = events.map(event => {
       const [startTimeStr, endTimeStr] = (event.time || '19:00 - 20:00').split(' - ');
-      const [startHour, startMin = 0] = startTimeStr.split(':').map(Number);
-      const [endHour, endMin = 0] = endTimeStr.split(':').map(Number);
+      const startParts = startTimeStr.trim().split(':');
+      const endParts = endTimeStr.trim().split(':');
+      
+      const startHour = parseInt(startParts[0], 10);
+      const startMin = startParts[1] ? parseInt(startParts[1], 10) : 0;
+      const endHour = parseInt(endParts[0], 10);
+      const endMin = endParts[1] ? parseInt(endParts[1], 10) : 0;
       
       // Get slot indices
       const startSlotIndex = getSlotIndex(startHour, event.day);
@@ -131,6 +136,25 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       const startTotalMinutes = startSlotIndex * 60 + startMin;
       const endTotalMinutes = endSlotIndex * 60 + endMin;
       
+      // Calculate actual duration in minutes
+      let durationMinutes = 0;
+      if (endSlotIndex > startSlotIndex) {
+        // Event spans multiple hours
+        durationMinutes = (endSlotIndex - startSlotIndex) * 60 - startMin + endMin;
+      } else if (endSlotIndex === startSlotIndex) {
+        // Event within same hour
+        durationMinutes = endMin - startMin;
+      }
+      
+      // Handle cross-day duration calculation
+      if (endHour < startHour) {
+        if (event.day === 'Freitag') {
+          durationMinutes = (24 - startHour + endHour) * 60 - startMin + endMin;
+        } else if (event.day === 'Samstag') {
+          durationMinutes = (24 - startHour + endHour) * 60 - startMin + endMin;
+        }
+      }
+      
       // Determine correct venue column with fallback
       const venueIndex = venues.indexOf(event.venue as any);
       if (venueIndex === -1) {
@@ -142,7 +166,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         ...event,
         startMinutes: startTotalMinutes,
         endMinutes: endTotalMinutes,
-        duration: endTotalMinutes - startTotalMinutes,
+        duration: durationMinutes,
         gridRowStart: startSlotIndex + 2, // +2 for header row (1-indexed + 1 for header)
         gridRowEnd: endSlotIndex + 2,
         gridColumn: venueIndex + 3, // +3 for day and time columns
@@ -392,8 +416,11 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                           const widthPercent = event.totalLanes > 1 ? (100 / event.totalLanes) : 100;
                           const leftPercent = event.totalLanes > 1 ? (event.lane * widthPercent) : 0;
                           const topOffset = (event.minuteOffset / 60) * 100; // percentage of cell height
-                          const heightInCells = event.gridRowEnd - event.gridRowStart;
-                          const heightPercent = ((heightInCells * 80 - (event.minuteOffset / 60) * 80) / 80) * 100;
+                          
+                          // Calculate actual height based on duration in minutes
+                          const durationInMinutes = event.duration;
+                          const pixelsPerMinute = 80 / 60; // 80px per hour = 1.333px per minute
+                          const heightInPixels = durationInMinutes * pixelsPerMinute;
                           
                           return (
                             <div
@@ -406,8 +433,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                                 width: `${widthPercent}%`,
                                 left: `${leftPercent}%`,
                                 top: `${topOffset}%`,
-                                height: `${heightPercent}%`,
-                                minHeight: `${(heightInCells - 1) * 80 + (80 - (event.minuteOffset / 60) * 80)}px`
+                                height: `${heightInPixels}px`
                               }}
                               onClick={() => onEventClick(event)}
                             >
