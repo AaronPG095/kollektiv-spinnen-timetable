@@ -371,6 +371,10 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
               const leftPercent = event.totalLanes > 1 ? (event.lane * widthPercent) : 0;
               const topOffset = (event.minuteOffset / 60) * 80; // 80px per hour cell
               
+              // Ensure event stays within its designated venue column
+              const venueIndex = venues.indexOf(event.venue as any);
+              const correctGridColumn = venueIndex + 3; // +3 for day and time columns
+              
               return (
                 <div
                   key={event.id}
@@ -379,13 +383,12 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                              transition-all duration-200 hover:scale-[1.02] hover:shadow-xl 
                              hover:border-white/50 hover:z-30 overflow-hidden`}
                   style={{
-                    gridColumn: event.gridColumn,
+                    gridColumn: correctGridColumn,
                     gridRow: `${event.gridRowStart} / ${event.gridRowEnd}`,
-                    width: `calc(${widthPercent}% - 8px)`,
-                    marginLeft: `calc(${leftPercent}% + 4px)`,
-                    marginTop: `${topOffset + 4}px`,
-                    marginRight: '4px',
-                    height: `calc(100% - ${topOffset + 8}px)`
+                    width: `${widthPercent}%`,
+                    left: `${leftPercent}%`,
+                    top: `${topOffset}px`,
+                    height: `calc(100% - ${topOffset}px)`
                   }}
                   onClick={() => onEventClick(event)}
                 >
@@ -396,9 +399,11 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                       }`}>
                         {event.title}
                       </div>
-                      <div className="text-sm text-white/80 mt-1">
-                        {event.time}
-                      </div>
+                      {event.duration >= 60 && (
+                        <div className="text-sm text-white/80 mt-1">
+                          {event.time}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
