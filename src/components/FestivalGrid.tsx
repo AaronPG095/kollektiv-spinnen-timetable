@@ -121,11 +121,6 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         endSlotIndex = getSlotIndex(endHour, 'Sonntag');
       }
       
-      // If event ends with minutes > 0, it extends into the next hour
-      if (endMin > 0) {
-        endSlotIndex++;
-      }
-      
       // Ensure valid slot indices
       if (startSlotIndex === -1 || endSlotIndex === -1) {
         console.warn(`Invalid time for event ${event.title}: ${event.time} on ${event.day}`);
@@ -136,23 +131,21 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       const startTotalMinutes = startSlotIndex * 60 + startMin;
       const endTotalMinutes = endSlotIndex * 60 + endMin;
       
-      // Calculate actual duration in minutes
+      // Calculate actual duration in minutes - simplified and corrected
       let durationMinutes = 0;
-      if (endSlotIndex > startSlotIndex) {
-        // Event spans multiple hours
-        durationMinutes = (endSlotIndex - startSlotIndex) * 60 - startMin + endMin;
-      } else if (endSlotIndex === startSlotIndex) {
-        // Event within same hour
-        durationMinutes = endMin - startMin;
+      
+      // If event is within the same day
+      if (endHour >= startHour || (endHour < startHour && event.day !== 'Freitag' && event.day !== 'Samstag')) {
+        // Simple case: end hour is after start hour
+        durationMinutes = (endHour - startHour) * 60 + endMin - startMin;
+      } else {
+        // Cross-day event
+        durationMinutes = (24 - startHour + endHour) * 60 - startMin + endMin;
       }
       
-      // Handle cross-day duration calculation
-      if (endHour < startHour) {
-        if (event.day === 'Freitag') {
-          durationMinutes = (24 - startHour + endHour) * 60 - startMin + endMin;
-        } else if (event.day === 'Samstag') {
-          durationMinutes = (24 - startHour + endHour) * 60 - startMin + endMin;
-        }
+      // Debug log for duration calculation
+      if (event.title === 'Ricky Shark' || event.title === 'Regentag') {
+        console.log(`${event.title}: ${startHour}:${startMin} - ${endHour}:${endMin} = ${durationMinutes} minutes`);
       }
       
       // Determine correct venue column with fallback
@@ -168,7 +161,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         endMinutes: endTotalMinutes,
         duration: durationMinutes,
         gridRowStart: startSlotIndex + 2, // +2 for header row (1-indexed + 1 for header)
-        gridRowEnd: endSlotIndex + 2,
+        gridRowEnd: endSlotIndex + 2 + (endMin > 0 ? 1 : 0), // Extend to next row if minutes > 0
         gridColumn: venueIndex + 3, // +3 for day and time columns
         lane: 0,
         totalLanes: 1,
@@ -332,7 +325,8 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
           <div className="festival-grid-main grid gap-0"
                style={{ 
                  gridTemplateColumns: '80px 60px repeat(3, 1fr)',
-                 gridTemplateRows: `60px repeat(${timeSlots.length}, 80px)` 
+                 gridTemplateRows: `60px repeat(${timeSlots.length}, 80px)`,
+                 overflow: 'visible'
                }}>
             
             {/* Header - Day, Time and Venue labels */}
@@ -410,7 +404,10 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                     return (
                       <div key={`${slot.day}-${slot.hour}-${venue}`}
                            className="relative border-b border-gray-600 border-r"
-                           style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+                           style={{ 
+                             backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                             overflow: 'visible'
+                           }}>
                         {/* Render events that start in this cell */}
                         {cellEvents.map(event => {
                           const widthPercent = event.totalLanes > 1 ? (100 / event.totalLanes) : 100;
@@ -425,7 +422,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                           return (
                             <div
                               key={event.id}
-                              className={`absolute z-10 ${getEventTypeColor(event.type)} 
+                              className={`absolute z-20 ${getEventTypeColor(event.type)} 
                                          rounded-md border-2 border-white/30 shadow-lg cursor-pointer 
                                          transition-all duration-200 hover:scale-[1.02] hover:shadow-xl 
                                          hover:border-white/50 hover:z-30 overflow-hidden`}
