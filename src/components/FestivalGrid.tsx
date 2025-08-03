@@ -541,10 +541,9 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                           return (
                             <div
                               key={event.id}
-                              className={`absolute z-20 ${getEventTypeColor(event.type)} 
-                                         rounded-md border-2 border-white/30 shadow-lg cursor-pointer 
+                              className="absolute z-20 rounded-md border-2 border-white/30 shadow-lg cursor-pointer 
                                          transition-all duration-200 hover:scale-[1.02] hover:shadow-xl 
-                                         hover:border-white/50 hover:z-30 overflow-hidden`}
+                                         hover:border-white/50 hover:z-30 overflow-hidden"
                               style={{
                                 width: `${widthPercent}%`,
                                 left: `${leftPercent}%`,
