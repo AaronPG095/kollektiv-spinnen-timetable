@@ -75,16 +75,16 @@ export const FestivalHeader = ({
             </h1>
           </div>
 
-          {/* Top Controls: Search + Filters + Language/Auth */}
-          <div className="flex flex-col gap-4">
-            {/* Search and Controls Row */}
-            <div className="flex items-center justify-center gap-3">
-              {/* View Toggle - Desktop only, positioned left */}
-              {view && onViewChange && (
-                <div className="hidden md:block">
-                  <ViewToggle view={view} onViewChange={onViewChange} />
-                </div>
-              )}
+            {/* Top Controls: Search + Filters + Language/Auth */}
+            <div className="flex flex-col gap-4">
+              {/* Search and Controls Row */}
+              <div className="flex items-center justify-center gap-3">
+                {/* View Toggle - Desktop only, positioned left */}
+                {view && onViewChange && (
+                  <div className="hidden md:block">
+                    <ViewToggle view={view} onViewChange={onViewChange} />
+                  </div>
+                )}
               
               {/* Search */}
               <div className="relative flex-1 md:max-w-md">
@@ -107,16 +107,6 @@ export const FestivalHeader = ({
                   </PopoverTrigger>
                   <PopoverContent className="w-80 p-4" align="end">
                     <div className="space-y-4">
-                      {/* View Toggle in Mobile */}
-                      {view && onViewChange && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <Filter className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">View</span>
-                          </div>
-                          <ViewToggle view={view} onViewChange={onViewChange} />
-                        </div>
-                      )}
                       
                       {/* Day Filter in Mobile */}
                       <div>
@@ -318,10 +308,17 @@ export const FestivalHeader = ({
                       </Button>
                     ))}
                   </div>
-                </div>
               </div>
+            </div>
 
             </div>
+            
+            {/* Mobile View Toggle - centered below toolbar */}
+            {view && onViewChange && (
+              <div className="block md:hidden flex justify-center">
+                <ViewToggle view={view} onViewChange={onViewChange} />
+              </div>
+            )}
           </div>
         </div>
       </div>

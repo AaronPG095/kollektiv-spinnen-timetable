@@ -433,12 +433,12 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
             <div className="sticky top-0 z-30 border-b-2 border-gray-700 border-r-2 
                            flex items-center justify-center font-bold text-cyan-300 px-2 uppercase tracking-wider"
                  style={{ backgroundColor: '#0F1729' }}>
-              Tag
+              {t('day')}
             </div>
             <div className="sticky top-0 z-30 border-b-2 border-gray-700 border-r-2
                            flex items-center justify-center font-bold text-cyan-300 px-2 uppercase tracking-wider"
                  style={{ backgroundColor: '#0F1729' }}>
-              Zeit
+              {t('time')}
             </div>
             {venues.map((venue, index) => (
               <div key={venue}
