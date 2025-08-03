@@ -389,8 +389,8 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       </div>
 
       <div className="festival-grid relative overflow-hidden rounded-lg max-w-[1200px] mx-auto" style={{ backgroundColor: '#3100a2' }}>
-        {/* Zoom controls for desktop only */}
-        <div className="absolute top-2 right-2 z-40 hidden md:flex gap-2">
+        {/* Zoom controls for non-touch devices */}
+        <div className="absolute top-2 right-2 z-40 flex gap-2">
           <button 
             onClick={() => setZoomLevel(Math.max(0.5, zoomLevel - 0.25))}
             className="bg-white/20 hover:bg-white/30 text-white rounded px-3 py-1 text-sm font-medium transition-colors"
@@ -417,6 +417,13 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
               Reset
             </button>
           )}
+        </div>
+        
+        {/* Mobile hint */}
+        <div className="absolute top-2 left-2 z-40 md:hidden">
+          <span className="bg-white/10 text-white rounded px-2 py-1 text-xs">
+            Pinch to zoom
+          </span>
         </div>
         
         <div ref={gridContainerRef} className="grid-container overflow-auto max-h-[70vh]" style={{ touchAction: 'pan-x pan-y' }}>
