@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Event } from '@/components/EventCard';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -48,19 +49,6 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
   const getEventTextColor = (type: string) => {
     // All vibrant colors work well with white text
     return 'text-white';
-  };
-
-  const getDayBackgroundColor = (day: string) => {
-    switch (day) {
-      case 'Freitag':
-        return 'rgba(255, 255, 255, 0.12)'; // Lightest
-      case 'Samstag':
-        return 'rgba(255, 255, 255, 0.08)'; // Medium
-      case 'Sonntag':
-        return 'rgba(255, 255, 255, 0.04)'; // Darkest
-      default:
-        return 'rgba(255, 255, 255, 0.08)';
-    }
   };
 
   // Generate time slots from Friday 19:00 to Sunday 20:00
@@ -301,32 +289,21 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
   }, [events]);
 
   const getEventTypeColor = (type: string) => {
-    // Using the gradient palette from the provided image (light to dark purple)
+    // Using the new vibrant gradient colors from the user's image
     switch (type) {
-      case 'interaktiv':
-        return 'bg-[#D8B9FF]/95'; // Lightest purple with opacity
-      case 'workshop':
-        return 'bg-[#B589D6]/95'; // Light purple with opacity
       case 'performance':
-        return 'bg-[#9552CC]/95'; // Medium purple with opacity
+        return 'bg-[#FF1F8A]/95'; // Magenta
+      case 'workshop':
+        return 'bg-[#7B2FBF]/95'; // Purple
       case 'live':
-        return 'bg-[#7B2FBF]/95'; // Dark purple with opacity
+        return 'bg-[#5724E8]/95'; // Blue-Purple
       case 'dj':
-        return 'bg-[#521B99]/95'; // Darkest purple with opacity
+        return 'bg-[#2E8FE8]/95'; // Blue
+      case 'interaktiv':
+        return 'bg-[#00E5FF]/95'; // Cyan
       default:
-        return 'bg-[#3C096C]/95';
+        return 'bg-[#5724E8]/95'; // Default to blue-purple
     }
-  };
-
-  const getEventTypeLabel = (type: string) => {
-    const typeLabels: Record<string, string> = {
-      'dj': 'DJ',
-      'live': 'Live-Konzert',
-      'performance': 'Performance',
-      'workshop': 'Workshop',
-      'interaktiv': 'Interaktiv'
-    };
-    return typeLabels[type] || type.toUpperCase();
   };
 
   // Handle pinch-to-zoom on touch devices
@@ -554,11 +531,10 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                     
                     return (
                       <div key={`${slot.day}-${slot.hour}-${venue}`}
-                           className={`relative border-b border-gray-600 border-r ${
+                           className={`relative border-b border-gray-600 border-r bg-background/10 ${
                              isLastSlotOfDay ? 'border-b-2 border-b-gray-400' : ''
                            }`}
                            style={{ 
-                             backgroundColor: getDayBackgroundColor(slot.day),
                              overflow: 'visible'
                            }}>
                         {/* Render events that start in this cell */}
