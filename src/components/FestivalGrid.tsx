@@ -271,20 +271,19 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
   }, [events]);
 
   const getEventTypeColor = (type: string) => {
-    // Using the gradient palette from the provided image (light to dark purple)
     switch (type) {
-      case 'interaktiv':
-        return 'bg-[#D8B9FF]/95'; // Lightest purple with opacity
-      case 'workshop':
-        return 'bg-[#B589D6]/95'; // Light purple with opacity
-      case 'performance':
-        return 'bg-[#9552CC]/95'; // Medium purple with opacity
-      case 'live':
-        return 'bg-[#7B2FBF]/95'; // Dark purple with opacity
       case 'dj':
-        return 'bg-[#521B99]/95'; // Darkest purple with opacity
+        return 'bg-[rgba(233,30,99,0.9)]'; // Hot pink
+      case 'live':
+        return 'bg-[rgba(156,39,176,0.9)]'; // Purple
+      case 'performance':
+        return 'bg-[rgba(103,58,183,0.9)]'; // Deep purple
+      case 'workshop':
+        return 'bg-[rgba(33,150,243,0.9)]'; // Light blue
+      case 'interaktiv':
+        return 'bg-[rgba(0,188,212,0.9)]'; // Cyan
       default:
-        return 'bg-[#3C096C]/95';
+        return 'bg-[rgba(103,58,183,0.9)]';
     }
   };
 
