@@ -33,6 +33,12 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
   const lastDistanceRef = useRef<number>(0);
   const gridContainerRef = useRef<HTMLDivElement>(null);
 
+  // Helper function to translate day names
+  const translateDay = (day: string): string => {
+    const dayKey = day.toLowerCase();
+    return t(dayKey) || day;
+  };
+
   // Generate time slots from Friday 19:00 to Sunday 20:00
   const timeSlots = useMemo(() => {
     const slots = [];
@@ -484,7 +490,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                            writingMode: 'vertical-rl',
                            textOrientation: 'mixed'
                          }}>
-                      {slot.day.toUpperCase()}
+                      {translateDay(slot.day).toUpperCase()}
                     </div>
                   ) : (
                     <div style={{ display: 'none' }}></div>
