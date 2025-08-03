@@ -271,19 +271,20 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
   }, [events]);
 
   const getEventTypeColor = (type: string) => {
+    // Using the gradient palette from the provided image (light to dark purple)
     switch (type) {
-      case 'dj':
-        return 'bg-[#ff3c7e]'; // Pink color from list
-      case 'live':
-        return 'bg-[#fe7639]'; // Orange color from list
-      case 'performance':
-        return 'bg-[#ffd835]'; // Yellow color from list  
-      case 'workshop':
-        return 'bg-[#2ECC71]';
       case 'interaktiv':
-        return 'bg-[#ff61f6]'; // Bright pink/magenta from list
+        return 'bg-[#D8B9FF]/95'; // Lightest purple with opacity
+      case 'workshop':
+        return 'bg-[#B589D6]/95'; // Light purple with opacity
+      case 'performance':
+        return 'bg-[#9552CC]/95'; // Medium purple with opacity
+      case 'live':
+        return 'bg-[#7B2FBF]/95'; // Dark purple with opacity
+      case 'dj':
+        return 'bg-[#521B99]/95'; // Darkest purple with opacity
       default:
-        return 'bg-[#B8860B]';
+        return 'bg-[#3C096C]/95';
     }
   };
 
@@ -296,19 +297,6 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       'interaktiv': 'Interaktiv'
     };
     return typeLabels[type] || type.toUpperCase();
-  };
-
-  const getDayBackgroundColor = (day: string) => {
-    switch (day) {
-      case 'Freitag':
-        return '#1a1a2e';
-      case 'Samstag':
-        return '#16213e';
-      case 'Sonntag':
-        return '#0f1419';
-      default:
-        return '#0a0b1e';
-    }
   };
 
   // Handle pinch-to-zoom on touch devices
@@ -399,7 +387,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         </svg>
       </div>
 
-      <div className="festival-grid relative overflow-hidden rounded-lg max-w-[1200px] mx-auto" style={{ backgroundColor: '#0a0b1e' }}>
+      <div className="festival-grid relative overflow-hidden rounded-lg max-w-[1200px] mx-auto" style={{ backgroundColor: '#0B0E1F' }}>
         {/* Zoom controls for desktop only */}
         <div className="absolute top-2 right-2 z-40 hidden md:flex gap-2">
           <button 
@@ -443,24 +431,25 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                }}>
             
             {/* Header - Day, Time and Venue labels */}
-            <div className="sticky top-0 z-30 border-b-2 border-gray-800 border-r-2 
-                           flex items-center justify-center font-bold text-cyan-400 px-2 uppercase tracking-wider"
-                 style={{ backgroundColor: '#1a1d3a' }}>
+            <div className="sticky top-0 z-30 border-b-2 border-gray-700 border-r-2 
+                           flex items-center justify-center font-bold text-cyan-300 px-2 uppercase tracking-wider"
+                 style={{ backgroundColor: '#0F1729' }}>
               Tag
             </div>
-            <div className="sticky top-0 z-30 border-b-2 border-gray-800 border-r-2
-                           flex items-center justify-center font-bold text-cyan-400 px-2 uppercase tracking-wider"
-                 style={{ backgroundColor: '#1a1d3a' }}>
+            <div className="sticky top-0 z-30 border-b-2 border-gray-700 border-r-2
+                           flex items-center justify-center font-bold text-cyan-300 px-2 uppercase tracking-wider"
+                 style={{ backgroundColor: '#0F1729' }}>
               Zeit
             </div>
             {venues.map((venue, index) => (
               <div key={venue}
-                   className="sticky top-0 z-30 border-b-2 border-gray-800 border-r-2 
-                             flex items-center justify-center font-bold text-white px-4 text-center tracking-wider"
+                   className="sticky top-0 z-30 border-b-2 border-gray-700 border-r-2 
+                             flex items-center justify-center font-bold text-white px-4 text-center tracking-wider uppercase"
                    style={{ 
-                     backgroundColor: index === 0 ? '#00BCD4' : 
-                                      index === 1 ? '#7B1FA2' : 
-                                      '#E91E63' 
+                     backgroundColor: index === 0 ? '#1B5E7C' : // Teal/dark cyan for Neue Ufer 
+                                      index === 1 ? '#2E1A47' : // Dark purple for Salon
+                                      index === 2 ? '#6B1F49' : // Dark pink/magenta for Flora
+                                      '#2E1A47'
                    }}>
                 {venueLabels[venue as keyof typeof venueLabels]}
               </div>
@@ -488,10 +477,10 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                 <React.Fragment key={`${slot.day}-${slot.hour}`}>
                   {/* Day label (only for first slot of each day) */}
                   {isFirstSlotOfDay ? (
-                    <div className="sticky left-0 z-20 border-b border-gray-700 border-r-2
-                                   flex items-center justify-center text-cyan-400 font-bold text-lg px-2 tracking-wider"
+                    <div className="sticky left-0 z-20 border-b border-gray-800 border-r-2
+                                   flex items-center justify-center text-cyan-300 font-bold text-lg px-2 tracking-wider"
                          style={{ 
-                           backgroundColor: '#2d3561',
+                           backgroundColor: '#1A2238',
                            gridRowEnd: `span ${daySpan}`,
                            writingMode: 'vertical-rl',
                            textOrientation: 'mixed'
@@ -509,12 +498,12 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                                            (slot.day === 'Samstag' && slot.hour === 23);
                     
                     return (
-                      <div className={`sticky left-0 z-20 border-b border-gray-700 border-r-2
-                                     flex items-center justify-center text-gray-300 text-sm px-2 ${
-                                     isLastSlotOfDay ? 'border-b-2 border-b-gray-500' : ''
+                      <div className={`sticky left-0 z-20 border-b border-gray-800 border-r-2
+                                     flex items-center justify-center text-gray-400 text-sm px-2 ${
+                                     isLastSlotOfDay ? 'border-b-2 border-b-gray-600' : ''
                                    }`}
                            style={{ 
-                             backgroundColor: '#2d3561'
+                             backgroundColor: '#1A2238'
                            }}>
                         <div className="font-medium">{slot.label}</div>
                       </div>
@@ -532,8 +521,8 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                     
                     return (
                       <div key={`${slot.day}-${slot.hour}-${venue}`}
-                           className={`relative border-b border-gray-700 border-r ${
-                             isLastSlotOfDay ? 'border-b-2 border-b-gray-500' : ''
+                           className={`relative border-b border-gray-800 border-r border-gray-800 ${
+                             isLastSlotOfDay ? 'border-b-2 border-b-gray-600' : ''
                            }`}
                            style={{ 
                              backgroundColor: getDayBackgroundColor(slot.day),
