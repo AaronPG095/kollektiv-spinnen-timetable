@@ -33,6 +33,36 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
   const lastDistanceRef = useRef<number>(0);
   const gridContainerRef = useRef<HTMLDivElement>(null);
 
+  // Helper functions
+  const getEventTypeLabel = (type: string) => {
+    const typeLabels: Record<string, string> = {
+      'dj': 'DJ',
+      'live': 'Live-Konzert',
+      'performance': 'Performance',
+      'workshop': 'Workshop',
+      'interaktiv': 'Interaktiv'
+    };
+    return typeLabels[type] || type.toUpperCase();
+  };
+
+  const getEventTextColor = (type: string) => {
+    // All vibrant colors work well with white text
+    return 'text-white';
+  };
+
+  const getDayBackgroundColor = (day: string) => {
+    switch (day) {
+      case 'Freitag':
+        return 'rgba(255, 255, 255, 0.12)'; // Lightest
+      case 'Samstag':
+        return 'rgba(255, 255, 255, 0.08)'; // Medium
+      case 'Sonntag':
+        return 'rgba(255, 255, 255, 0.04)'; // Darkest
+      default:
+        return 'rgba(255, 255, 255, 0.08)';
+    }
+  };
+
   // Generate time slots from Friday 19:00 to Sunday 20:00
   const timeSlots = useMemo(() => {
     const slots = [];
