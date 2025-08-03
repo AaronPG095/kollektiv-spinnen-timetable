@@ -13,17 +13,17 @@ interface GridTimetableProps {
 }
 
 const venues = [
-  { id: "draussen", color: "venue-draussen" },
-  { id: "oben", color: "venue-oben" },
-  { id: "unten", color: "venue-unten" }
+  { id: "draussen", color: "bg-venue-draussen" },
+  { id: "oben", color: "bg-venue-oben" },
+  { id: "unten", color: "bg-venue-unten" }
 ];
 
 const typeConfig = {
-  performance: { label: "Performance", color: "type-performance" },
-  dj: { label: "DJ", color: "type-dj" },
-  workshop: { label: "Workshop", color: "type-workshop" },
-  live: { label: "Live-Konzert", color: "type-live" },
-  interaktiv: { label: "Interaktiv", color: "type-interaktiv" }
+  performance: { label: "Performance", color: "bg-type-performance" },
+  dj: { label: "DJ", color: "bg-type-dj" },
+  workshop: { label: "Workshop", color: "bg-type-workshop" },
+  live: { label: "Live-Konzert", color: "bg-type-live" },
+  interaktiv: { label: "Interaktiv", color: "bg-type-interaktiv" }
 };
 
 export const GridTimetable = ({ 

@@ -19,8 +19,8 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				'orbitron': ['Orbitron', 'sans-serif'],
-				'sans': ['Orbitron', 'sans-serif'],
+				'quantico': ['Quantico', 'sans-serif'],
+				'sans': ['Quantico', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
