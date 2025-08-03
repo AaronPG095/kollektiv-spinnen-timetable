@@ -299,6 +299,19 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
     return typeLabels[type] || type.toUpperCase();
   };
 
+  const getDayBackgroundColor = (day: string) => {
+    switch (day) {
+      case 'Freitag':
+        return '#0D1B2A'; // Dark blue for Friday
+      case 'Samstag':
+        return '#1B263B'; // Medium blue for Saturday  
+      case 'Sonntag':
+        return '#2E3440'; // Lighter blue for Sunday
+      default:
+        return '#0B0E1F';
+    }
+  };
+
   // Handle pinch-to-zoom on touch devices
   useEffect(() => {
     const container = gridContainerRef.current;
