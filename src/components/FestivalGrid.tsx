@@ -520,14 +520,13 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                                            (slot.day === 'Samstag' && slot.hour === 23);
                     
                     return (
-                      <div key={`${slot.day}-${slot.hour}-${venue}`}
-                           className={`relative border-b border-gray-800 border-r border-gray-800 ${
-                             isLastSlotOfDay ? 'border-b-2 border-b-gray-600' : ''
-                           }`}
-                           style={{ 
-                             backgroundColor: getDayBackgroundColor(slot.day),
-                             overflow: 'visible'
-                           }}>
+                       <div key={`${slot.day}-${slot.hour}-${venue}`}
+                            className={`relative border-b border-gray-800 border-r border-gray-800 bg-background/10 ${
+                              isLastSlotOfDay ? 'border-b-2 border-b-gray-600' : ''
+                            }`}
+                            style={{ 
+                              overflow: 'visible'
+                            }}>
                         {/* Render events that start in this cell */}
                         {cellEvents.map(event => {
                           const widthPercent = event.totalLanes > 1 ? (100 / event.totalLanes) : 100;
