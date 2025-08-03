@@ -298,6 +298,19 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
     return typeLabels[type] || type.toUpperCase();
   };
 
+  const getDayBackgroundColor = (day: string) => {
+    switch (day) {
+      case 'Freitag':
+        return '#1a1a2e';
+      case 'Samstag':
+        return '#16213e';
+      case 'Sonntag':
+        return '#0f1419';
+      default:
+        return '#0a0b1e';
+    }
+  };
+
   // Handle pinch-to-zoom on touch devices
   useEffect(() => {
     const container = gridContainerRef.current;
