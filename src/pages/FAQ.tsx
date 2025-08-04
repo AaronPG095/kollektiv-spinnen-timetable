@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, Loader2, Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,6 +26,7 @@ const FAQ = () => {
   const { toast } = useToast();
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadFAQs();
@@ -54,8 +56,21 @@ const FAQ = () => {
     }
   };
 
-  // Group FAQs by category and subcategory
-  const groupedFAQs = faqs.reduce((acc, faq) => {
+  // Filter FAQs based on search term
+  const filteredFaqs = useMemo(() => {
+    if (!searchTerm.trim()) return faqs;
+    
+    const term = searchTerm.toLowerCase();
+    return faqs.filter(faq => 
+      faq.question.toLowerCase().includes(term) ||
+      faq.answer.toLowerCase().includes(term) ||
+      (faq.category && faq.category.toLowerCase().includes(term)) ||
+      (faq.subcategory && faq.subcategory.toLowerCase().includes(term))
+    );
+  }, [faqs, searchTerm]);
+
+  // Group filtered FAQs by category and subcategory
+  const groupedFAQs = filteredFaqs.reduce((acc, faq) => {
     const category = faq.category || 'Allgemein';
     const subcategory = faq.subcategory || 'Allgemein';
     
@@ -68,6 +83,10 @@ const FAQ = () => {
     acc[category][subcategory].push(faq);
     return acc;
   }, {} as Record<string, Record<string, FAQItem[]>>);
+
+  const clearSearch = () => {
+    setSearchTerm('');
+  };
 
   if (loading) {
     return (
@@ -160,6 +179,60 @@ const FAQ = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Search Bar */}
+              <Card className="bg-card/30 backdrop-blur-sm border-border/50">
+                <CardContent className="p-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder={language === 'de' ? 'FAQs durchsuchen...' : 'Search FAQs...'}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 pr-10 bg-background/50"
+                    />
+                    {searchTerm && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearSearch}
+                        className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-background/80"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  {searchTerm && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {language === 'de' 
+                        ? `${filteredFaqs.length} Ergebnis${filteredFaqs.length !== 1 ? 'se' : ''} gefunden`
+                        : `${filteredFaqs.length} result${filteredFaqs.length !== 1 ? 's' : ''} found`
+                      }
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Show message when no search results */}
+              {searchTerm && Object.keys(groupedFAQs).length === 0 && (
+                <Card className="bg-card/30 backdrop-blur-sm border-border/50">
+                  <CardContent className="p-12 text-center">
+                    <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-xl font-semibold mb-2">
+                      {language === 'de' ? 'Keine Ergebnisse gefunden' : 'No results found'}
+                    </h3>
+                    <p className="text-muted-foreground mb-4">
+                      {language === 'de' 
+                        ? `Keine FAQs entsprechen der Suche "${searchTerm}"`
+                        : `No FAQs match your search for "${searchTerm}"`
+                      }
+                    </p>
+                    <Button variant="outline" onClick={clearSearch}>
+                      {language === 'de' ? 'Suche zurücksetzen' : 'Clear search'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* FAQ Categories */}
               {Object.entries(groupedFAQs).map(([category, subcategories]) => (
