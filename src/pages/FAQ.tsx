@@ -130,6 +130,38 @@ const FAQ = () => {
             </Card>
           ) : (
             <div className="space-y-6">
+              {/* Intro Text */}
+              <Card className="bg-card/30 backdrop-blur-sm border-border/50">
+                <CardContent className="p-6">
+                  {language === 'de' ? (
+                    <div className="text-center space-y-4">
+                      <h2 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                        Kollektiv Spinnen Festival - das FAQ von A bis Z
+                      </h2>
+                      <p className="text-lg font-semibold text-primary">
+                        [Privatveranstaltung vom 08.-10.08.2025]
+                      </p>
+                      <p className="text-muted-foreground leading-relaxed">
+                        Wir (Aaron, Nico und Momo) wollen mit euch Kollektiv Spinnen und unsere drei Geburtstage feiern – Freitag planen wir ein buntes und sweetes Miteinander, ab Samstag Nachmittag dann über 24h Musik und Tanzen - insgesamt ein festivalhaftes Wochenende von Friends für Friends 🪩
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center space-y-4">
+                      <h2 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                        English Version – Kollektiv Spinnen Festival: FAQ
+                      </h2>
+                      <p className="text-lg font-semibold text-primary">
+                        [Private event from August 8-10, 2025]
+                      </p>
+                      <p className="text-muted-foreground leading-relaxed">
+                        We (Aaron, Nico, and Momo) want to celebrate Kollektiv Spinnen and our three birthdays with you: On Friday, we're planning a colorful and sweet get-together, and then starting Saturday afternoon, there will be over 24 hours of music and dancing – all in all, a festival-like weekend by friends for friends 🪩
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* FAQ Categories */}
               {Object.entries(groupedFAQs).map(([category, subcategories]) => (
                 <Card key={category} className="bg-card/30 backdrop-blur-sm border-border/50">
                   <CardHeader>
