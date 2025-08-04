@@ -226,11 +226,13 @@ const Admin = () => {
                   Add Event
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl mx-4 sm:mx-auto">
+              <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Create New Event</DialogTitle>
                 </DialogHeader>
-                <EventForm onSave={handleSaveEvent} />
+                <div className="max-h-[75vh] overflow-y-auto pr-2">
+                  <EventForm onSave={handleSaveEvent} />
+                </div>
               </DialogContent>
             </Dialog>
           </div>
@@ -312,14 +314,16 @@ const Admin = () => {
                           <Edit className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
+                      <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle>Edit Event</DialogTitle>
                         </DialogHeader>
-                        <EventForm 
-                          onSave={handleSaveEvent} 
-                          initialEvent={event}
-                        />
+                        <div className="max-h-[75vh] overflow-y-auto pr-2">
+                          <EventForm 
+                            onSave={handleSaveEvent} 
+                            initialEvent={event}
+                          />
+                        </div>
                       </DialogContent>
                     </Dialog>
                     <Button 
