@@ -561,6 +561,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                               <div className="h-full flex items-center justify-center text-center p-2">
                                 <div className="text-white">
                                   <div className={`font-semibold leading-tight ${
+                                    event.duration <= 15 ? 'text-[60%]' : 
                                     event.title.length > 25 ? 'text-sm' : 'text-base'
                                   }`}>
                                     {event.title}
