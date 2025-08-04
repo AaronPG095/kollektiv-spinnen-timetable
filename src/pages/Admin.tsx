@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, ArrowUpDown, Calendar } from 'lucide-react';
 
 interface DatabaseEvent {
   id: string;
@@ -26,16 +26,28 @@ interface DatabaseEvent {
   is_visible?: boolean;
 }
 
+interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+  order_index: number;
+  is_visible: boolean;
+}
+
 const Admin = () => {
   const { user, isAdmin, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [events, setEvents] = useState<DatabaseEvent[]>([]);
+  const [faqs, setFaqs] = useState<FAQItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingEvent, setEditingEvent] = useState<DatabaseEvent | null>(null);
+  const [editingFAQ, setEditingFAQ] = useState<FAQItem | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isFAQCreateOpen, setIsFAQCreateOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showHiddenMode, setShowHiddenMode] = useState(false);
+  const [activeTab, setActiveTab] = useState<"events" | "faqs">("events");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -55,6 +67,7 @@ const Admin = () => {
 
     if (isAdmin) {
       loadEvents();
+      loadFAQs();
     }
   }, [user, isAdmin, authLoading, navigate]);
 
@@ -76,6 +89,24 @@ const Admin = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFAQs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('faqs')
+        .select('*')
+        .order('order_index', { ascending: true });
+
+      if (error) throw error;
+      setFaqs(data || []);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load FAQs",
+        variant: "destructive",
+      });
     }
   };
 
@@ -152,6 +183,79 @@ const Admin = () => {
     }
   };
 
+  const handleSaveFAQ = async (faqData: Omit<FAQItem, 'id'>) => {
+    try {
+      if (editingFAQ) {
+        const { error } = await supabase
+          .from('faqs')
+          .update(faqData)
+          .eq('id', editingFAQ.id);
+        
+        if (error) throw error;
+        toast({ title: "FAQ updated successfully" });
+      } else {
+        const { error } = await supabase
+          .from('faqs')
+          .insert([faqData]);
+        
+        if (error) throw error;
+        toast({ title: "FAQ created successfully" });
+      }
+      
+      loadFAQs();
+      setEditingFAQ(null);
+      setIsFAQCreateOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save FAQ",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteFAQ = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this FAQ?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('faqs')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      toast({ title: "FAQ deleted successfully" });
+      loadFAQs();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete FAQ",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleFAQVisibility = async (id: string, currentVisibility: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('faqs')
+        .update({ is_visible: !currentVisibility })
+        .eq('id', id);
+      
+      if (error) throw error;
+      toast({ 
+        title: currentVisibility ? "FAQ hidden from public" : "FAQ made visible to public" 
+      });
+      loadFAQs();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update FAQ visibility",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
@@ -199,42 +303,87 @@ const Admin = () => {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-          <h2 className="text-lg md:text-xl font-semibold">Events Management</h2>
-          <div className="flex gap-2">
+        {/* Tab Navigation */}
+        <div className="mb-6">
+          <div className="flex gap-1 bg-muted rounded-lg p-1">
             <Button
-              variant={showHiddenMode ? "default" : "outline"}
-              onClick={() => setShowHiddenMode(!showHiddenMode)}
-              className="min-h-[44px]"
+              variant={activeTab === "events" ? "default" : "ghost"}
+              onClick={() => setActiveTab("events")}
+              className="flex-1 gap-2"
             >
-              {showHiddenMode ? (
-                <>
-                  <EyeOff className="h-4 w-4 mr-2" />
-                  Hidden Mode
-                </>
-              ) : (
-                <>
-                  <Eye className="h-4 w-4 mr-2" />
-                  Show All
-                </>
-              )}
+              <Calendar className="h-4 w-4" />
+              Events
             </Button>
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button className="min-h-[44px]">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Event
+            <Button
+              variant={activeTab === "faqs" ? "default" : "ghost"}
+              onClick={() => setActiveTab("faqs")}
+              className="flex-1 gap-2"
+            >
+              <HelpCircle className="h-4 w-4" />
+              FAQs
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+          <h2 className="text-lg md:text-xl font-semibold">
+            {activeTab === "events" ? "Events Management" : "FAQ Management"}
+          </h2>
+          <div className="flex gap-2">
+            {activeTab === "events" ? (
+              <>
+                <Button
+                  variant={showHiddenMode ? "default" : "outline"}
+                  onClick={() => setShowHiddenMode(!showHiddenMode)}
+                  className="min-h-[44px]"
+                >
+                  {showHiddenMode ? (
+                    <>
+                      <EyeOff className="h-4 w-4 mr-2" />
+                      Hidden Mode
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="h-4 w-4 mr-2" />
+                      Show All
+                    </>
+                  )}
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Create New Event</DialogTitle>
-                </DialogHeader>
-                <div className="max-h-[75vh] overflow-y-auto pr-2">
-                  <EventForm onSave={handleSaveEvent} />
-                </div>
-              </DialogContent>
-            </Dialog>
+                <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="min-h-[44px]">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Event
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Create New Event</DialogTitle>
+                    </DialogHeader>
+                    <div className="max-h-[75vh] overflow-y-auto pr-2">
+                      <EventForm onSave={handleSaveEvent} />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </>
+            ) : (
+              <Dialog open={isFAQCreateOpen} onOpenChange={setIsFAQCreateOpen}>
+                <DialogTrigger asChild>
+                  <Button className="min-h-[44px]">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add FAQ
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Create New FAQ</DialogTitle>
+                  </DialogHeader>
+                  <div className="max-h-[75vh] overflow-y-auto pr-2">
+                    <FAQForm onSave={handleSaveFAQ} />
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </div>
 
@@ -256,89 +405,158 @@ const Admin = () => {
           )}
         </div>
 
-        <div className="grid gap-4">
-          {filteredEvents.map((event) => (
-            <Card key={event.id} className={event.is_visible === false ? "border-destructive/50 bg-destructive/5" : ""}>
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-lg">{event.title}</h3>
-                      {event.is_visible === false && (
-                        <div className="flex items-center text-destructive text-xs">
-                          <EyeOff className="h-3 w-3 mr-1" />
-                          Hidden
+        {activeTab === "events" ? (
+          <div className="grid gap-4">
+            {filteredEvents.map((event) => (
+              <Card key={event.id} className={event.is_visible === false ? "border-destructive/50 bg-destructive/5" : ""}>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-lg">{event.title}</h3>
+                        {event.is_visible === false && (
+                          <div className="flex items-center text-destructive text-xs">
+                            <EyeOff className="h-3 w-3 mr-1" />
+                            Hidden
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground">
+                        {event.day} • {event.time} • {event.venue} • {event.type}
+                      </p>
+                      {event.description && (
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {(() => {
+                            try {
+                              const parsed = JSON.parse(event.description);
+                              if (typeof parsed === 'object' && (parsed.en || parsed.de)) {
+                                return (
+                                  <div className="space-y-1">
+                                    {parsed.de && <div><strong>DE:</strong> {parsed.de}</div>}
+                                    {parsed.en && <div><strong>EN:</strong> {parsed.en}</div>}
+                                  </div>
+                                );
+                              }
+                            } catch {
+                              // If not JSON, display as is
+                            }
+                            return <div>{event.description}</div>;
+                          })()}
                         </div>
                       )}
                     </div>
-                    <p className="text-muted-foreground">
-                      {event.day} • {event.time} • {event.venue} • {event.type}
-                    </p>
-                    {event.description && (
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {(() => {
-                          try {
-                            const parsed = JSON.parse(event.description);
-                            if (typeof parsed === 'object' && (parsed.en || parsed.de)) {
-                              return (
-                                <div className="space-y-1">
-                                  {parsed.de && <div><strong>DE:</strong> {parsed.de}</div>}
-                                  {parsed.en && <div><strong>EN:</strong> {parsed.en}</div>}
-                                </div>
-                              );
-                            }
-                          } catch {
-                            // If not JSON, display as is
-                          }
-                          return <div>{event.description}</div>;
-                        })()}
+                    <div className="flex gap-2">
+                      <Button
+                        variant={event.is_visible === false ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleToggleVisibility(event.id, event.is_visible !== false)}
+                        title={event.is_visible === false ? "Make visible to public" : "Hide from public"}
+                      >
+                        {event.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setEditingEvent(event)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Edit Event</DialogTitle>
+                          </DialogHeader>
+                          <div className="max-h-[75vh] overflow-y-auto pr-2">
+                            <EventForm 
+                              onSave={handleSaveEvent} 
+                              initialEvent={event}
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleDeleteEvent(event.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {faqs.map((faq) => (
+              <Card key={faq.id} className={faq.is_visible === false ? "border-destructive/50 bg-destructive/5" : ""}>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-lg">{faq.question}</h3>
+                        {faq.is_visible === false && (
+                          <div className="flex items-center text-destructive text-xs">
+                            <EyeOff className="h-3 w-3 mr-1" />
+                            Hidden
+                          </div>
+                        )}
                       </div>
-                    )}
+                      <p className="text-muted-foreground text-sm">
+                        Order: {faq.order_index}
+                      </p>
+                      <div className="text-sm text-muted-foreground mt-2">
+                        {faq.answer}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={faq.is_visible === false ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleToggleFAQVisibility(faq.id, faq.is_visible !== false)}
+                        title={faq.is_visible === false ? "Make visible to public" : "Hide from public"}
+                      >
+                        {faq.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setEditingFAQ(faq)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Edit FAQ</DialogTitle>
+                          </DialogHeader>
+                          <div className="max-h-[75vh] overflow-y-auto pr-2">
+                            <FAQForm 
+                              onSave={handleSaveFAQ} 
+                              initialFAQ={faq}
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleDeleteFAQ(faq.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={event.is_visible === false ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleToggleVisibility(event.id, event.is_visible !== false)}
-                      title={event.is_visible === false ? "Make visible to public" : "Hide from public"}
-                    >
-                      {event.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                    </Button>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setEditingEvent(event)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Edit Event</DialogTitle>
-                        </DialogHeader>
-                        <div className="max-h-[75vh] overflow-y-auto pr-2">
-                          <EventForm 
-                            onSave={handleSaveEvent} 
-                            initialEvent={event}
-                          />
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => handleDeleteEvent(event.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -622,6 +840,82 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
 
       <Button type="submit" className="w-full">
         {initialEvent ? 'Update Event' : 'Create Event'}
+      </Button>
+    </form>
+  );
+};
+
+interface FAQFormProps {
+  onSave: (faq: Omit<FAQItem, 'id'>) => void;
+  initialFAQ?: FAQItem;
+}
+
+const FAQForm = ({ onSave, initialFAQ }: FAQFormProps) => {
+  const [formData, setFormData] = useState({
+    question: initialFAQ?.question || '',
+    answer: initialFAQ?.answer || '',
+    order_index: initialFAQ?.order_index || 0,
+    is_visible: initialFAQ?.is_visible ?? true
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="question">Question *</Label>
+        <Input
+          id="question"
+          value={formData.question}
+          onChange={(e) => setFormData({ ...formData, question: e.target.value })}
+          required
+          placeholder="Enter the frequently asked question..."
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="answer">Answer *</Label>
+        <Textarea
+          id="answer"
+          value={formData.answer}
+          onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
+          required
+          rows={4}
+          placeholder="Enter the answer to the question..."
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="order_index">Display Order</Label>
+        <Input
+          id="order_index"
+          type="number"
+          value={formData.order_index}
+          onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) || 0 })}
+          placeholder="0"
+          min="0"
+        />
+        <p className="text-xs text-muted-foreground">
+          Lower numbers appear first. Use this to control the order of FAQs.
+        </p>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="is_visible"
+          checked={formData.is_visible}
+          onChange={(e) => setFormData({ ...formData, is_visible: e.target.checked })}
+          className="rounded border-border"
+        />
+        <Label htmlFor="is_visible">Visible to public</Label>
+      </div>
+
+      <Button type="submit" className="w-full">
+        {initialFAQ ? 'Update FAQ' : 'Create FAQ'}
       </Button>
     </form>
   );

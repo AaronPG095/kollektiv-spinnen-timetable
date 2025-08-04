@@ -267,7 +267,9 @@ export const GridTimetable = ({
                       }}
                       onClick={() => onEventClick(event)}
                     >
-                      <div className="font-bold text-xs text-foreground line-clamp-2 leading-tight text-center px-1">
+                      <div className={`font-bold text-foreground line-clamp-2 leading-tight text-center px-1 ${
+                        actualSpan === 1 ? 'text-[10px] md:text-xs' : 'text-xs'
+                      }`}>
                         {event.title}
                       </div>
                     </div>

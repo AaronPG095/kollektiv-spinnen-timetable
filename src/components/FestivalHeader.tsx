@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ViewToggle } from "@/components/ViewToggle";
+import { HeaderActions } from "@/components/HeaderActions";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -79,10 +79,10 @@ export const FestivalHeader = ({
             <div className="flex flex-col gap-4">
               {/* Search and Controls Row */}
               <div className="flex items-center justify-center gap-3">
-                {/* View Toggle - Desktop only, positioned left */}
+                {/* Header Actions - Desktop only, positioned left */}
                 {view && onViewChange && (
                   <div className="hidden md:block">
-                    <ViewToggle view={view} onViewChange={onViewChange} />
+                    <HeaderActions view={view} onViewChange={onViewChange} />
                   </div>
                 )}
               
@@ -313,10 +313,10 @@ export const FestivalHeader = ({
 
             </div>
             
-            {/* Mobile View Toggle - centered below toolbar */}
+            {/* Mobile Header Actions - centered below toolbar */}
             {view && onViewChange && (
               <div className="block md:hidden flex justify-center">
-                <ViewToggle view={view} onViewChange={onViewChange} />
+                <HeaderActions view={view} onViewChange={onViewChange} />
               </div>
             )}
           </div>

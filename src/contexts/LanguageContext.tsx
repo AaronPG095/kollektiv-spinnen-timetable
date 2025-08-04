@@ -72,7 +72,12 @@ const translations = {
     aerobicTherapyDesc: 'Bewegungstherapie, die Tanz und Wellness kombiniert',
     letterOpeningDesc: 'Interaktive Brieföffnungs-Performance-Kunst',
     soundJourneyLiveDesc: 'Live-Looping Klanglandschaft',
-    bowling: 'Interaktives Bowling mit Sekt - Spaß und Spiele für alle'
+    bowling: 'Interaktives Bowling mit Sekt - Spaß und Spiele für alle',
+    
+    // FAQ
+    faq: 'FAQ',
+    frequentlyAskedQuestions: 'Häufig gestellte Fragen',
+    back: 'Zurück'
   },
   en: {
     // Header
@@ -135,7 +140,12 @@ const translations = {
     aerobicTherapyDesc: 'Movement therapy combining dance and wellness',
     letterOpeningDesc: 'Interactive letter-opening performance art',
     soundJourneyLiveDesc: 'Live-Looping Soundjourney',
-    bowling: 'Interactive bowling with sparkling wine - fun and games for everyone'
+    bowling: 'Interactive bowling with sparkling wine - fun and games for everyone',
+    
+    // FAQ
+    faq: 'FAQ',
+    frequentlyAskedQuestions: 'Frequently Asked Questions',
+    back: 'Back'
   }
 };
 
