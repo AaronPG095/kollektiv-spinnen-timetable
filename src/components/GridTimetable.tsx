@@ -284,9 +284,9 @@ export const GridTimetable = ({
                           
                           const durationMinutes = endMinutes - startMinutes;
                           
-                          // If 15 minutes or less, make text 30% smaller
+                          // If 15 minutes or less, make text 50% smaller
                           if (durationMinutes <= 15) {
-                            return 'text-[7px] md:text-[8px]'; // 30% smaller than text-[10px] md:text-xs
+                            return 'text-[5px] md:text-[6px]'; // 50% smaller
                           } else if (actualSpan === 1) {
                             return 'text-[10px] md:text-xs';
                           } else {
