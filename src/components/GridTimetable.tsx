@@ -268,7 +268,31 @@ export const GridTimetable = ({
                       onClick={() => onEventClick(event)}
                     >
                       <div className={`font-bold text-foreground line-clamp-2 leading-tight text-center px-1 ${
-                        actualSpan === 1 ? 'text-[10px] md:text-xs' : 'text-xs'
+                        (() => {
+                          // Calculate event duration in minutes
+                          const [startTime, endTime] = event.time.split(' - ');
+                          const [startHour, startMin = '0'] = startTime.split(':');
+                          const [endHour, endMin = '0'] = endTime.split(':');
+                          
+                          const startMinutes = parseInt(startHour) * 60 + parseInt(startMin);
+                          let endMinutes = parseInt(endHour) * 60 + parseInt(endMin);
+                          
+                          // Handle cross-day events
+                          if (endMinutes <= startMinutes) {
+                            endMinutes += 24 * 60;
+                          }
+                          
+                          const durationMinutes = endMinutes - startMinutes;
+                          
+                          // If 15 minutes or less, make text 30% smaller
+                          if (durationMinutes <= 15) {
+                            return 'text-[7px] md:text-[8px]'; // 30% smaller than text-[10px] md:text-xs
+                          } else if (actualSpan === 1) {
+                            return 'text-[10px] md:text-xs';
+                          } else {
+                            return 'text-xs';
+                          }
+                        })()
                       }`}>
                         {event.title}
                       </div>

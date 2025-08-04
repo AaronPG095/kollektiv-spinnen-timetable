@@ -25,25 +25,25 @@ export const ChronologicalTimetable = ({
 
   const venueConfig = {
     draussen: { 
-      label: t('draussen'), 
+      label: t('draussen').toUpperCase(), 
       color: "venue-draussen",
       bgColor: "bg-venue-draussen/10",
       borderColor: "border-venue-draussen/20",
-      icon: Music
+      emoji: "🌊"
     },
     oben: { 
-      label: t('oben'), 
+      label: t('oben').toUpperCase(), 
       color: "venue-oben",
       bgColor: "bg-venue-oben/10", 
       borderColor: "border-venue-oben/20",
-      icon: Users
+      emoji: "✨"
     },
     unten: { 
-      label: t('unten'), 
+      label: t('unten').toUpperCase(), 
       color: "venue-unten",
       bgColor: "bg-venue-unten/10",
       borderColor: "border-venue-unten/20", 
-      icon: Music
+      emoji: "🌿"
     }
   };
 
@@ -115,7 +115,7 @@ export const ChronologicalTimetable = ({
                 <div key={venueId} className={`space-y-3 p-4 rounded-lg ${venueInfo.bgColor} ${venueInfo.borderColor} border`}>
                   {/* Venue Header */}
                   <div className="flex items-center gap-2 mb-4">
-                    <venueInfo.icon className="h-4 w-4" />
+                    <span className="text-lg">{venueInfo.emoji}</span>
                     <h3 className={`text-xl font-semibold text-${venueInfo.color}`}>
                       {venueInfo.label}
                     </h3>
