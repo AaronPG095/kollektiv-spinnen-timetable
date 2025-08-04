@@ -115,7 +115,7 @@ export const ChronologicalTimetable = ({
                 <div key={venueId} className={`space-y-3 p-4 rounded-lg ${venueInfo.bgColor} ${venueInfo.borderColor} border`}>
                   {/* Venue Header */}
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="text-lg">{venueInfo.emoji}</span>
+                    <span className="text-lg filter grayscale">{venueInfo.emoji}</span>
                     <h3 className={`text-xl font-semibold text-${venueInfo.color}`}>
                       {venueInfo.label}
                     </h3>
