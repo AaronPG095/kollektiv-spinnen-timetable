@@ -167,7 +167,7 @@ const FAQ = () => {
                   ) : (
                     <div className="text-center space-y-4">
                       <h2 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                        English Version – Kollektiv Spinnen Festival: FAQ
+                        Kollektiv Spinnen Festival - FAQ from A to Z
                       </h2>
                       <p className="text-lg font-semibold text-primary">
                         [Private event from August 8-10, 2025]
