@@ -14,10 +14,13 @@ interface FAQItem {
   answer: string;
   order_index: number;
   is_visible: boolean;
+  category?: string;
+  subcategory?: string;
+  language: string;
 }
 
 const FAQ = () => {
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
@@ -25,7 +28,7 @@ const FAQ = () => {
 
   useEffect(() => {
     loadFAQs();
-  }, []);
+  }, [language]);
 
   const loadFAQs = async () => {
     try {
@@ -33,6 +36,9 @@ const FAQ = () => {
         .from('faqs')
         .select('*')
         .eq('is_visible', true)
+        .eq('language', language)
+        .order('category', { ascending: true })
+        .order('subcategory', { ascending: true })
         .order('order_index', { ascending: true });
 
       if (error) throw error;
@@ -48,6 +54,21 @@ const FAQ = () => {
     }
   };
 
+  // Group FAQs by category and subcategory
+  const groupedFAQs = faqs.reduce((acc, faq) => {
+    const category = faq.category || 'Allgemein';
+    const subcategory = faq.subcategory || 'Allgemein';
+    
+    if (!acc[category]) {
+      acc[category] = {};
+    }
+    if (!acc[category][subcategory]) {
+      acc[category][subcategory] = [];
+    }
+    acc[category][subcategory].push(faq);
+    return acc;
+  }, {} as Record<string, Record<string, FAQItem[]>>);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -61,19 +82,39 @@ const FAQ = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="flex items-center gap-4 mb-8">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => navigate('/')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              {t('back')}
-            </Button>
-            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              {t('faq')}
-            </h1>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate('/')}
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                {t('back')}
+              </Button>
+              <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                {t('faq')}
+              </h1>
+            </div>
+            
+            {/* Language Toggle */}
+            <div className="flex items-center gap-2 bg-card/50 rounded-lg p-1 border border-border/30">
+              <Button
+                variant={language === 'de' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setLanguage('de')}
+              >
+                Deutsch
+              </Button>
+              <Button
+                variant={language === 'en' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setLanguage('en')}
+              >
+                English
+              </Button>
+            </div>
           </div>
 
           {/* FAQ Content */}
@@ -88,29 +129,46 @@ const FAQ = () => {
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-card/30 backdrop-blur-sm border-border/50">
-              <CardHeader>
-                <CardTitle className="text-xl">{t('frequentlyAskedQuestions')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Accordion type="single" collapsible className="space-y-2">
-                  {faqs.map((faq) => (
-                    <AccordionItem 
-                      key={faq.id} 
-                      value={faq.id}
-                      className="border border-border/30 rounded-lg bg-background/50 px-4"
-                    >
-                      <AccordionTrigger className="text-left font-medium hover:no-underline">
-                        {faq.question}
-                      </AccordionTrigger>
-                      <AccordionContent className="text-muted-foreground leading-relaxed">
-                        {faq.answer}
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              {Object.entries(groupedFAQs).map(([category, subcategories]) => (
+                <Card key={category} className="bg-card/30 backdrop-blur-sm border-border/50">
+                  <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-3">
+                      <span className="bg-gradient-primary bg-clip-text text-transparent font-bold text-2xl">
+                        {category}
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {Object.entries(subcategories).map(([subcategory, subcategoryFaqs]) => (
+                      <div key={subcategory}>
+                        {subcategory !== 'Allgemein' && (
+                          <h3 className="text-lg font-semibold mb-3 text-primary">
+                            {subcategory}
+                          </h3>
+                        )}
+                        <Accordion type="single" collapsible className="space-y-2">
+                          {subcategoryFaqs.map((faq) => (
+                            <AccordionItem 
+                              key={faq.id} 
+                              value={faq.id}
+                              className="border border-border/30 rounded-lg bg-background/50 px-4"
+                            >
+                              <AccordionTrigger className="text-left font-medium hover:no-underline">
+                                {faq.question}
+                              </AccordionTrigger>
+                              <AccordionContent className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                                {faq.answer}
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </div>
       </div>

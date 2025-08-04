@@ -65,29 +65,38 @@ export type Database = {
       faqs: {
         Row: {
           answer: string
+          category: string | null
           created_at: string
           id: string
           is_visible: boolean
+          language: string | null
           order_index: number
           question: string
+          subcategory: string | null
           updated_at: string
         }
         Insert: {
           answer: string
+          category?: string | null
           created_at?: string
           id?: string
           is_visible?: boolean
+          language?: string | null
           order_index?: number
           question: string
+          subcategory?: string | null
           updated_at?: string
         }
         Update: {
           answer?: string
+          category?: string | null
           created_at?: string
           id?: string
           is_visible?: boolean
+          language?: string | null
           order_index?: number
           question?: string
+          subcategory?: string | null
           updated_at?: string
         }
         Relationships: []
