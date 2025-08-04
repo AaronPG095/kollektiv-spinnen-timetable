@@ -33,6 +33,12 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
   const lastDistanceRef = useRef<number>(0);
   const gridContainerRef = useRef<HTMLDivElement>(null);
 
+  // Helper function to translate day names
+  const translateDay = (day: string): string => {
+    const dayKey = day.toLowerCase();
+    return t(dayKey) || day;
+  };
+
   // Helper functions
   const getEventTypeLabel = (type: string) => {
     const typeLabels: Record<string, string> = {
@@ -55,6 +61,23 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         return 'rgba(255, 255, 255, 0.04)'; // Darkest
       default:
         return 'rgba(255, 255, 255, 0.08)';
+    }
+  };
+
+  const getEventTypeColor = (type: string) => {
+    switch (type) {
+      case 'dj':
+        return 'bg-[rgba(233,30,99,0.9)]'; // Hot pink
+      case 'live':
+        return 'bg-[rgba(156,39,176,0.9)]'; // Purple
+      case 'performance':
+        return 'bg-[rgba(103,58,183,0.9)]'; // Deep purple
+      case 'workshop':
+        return 'bg-[rgba(33,150,243,0.9)]'; // Light blue
+      case 'interaktiv':
+        return 'bg-[rgba(0,188,212,0.9)]'; // Cyan
+      default:
+        return 'bg-[rgba(103,58,183,0.9)]';
     }
   };
 
