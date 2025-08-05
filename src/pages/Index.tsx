@@ -143,10 +143,11 @@ const Index = () => {
                   </Badge>
                   <Badge 
                     variant="outline" 
-                    className="flex items-center gap-1 text-white border"
+                    className="flex items-center gap-1 border"
                     style={{
-                      backgroundColor: getEventTypeColor(selectedEvent.type),
-                      borderColor: getEventTypeColor(selectedEvent.type)
+                      backgroundColor: getEventTypeColor(selectedEvent.type).replace('0.9', '0.3'),
+                      borderColor: getEventTypeColor(selectedEvent.type),
+                      color: getEventTypeColor(selectedEvent.type)
                     }}
                   >
                     {t(selectedEvent.type)}

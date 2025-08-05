@@ -147,7 +147,7 @@ export const ChronologicalTimetable = ({
                         return (
                           <Card 
                             key={event.id}
-                            className="p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2"
+                            className="p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border"
                             style={{
                               backgroundColor: `${getEventTypeColor(event.type).replace('0.9', '0.1')}`,
                               borderColor: getEventTypeColor(event.type)
@@ -161,10 +161,11 @@ export const ChronologicalTimetable = ({
                                   {event.title}
                                 </h4>
                                 <div 
-                                  className="px-2 py-1 rounded text-xs font-medium shrink-0 text-white border"
+                                  className="px-2 py-1 rounded text-xs font-medium shrink-0 border"
                                   style={{
-                                    backgroundColor: getEventTypeColor(event.type),
-                                    borderColor: getEventTypeColor(event.type)
+                                    backgroundColor: getEventTypeColor(event.type).replace('0.9', '0.3'),
+                                    borderColor: getEventTypeColor(event.type),
+                                    color: getEventTypeColor(event.type)
                                   }}
                                 >
                                   {type.label}
