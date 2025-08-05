@@ -58,17 +58,17 @@ export const ChronologicalTimetable = ({
   const getEventTypeColor = (type: string) => {
     switch (type) {
       case 'dj':
-        return 'rgba(233,30,99,0.9)'; // Hot pink
+        return 'rgba(233,30,99,0.7)'; // Hot pink
       case 'live':
-        return 'rgba(156,39,176,0.9)'; // Purple
+        return 'rgba(156,39,176,0.7)'; // Purple
       case 'performance':
-        return 'rgba(103,58,183,0.9)'; // Deep purple
+        return 'rgba(103,58,183,0.7)'; // Deep purple
       case 'workshop':
-        return 'rgba(33,150,243,0.9)'; // Light blue
+        return 'rgba(33,150,243,0.7)'; // Light blue
       case 'interaktiv':
-        return 'rgba(0,188,212,0.9)'; // Cyan
+        return 'rgba(0,188,212,0.7)'; // Cyan
       default:
-        return 'rgba(103,58,183,0.9)';
+        return 'rgba(103,58,183,0.7)';
     }
   };
   // Filter events
