@@ -149,7 +149,7 @@ export const ChronologicalTimetable = ({
                             key={event.id}
                             className="p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2"
                             style={{
-                              backgroundColor: `${getEventTypeColor(event.type).replace('0.9', '0.1')}`,
+                              backgroundColor: `${getEventTypeColor(event.type).replace('0.9', '0.2')}`,
                               borderColor: getEventTypeColor(event.type)
                             }}
                             onClick={() => onEventClick(event)}
