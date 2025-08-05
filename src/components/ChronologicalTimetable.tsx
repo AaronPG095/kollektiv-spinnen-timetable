@@ -165,7 +165,7 @@ export const ChronologicalTimetable = ({
                                   style={{
                                     backgroundColor: getEventTypeColor(event.type).replace('0.9', '0.1'),
                                     color: getEventTypeColor(event.type),
-                                    borderColor: getEventTypeColor(event.type).replace('0.9', '0.9')
+                                    borderColor: getEventTypeColor(event.type).replace('0.9', '1')
                                   }}
                                 >
                                   {type.label}
