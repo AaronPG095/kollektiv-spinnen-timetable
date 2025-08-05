@@ -147,7 +147,7 @@ export const ChronologicalTimetable = ({
                         return (
                           <Card 
                             key={event.id}
-                            className="p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2"
+                            className="p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-1"
                             style={{
                               backgroundColor: `${getEventTypeColor(event.type).replace('0.9', '0.2')}`,
                               borderColor: getEventTypeColor(event.type)
