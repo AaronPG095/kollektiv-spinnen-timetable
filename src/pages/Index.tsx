@@ -41,6 +41,23 @@ const Index = () => {
     unten: { label: t('unten'), color: "venue-unten" }
   };
 
+  const getEventTypeColor = (type: string) => {
+    switch (type) {
+      case 'dj':
+        return 'rgba(233,30,99,0.9)'; // Hot pink
+      case 'live':
+        return 'rgba(156,39,176,0.9)'; // Purple
+      case 'performance':
+        return 'rgba(103,58,183,0.9)'; // Deep purple
+      case 'workshop':
+        return 'rgba(33,150,243,0.9)'; // Light blue
+      case 'interaktiv':
+        return 'rgba(0,188,212,0.9)'; // Cyan
+      default:
+        return 'rgba(103,58,183,0.9)';
+    }
+  };
+
   // Filter events for both views
   const filteredEvents = events.filter((event) => {
     const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -126,11 +143,10 @@ const Index = () => {
                   </Badge>
                   <Badge 
                     variant="outline" 
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 text-white border"
                     style={{
-                      backgroundColor: `hsl(var(--type-${selectedEvent.type}) / 0.1)`,
-                      borderColor: `hsl(var(--type-${selectedEvent.type}) / 0.3)`,
-                      color: `hsl(var(--type-${selectedEvent.type}))`
+                      backgroundColor: getEventTypeColor(selectedEvent.type),
+                      borderColor: getEventTypeColor(selectedEvent.type)
                     }}
                   >
                     {t(selectedEvent.type)}
