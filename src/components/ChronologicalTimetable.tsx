@@ -147,24 +147,24 @@ export const ChronologicalTimetable = ({
                         return (
                           <Card 
                             key={event.id}
-                            className="p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border border-white/20"
+                            className="p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2"
                             style={{
-                              backgroundColor: getEventTypeColor(event.type).replace('0.9', '0.8')
+                              backgroundColor: `${getEventTypeColor(event.type).replace('0.9', '0.1')}`,
+                              borderColor: getEventTypeColor(event.type)
                             }}
                             onClick={() => onEventClick(event)}
                           >
                             <div className="space-y-2">
                               {/* Title and Type */}
                               <div className="flex items-start justify-between gap-2">
-                                <h4 className="font-medium text-white text-sm leading-tight flex-1">
+                                <h4 className="font-medium text-foreground text-sm leading-tight flex-1">
                                   {event.title}
                                 </h4>
                                 <div 
-                                  className="px-2 py-1 rounded text-xs font-medium shrink-0 border"
+                                  className="px-2 py-1 rounded text-xs font-medium shrink-0 text-white border"
                                   style={{
-                                    backgroundColor: getEventTypeColor(event.type).replace('0.9', '0.3'),
-                                    borderColor: getEventTypeColor(event.type),
-                                    color: getEventTypeColor(event.type)
+                                    backgroundColor: getEventTypeColor(event.type),
+                                    borderColor: getEventTypeColor(event.type)
                                   }}
                                 >
                                   {type.label}
@@ -172,14 +172,14 @@ export const ChronologicalTimetable = ({
                               </div>
                               
                               {/* Time */}
-                              <div className="flex items-center gap-2 text-xs text-white/80">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Clock className="h-3 w-3" />
                                 <span>{event.time}</span>
                               </div>
                               
                               {/* Description */}
                               {event.description && (
-                                <p className="text-xs text-white/70 line-clamp-2">
+                                <p className="text-xs text-muted-foreground line-clamp-2">
                                   {(() => {
                                     const desc = event.description;
                                     
