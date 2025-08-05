@@ -126,7 +126,12 @@ const Index = () => {
                   </Badge>
                   <Badge 
                     variant="outline" 
-                    className={`flex items-center gap-1 bg-type-${selectedEvent.type}/10 border-type-${selectedEvent.type}/30 text-type-${selectedEvent.type}`}
+                    className="flex items-center gap-1"
+                    style={{
+                      backgroundColor: `hsl(var(--type-${selectedEvent.type}) / 0.1)`,
+                      borderColor: `hsl(var(--type-${selectedEvent.type}) / 0.3)`,
+                      color: `hsl(var(--type-${selectedEvent.type}))`
+                    }}
                   >
                     {t(selectedEvent.type)}
                   </Badge>
