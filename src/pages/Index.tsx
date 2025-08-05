@@ -145,8 +145,8 @@ const Index = () => {
                     variant="outline" 
                     className="flex items-center gap-1 border"
                     style={{
-                      backgroundColor: getEventTypeColor(selectedEvent.type).replace('0.9', '0.3'),
-                      borderColor: getEventTypeColor(selectedEvent.type),
+                      backgroundColor: getEventTypeColor(selectedEvent.type).replace('0.9', '0.1'),
+                      borderColor: getEventTypeColor(selectedEvent.type).replace('0.9', '0.2'),
                       color: getEventTypeColor(selectedEvent.type)
                     }}
                   >

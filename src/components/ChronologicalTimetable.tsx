@@ -161,10 +161,11 @@ export const ChronologicalTimetable = ({
                                   {event.title}
                                 </h4>
                                 <div 
-                                  className="px-2 py-1 rounded text-xs font-medium shrink-0 text-white border"
+                                  className="px-2 py-1 rounded text-xs font-medium shrink-0 border"
                                   style={{
-                                    backgroundColor: getEventTypeColor(event.type),
-                                    borderColor: getEventTypeColor(event.type)
+                                    backgroundColor: getEventTypeColor(event.type).replace('0.9', '0.1'),
+                                    color: getEventTypeColor(event.type),
+                                    borderColor: getEventTypeColor(event.type).replace('0.9', '0.2')
                                   }}
                                 >
                                   {type.label}
