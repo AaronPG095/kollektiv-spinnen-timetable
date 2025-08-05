@@ -124,6 +124,12 @@ const Index = () => {
                     <MapPin className="h-3 w-3" />
                     {venueConfig[selectedEvent.venue].label}
                   </Badge>
+                  <Badge 
+                    variant="outline" 
+                    className={`flex items-center gap-1 bg-type-${selectedEvent.type}/10 border-type-${selectedEvent.type}/30 text-type-${selectedEvent.type}`}
+                  >
+                    {t(selectedEvent.type)}
+                  </Badge>
                 </div>
                 {selectedEvent.description && (
                   <p className="text-muted-foreground leading-relaxed">
