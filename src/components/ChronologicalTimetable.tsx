@@ -54,6 +54,23 @@ export const ChronologicalTimetable = ({
     live: { label: t('live'), color: "type-live" },
     interaktiv: { label: t('interaktiv'), color: "type-interaktiv" }
   };
+
+  const getEventTypeColor = (type: string) => {
+    switch (type) {
+      case 'dj':
+        return 'rgba(233,30,99,0.9)'; // Hot pink
+      case 'live':
+        return 'rgba(156,39,176,0.9)'; // Purple
+      case 'performance':
+        return 'rgba(103,58,183,0.9)'; // Deep purple
+      case 'workshop':
+        return 'rgba(33,150,243,0.9)'; // Light blue
+      case 'interaktiv':
+        return 'rgba(0,188,212,0.9)'; // Cyan
+      default:
+        return 'rgba(103,58,183,0.9)';
+    }
+  };
   // Filter events
   const filteredEvents = events.filter(event => {
     const matchesDay = selectedDay === "Alle" || event.day === selectedDay;
@@ -130,7 +147,11 @@ export const ChronologicalTimetable = ({
                         return (
                           <Card 
                             key={event.id}
-                            className={`p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2 bg-${type.color}/10 border-${type.color}/40`}
+                            className="p-3 cursor-pointer transition-smooth hover:shadow-glow hover:scale-[1.02] backdrop-blur-sm border-2"
+                            style={{
+                              backgroundColor: `${getEventTypeColor(event.type).replace('0.9', '0.1')}`,
+                              borderColor: getEventTypeColor(event.type)
+                            }}
                             onClick={() => onEventClick(event)}
                           >
                             <div className="space-y-2">
@@ -140,7 +161,11 @@ export const ChronologicalTimetable = ({
                                   {event.title}
                                 </h4>
                                 <div 
-                                  className={`px-2 py-1 rounded text-xs font-medium bg-${type.color}/20 text-${type.color} border border-${type.color}/30 shrink-0`}
+                                  className="px-2 py-1 rounded text-xs font-medium shrink-0 text-white border"
+                                  style={{
+                                    backgroundColor: getEventTypeColor(event.type),
+                                    borderColor: getEventTypeColor(event.type)
+                                  }}
                                 >
                                   {type.label}
                                 </div>
