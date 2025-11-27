@@ -1,73 +1,130 @@
-# Welcome to your Lovable project
+# Kollektiv Spinnen Timetable
 
-## Project info
+A modern, responsive festival timetable application built with React and TypeScript. This application provides an interactive way to browse and filter festival events with support for multiple views, languages, and real-time updates.
 
-**URL**: https://lovable.dev/projects/37c50176-120f-4e58-b7e6-f5ebc448d1f1
+## Features
 
-## How can I edit this code?
+- 📅 **Interactive Timetable**: View events in chronological list or grid format
+- 🔍 **Advanced Filtering**: Filter by day, venue, event type, and search query
+- 🌍 **Multi-language Support**: English and German language support
+- 📱 **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+- 🔐 **Authentication**: User authentication with admin panel for event management
+- 🎨 **Modern UI**: Built with shadcn/ui components and Tailwind CSS
+- ⚡ **Real-time Updates**: Powered by Supabase for real-time data synchronization
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend Framework**: React 18 with TypeScript
+- **Build Tool**: Vite
+- **UI Components**: shadcn/ui (Radix UI primitives)
+- **Styling**: Tailwind CSS
+- **Backend**: Supabase (PostgreSQL database with real-time subscriptions)
+- **Routing**: React Router DOM
+- **State Management**: React Query (TanStack Query)
+- **Mobile**: Capacitor (iOS & Android support)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/37c50176-120f-4e58-b7e6-f5ebc448d1f1) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js 18+ and npm (or use [nvm](https://github.com/nvm-sh/nvm#installing-and-updating) to install)
+- A Supabase project (or use the existing configuration)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. **Clone the repository**
+   ```sh
+   git clone <YOUR_GIT_URL>
+   cd kollektiv-spinnen-timetable
+   ```
 
-Follow these steps:
+2. **Install dependencies**
+   ```sh
+   npm install
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3. **Set up environment variables**
+   
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_APP_URL=http://localhost:5173
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+4. **Start the development server**
+   ```sh
+   npm run dev
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+   The application will be available at `http://localhost:5173`
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+## Available Scripts
+
+- `npm run dev` - Start the development server
+- `npm run build` - Build for production
+- `npm run build:dev` - Build in development mode
+- `npm run preview` - Preview the production build locally
+- `npm run lint` - Run ESLint
+
+## Project Structure
+
+```
+src/
+├── components/          # React components
+│   ├── ui/             # shadcn/ui components
+│   └── ...             # Feature components
+├── contexts/           # React contexts (Auth, Language)
+├── data/               # Static data files
+├── hooks/              # Custom React hooks
+├── integrations/       # External service integrations
+│   └── supabase/       # Supabase client and types
+├── lib/                # Utility functions
+├── pages/              # Page components
+└── main.tsx            # Application entry point
 ```
 
-**Edit a file directly in GitHub**
+## Deployment
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Quick Deploy Options
 
-**Use GitHub Codespaces**
+For the fastest deployment, see the [QUICK_START.md](./QUICK_START.md) guide which covers:
+- Vercel deployment (5 minutes)
+- Netlify deployment (5 minutes)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Detailed Migration Guide
 
-## What technologies are used for this project?
+For comprehensive deployment instructions and migration from other platforms, see [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md).
 
-This project is built with:
+### Environment Variables for Production
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Make sure to set these environment variables in your hosting platform:
 
-## How can I deploy this project?
+- `VITE_SUPABASE_URL` - Your Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Your Supabase anonymous/public key
+- `VITE_APP_URL` (optional) - Your production URL (for Capacitor mobile apps)
 
-Simply open [Lovable](https://lovable.dev/projects/37c50176-120f-4e58-b7e6-f5ebc448d1f1) and click on Share -> Publish.
+## Mobile App Support
 
-## Can I connect a custom domain to my Lovable project?
+This project includes Capacitor configuration for building native iOS and Android apps. After deploying your web app:
 
-Yes, you can!
+1. Update `capacitor.config.ts` with your production URL
+2. Run `npx cap sync` to sync the configuration
+3. Build for iOS: `npx cap open ios`
+4. Build for Android: `npx cap open android`
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Contributing
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is private and proprietary.
+
+## Support
+
+For issues, questions, or contributions, please open an issue in the repository.
