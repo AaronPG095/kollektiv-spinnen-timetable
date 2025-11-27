@@ -2,8 +2,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://ndhfsjroztkhlupzvjzh.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kaGZzanJvenRraGx1cHp2anpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4NzEwNTAsImV4cCI6MjA2OTQ0NzA1MH0.yv347okmpPHvFajXo1-ap5tjzbP-gCgMb3fCYcFhVkg";
+// Use environment variables with fallback to hardcoded values for backward compatibility
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://ndhfsjroztkhlupzvjzh.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kaGZzanJvenRraGx1cHp2anpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4NzEwNTAsImV4cCI6MjA2OTQ0NzA1MH0.yv347okmpPHvFajXo1-ap5tjzbP-gCgMb3fCYcFhVkg";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -15,3 +16,37 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   }
 });
+
+/**
+ * Test the Supabase connection by attempting a simple query
+ * @returns Promise<{ success: boolean; error?: any }>
+ */
+export const testSupabaseConnection = async () => {
+  try {
+    console.log('[Supabase] Testing connection...');
+    console.log('[Supabase] URL:', SUPABASE_URL);
+    console.log('[Supabase] Key present:', !!SUPABASE_PUBLISHABLE_KEY);
+    
+    // Try a simple query to test connection
+    const { data, error } = await supabase
+      .from('events')
+      .select('id')
+      .limit(1);
+    
+    if (error) {
+      console.error('[Supabase] Connection test failed:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      return { success: false, error };
+    }
+    
+    console.log('[Supabase] Connection test successful');
+    return { success: true };
+  } catch (err: any) {
+    console.error('[Supabase] Connection test error:', err);
+    return { success: false, error: err };
+  }
+};

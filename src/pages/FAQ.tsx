@@ -34,6 +34,9 @@ const FAQ = () => {
 
   const loadFAQs = async () => {
     try {
+      setLoading(true);
+      console.log(`[FAQ] Loading FAQs for language: ${language}`);
+      
       const { data, error } = await supabase
         .from('faqs')
         .select('*')
@@ -43,14 +46,32 @@ const FAQ = () => {
         .order('subcategory', { ascending: true })
         .order('order_index', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[FAQ] Supabase query error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
+      
+      console.log(`[FAQ] Successfully loaded ${data?.length || 0} FAQs`);
       setFaqs(data || []);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[FAQ] Error loading FAQs:', {
+        error,
+        message: error?.message,
+        details: error?.details,
+        hint: error?.hint,
+        code: error?.code
+      });
       toast({
         title: "Error",
-        description: "Failed to load FAQs",
+        description: error?.message || "Failed to load FAQs. Please check your connection and try again.",
         variant: "destructive",
       });
+      setFaqs([]);
     } finally {
       setLoading(false);
     }

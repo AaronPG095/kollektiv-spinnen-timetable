@@ -73,20 +73,42 @@ const Admin = () => {
 
   const loadEvents = async () => {
     try {
+      console.log('[Admin] Loading all events (admin view)...');
+      
+      // Admin should see all events including hidden ones
+      // RLS policies should allow admins to see everything
       const { data, error } = await supabase
         .from('events')
         .select('*')
         .order('day', { ascending: true })
         .order('time', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Admin] Supabase query error (events):', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
+      
+      console.log(`[Admin] Successfully loaded ${data?.length || 0} events`);
       setEvents(data || []);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Admin] Error loading events:', {
+        error,
+        message: error?.message,
+        details: error?.details,
+        hint: error?.hint,
+        code: error?.code
+      });
       toast({
         title: "Error",
-        description: "Failed to load events",
+        description: error?.message || "Failed to load events. Please check your connection and try again.",
         variant: "destructive",
       });
+      setEvents([]);
     } finally {
       setLoading(false);
     }
@@ -94,48 +116,79 @@ const Admin = () => {
 
   const loadFAQs = async () => {
     try {
+      console.log('[Admin] Loading all FAQs (admin view)...');
+      
+      // Admin should see all FAQs including hidden ones
+      // RLS policies should allow admins to see everything
       const { data, error } = await supabase
         .from('faqs')
         .select('*')
         .order('order_index', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Admin] Supabase query error (FAQs):', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
+      
+      console.log(`[Admin] Successfully loaded ${data?.length || 0} FAQs`);
       setFaqs(data || []);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Admin] Error loading FAQs:', {
+        error,
+        message: error?.message,
+        details: error?.details,
+        hint: error?.hint,
+        code: error?.code
+      });
       toast({
         title: "Error",
-        description: "Failed to load FAQs",
+        description: error?.message || "Failed to load FAQs. Please check your connection and try again.",
         variant: "destructive",
       });
+      setFaqs([]);
     }
   };
 
   const handleSaveEvent = async (eventData: Omit<DatabaseEvent, 'id'>) => {
     try {
       if (editingEvent) {
+        console.log('[Admin] Updating event:', editingEvent.id);
         const { error } = await supabase
           .from('events')
           .update(eventData)
           .eq('id', editingEvent.id);
         
-        if (error) throw error;
+        if (error) {
+          console.error('[Admin] Error updating event:', error);
+          throw error;
+        }
         toast({ title: "Event updated successfully" });
       } else {
+        console.log('[Admin] Creating new event');
         const { error } = await supabase
           .from('events')
           .insert([eventData]);
         
-        if (error) throw error;
+        if (error) {
+          console.error('[Admin] Error creating event:', error);
+          throw error;
+        }
         toast({ title: "Event created successfully" });
       }
       
       loadEvents();
       setEditingEvent(null);
       setIsCreateOpen(false);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Admin] Error saving event:', error);
       toast({
         title: "Error",
-        description: "Failed to save event",
+        description: error?.message || "Failed to save event. Please check your connection and try again.",
         variant: "destructive",
       });
     }
@@ -145,18 +198,23 @@ const Admin = () => {
     if (!confirm('Are you sure you want to delete this event?')) return;
     
     try {
+      console.log('[Admin] Deleting event:', id);
       const { error } = await supabase
         .from('events')
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('[Admin] Error deleting event:', error);
+        throw error;
+      }
       toast({ title: "Event deleted successfully" });
       loadEvents();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Admin] Error deleting event:', error);
       toast({
         title: "Error",
-        description: "Failed to delete event",
+        description: error?.message || "Failed to delete event. Please check your connection and try again.",
         variant: "destructive",
       });
     }
@@ -164,20 +222,25 @@ const Admin = () => {
 
   const handleToggleVisibility = async (id: string, currentVisibility: boolean) => {
     try {
+      console.log('[Admin] Toggling event visibility:', id, !currentVisibility);
       const { error } = await supabase
         .from('events')
         .update({ is_visible: !currentVisibility })
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('[Admin] Error toggling event visibility:', error);
+        throw error;
+      }
       toast({ 
         title: currentVisibility ? "Event hidden from public" : "Event made visible to public" 
       });
       loadEvents();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Admin] Error toggling event visibility:', error);
       toast({
         title: "Error",
-        description: "Failed to update event visibility",
+        description: error?.message || "Failed to update event visibility. Please check your connection and try again.",
         variant: "destructive",
       });
     }
@@ -186,29 +249,38 @@ const Admin = () => {
   const handleSaveFAQ = async (faqData: Omit<FAQItem, 'id'>) => {
     try {
       if (editingFAQ) {
+        console.log('[Admin] Updating FAQ:', editingFAQ.id);
         const { error } = await supabase
           .from('faqs')
           .update(faqData)
           .eq('id', editingFAQ.id);
         
-        if (error) throw error;
+        if (error) {
+          console.error('[Admin] Error updating FAQ:', error);
+          throw error;
+        }
         toast({ title: "FAQ updated successfully" });
       } else {
+        console.log('[Admin] Creating new FAQ');
         const { error } = await supabase
           .from('faqs')
           .insert([faqData]);
         
-        if (error) throw error;
+        if (error) {
+          console.error('[Admin] Error creating FAQ:', error);
+          throw error;
+        }
         toast({ title: "FAQ created successfully" });
       }
       
       loadFAQs();
       setEditingFAQ(null);
       setIsFAQCreateOpen(false);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Admin] Error saving FAQ:', error);
       toast({
         title: "Error",
-        description: "Failed to save FAQ",
+        description: error?.message || "Failed to save FAQ. Please check your connection and try again.",
         variant: "destructive",
       });
     }
@@ -218,18 +290,23 @@ const Admin = () => {
     if (!confirm('Are you sure you want to delete this FAQ?')) return;
     
     try {
+      console.log('[Admin] Deleting FAQ:', id);
       const { error } = await supabase
         .from('faqs')
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('[Admin] Error deleting FAQ:', error);
+        throw error;
+      }
       toast({ title: "FAQ deleted successfully" });
       loadFAQs();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Admin] Error deleting FAQ:', error);
       toast({
         title: "Error",
-        description: "Failed to delete FAQ",
+        description: error?.message || "Failed to delete FAQ. Please check your connection and try again.",
         variant: "destructive",
       });
     }
@@ -237,20 +314,25 @@ const Admin = () => {
 
   const handleToggleFAQVisibility = async (id: string, currentVisibility: boolean) => {
     try {
+      console.log('[Admin] Toggling FAQ visibility:', id, !currentVisibility);
       const { error } = await supabase
         .from('faqs')
         .update({ is_visible: !currentVisibility })
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('[Admin] Error toggling FAQ visibility:', error);
+        throw error;
+      }
       toast({ 
         title: currentVisibility ? "FAQ hidden from public" : "FAQ made visible to public" 
       });
       loadFAQs();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Admin] Error toggling FAQ visibility:', error);
       toast({
         title: "Error",
-        description: "Failed to update FAQ visibility",
+        description: error?.message || "Failed to update FAQ visibility. Please check your connection and try again.",
         variant: "destructive",
       });
     }

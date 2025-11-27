@@ -10,13 +10,30 @@ export const useEvents = () => {
   const loadEvents = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      console.log('[useEvents] Attempting to load events from database...');
+      
+      // Query with explicit is_visible filter for public users
+      // RLS policies should handle admin access, but we also filter client-side for safety
       const { data, error } = await supabase
         .from('events')
         .select('*')
+        .eq('is_visible', true)
         .order('day', { ascending: true })
         .order('time', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useEvents] Supabase query error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
+      
+      console.log(`[useEvents] Successfully loaded ${data?.length || 0} events`);
       
       // Transform database events to match the Event interface
       const transformedEvents: Event[] = (data || []).map(event => ({
@@ -35,9 +52,16 @@ export const useEvents = () => {
 
       setEvents(transformedEvents);
       setError(null);
-    } catch (err) {
-      console.error('Error loading events:', err);
-      setError('Failed to load events');
+    } catch (err: any) {
+      console.error('[useEvents] Error loading events:', {
+        error: err,
+        message: err?.message,
+        details: err?.details,
+        hint: err?.hint,
+        code: err?.code,
+        stack: err?.stack
+      });
+      setError(err?.message || 'Failed to load events. Please check your connection and try again.');
       // Fallback to empty array if database fails
       setEvents([]);
     } finally {
@@ -46,6 +70,25 @@ export const useEvents = () => {
   };
 
   useEffect(() => {
+    // Test connection first
+    const testConnection = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .select('id')
+          .limit(1);
+        
+        if (error) {
+          console.error('[useEvents] Initial connection test failed:', error);
+        } else {
+          console.log('[useEvents] Connection test successful');
+        }
+      } catch (err) {
+        console.error('[useEvents] Connection test error:', err);
+      }
+    };
+    
+    testConnection();
     loadEvents();
 
     // Set up real-time subscription for events
