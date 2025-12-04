@@ -1,11 +1,20 @@
-import { Languages, LogIn, Settings } from "lucide-react";
+import { Search, Languages, LogIn, Settings } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 
-export const FestivalHeader = () => {
+interface FestivalHeaderProps {
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+}
+
+export const FestivalHeader = ({
+  searchQuery,
+  onSearchChange
+}: FestivalHeaderProps) => {
   const { language, setLanguage, t } = useLanguage();
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -66,6 +75,21 @@ export const FestivalHeader = () => {
               )}
             </div>
           </div>
+
+          {/* Search Bar - Only show if search props are provided */}
+          {searchQuery !== undefined && onSearchChange && (
+            <div className="flex items-center justify-center">
+              <div className="relative flex-1 md:max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t('search')}
+                  value={searchQuery}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  className="pl-10 bg-card border-border"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
