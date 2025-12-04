@@ -77,7 +77,32 @@ const translations = {
     // FAQ
     faq: 'FAQ',
     frequentlyAskedQuestions: 'Häufig gestellte Fragen',
-    back: 'Zurück'
+    back: 'Zurück',
+    
+    // Navigation
+    timetable: 'Timetable',
+    tickets: 'Tickets',
+    
+    // Tickets
+    standardTickets: 'Standard Tickets',
+    standardTicketsDesc: 'Aufgrund der inhärenten Non-Profit / Community-basierten Natur von Kollektiv Spinnen beinhalten alle "Standard"-Tickets bei uns die Übernahme einer 2-Stunden-Schicht. Du kannst deine bevorzugte Option im nächsten Schritt auswählen.',
+    earlyBird: 'Early Bird',
+    normal: 'Normal',
+    reducedTickets: 'Reduzierte Tickets',
+    reducedTicketsDesc: 'Diese Tickets erhalten einen Preisnachlass aufgrund der Intensität / zusätzlichen Verantwortung der zugehörigen Positionen im Vergleich zu Standard-Tickets. Bitte beachte: Einige dieser Positionen sind ausschließlich für Personen mit vorheriger Erfahrung / Expertise verfügbar.',
+    chooseThisTicket: 'Wähle dieses Ticket',
+    roleDescriptions: 'Rollenbeschreibungen',
+    bar: 'Bar',
+    kuechenhilfe: 'Küchenhilfe',
+    springerRunner: 'Springer-Runner',
+    springerToilet: 'Springer-Toilet',
+    abbau: 'Abbau',
+    aufbau: 'Aufbau',
+    awareness: 'Awareness',
+    schichtleitung: 'Schichtleitung',
+    techHelfer: 'Tech Helfer',
+    selectRole: 'Rolle auswählen...',
+    roleDescriptionsDesc: 'Detaillierte Rollenbeschreibungen werden hier verfügbar sein.'
   },
   en: {
     // Header
@@ -145,7 +170,32 @@ const translations = {
     // FAQ
     faq: 'FAQ',
     frequentlyAskedQuestions: 'Frequently Asked Questions',
-    back: 'Back'
+    back: 'Back',
+    
+    // Navigation
+    timetable: 'Timetable',
+    tickets: 'Tickets',
+    
+    // Tickets
+    standardTickets: 'Standard Tickets',
+    standardTicketsDesc: 'Due to the inherent non-profit / community based nature of Kollektiv Spinnen, all \'standard\' tickets with us include taking over one 2hr shift, you can select your preferred option in the next step.',
+    earlyBird: 'Early Bird',
+    normal: 'Normal',
+    reducedTickets: 'Reduced Tickets',
+    reducedTicketsDesc: 'These tickets receive a price discount due to the intensity / additional responsibility of the related positions when compared to Standard Tickets. Please note: Some of these positions are exclusively available to individuals with prior experience / expertise.',
+    chooseThisTicket: 'Choose This Ticket',
+    roleDescriptions: 'Role Descriptions',
+    bar: 'Bar',
+    kuechenhilfe: 'Kitchen Helper',
+    springerRunner: 'Springer-Runner',
+    springerToilet: 'Springer-Toilet',
+    abbau: 'Breakdown',
+    aufbau: 'Setup',
+    awareness: 'Awareness',
+    schichtleitung: 'Shift Management',
+    techHelfer: 'Tech Helper',
+    selectRole: 'Select a role...',
+    roleDescriptionsDesc: 'Detailed role descriptions will be available here.'
   }
 };
 

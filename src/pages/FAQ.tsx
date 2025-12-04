@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
+import { FestivalHeader } from '@/components/FestivalHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Loader2, Search, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Loader2, Search, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface FAQItem {
@@ -21,8 +21,7 @@ interface FAQItem {
 }
 
 const FAQ = () => {
-  const { t, language, setLanguage } = useLanguage();
-  const navigate = useNavigate();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,43 +118,10 @@ const FAQ = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <FestivalHeader />
+      
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => navigate('/')}
-                className="gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                {t('back')}
-              </Button>
-              <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                {t('faq')}
-              </h1>
-            </div>
-            
-            {/* Language Toggle */}
-            <div className="flex items-center gap-2 bg-card/50 rounded-lg p-1 border border-border/30">
-              <Button
-                variant={language === 'de' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setLanguage('de')}
-              >
-                Deutsch
-              </Button>
-              <Button
-                variant={language === 'en' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setLanguage('en')}
-              >
-                English
-              </Button>
-            </div>
-          </div>
 
           {/* FAQ Content */}
           {faqs.length === 0 ? (

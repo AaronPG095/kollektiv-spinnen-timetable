@@ -2,12 +2,16 @@ import { useState } from "react";
 import { FestivalHeader } from "@/components/FestivalHeader";
 import { ChronologicalTimetable } from "@/components/ChronologicalTimetable";
 import FestivalGrid from "@/components/FestivalGrid";
+import { HeaderActions } from "@/components/HeaderActions";
 import { useEvents } from "@/hooks/useEvents";
 import { Event } from "@/components/EventCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, MapPin, Instagram, Youtube, ExternalLink, Music, Headphones } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Clock, Calendar, MapPin, Instagram, Youtube, ExternalLink, Music, Headphones, Filter, Music2, X, Search } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Input } from "@/components/ui/input";
 
 const Index = () => {
   const { t, language } = useLanguage();
@@ -69,34 +73,229 @@ const Index = () => {
     return matchesSearch && matchesDay && matchesVenue && matchesEventType;
   });
 
+  const days = [
+    { key: "Alle", label: t('allDays') },
+    { key: "Freitag", label: t('friday') },
+    { key: "Samstag", label: t('saturday') },
+    { key: "Sonntag", label: t('sunday') }
+  ];
+
+  const venues = [
+    { id: "draussen", label: t('draussen'), color: "venue-draussen" },
+    { id: "oben", label: t('oben'), color: "venue-oben" },
+    { id: "unten", label: t('unten'), color: "venue-unten" }
+  ];
+
+  const eventTypes = [
+    { id: "performance", label: t('performance'), color: "type-performance" },
+    { id: "dj", label: t('dj'), color: "type-dj" },
+    { id: "live", label: t('live'), color: "type-live" },
+    { id: "interaktiv", label: t('interaktiv'), color: "type-interaktiv" }
+  ];
+
+  const clearAllFilters = () => {
+    setSelectedDay("Alle");
+    setSelectedVenues([]);
+    setSelectedEventTypes([]);
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <FestivalHeader
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        selectedDay={selectedDay}
-        onDayChange={setSelectedDay}
-        selectedVenues={selectedVenues}
-        onVenueToggle={handleVenueToggle}
-        selectedEventTypes={selectedEventTypes}
-        onEventTypeToggle={handleEventTypeToggle}
-        view={view}
-        onViewChange={setView}
-      />
-      
-      {/* Mobile Day Filter Label */}
-      {selectedDay !== "Alle" && (
-        <div className="md:hidden bg-card border-b border-border px-4 py-3">
-          <div className="flex items-center justify-center">
-            <Badge variant="secondary" className="bg-festival-light/10 border-festival-light/30 text-festival-light">
-              <Calendar className="h-3 w-3 mr-1" />
-              {t(selectedDay.toLowerCase())}
-            </Badge>
-          </div>
-        </div>
-      )}
+      <FestivalHeader />
       
       <main className="container mx-auto px-4 py-8">
+        {/* Search Bar and View Toggle */}
+        <div className="mb-6 flex items-center justify-center gap-4 flex-wrap">
+          <HeaderActions view={view} onViewChange={setView} />
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('search')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-card border-border"
+            />
+          </div>
+        </div>
+
+        {/* Filters Section */}
+        <div className="mb-8 space-y-4">
+
+          {/* Desktop Filters */}
+          <div className="hidden md:flex flex-col gap-4">
+            <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-center">
+              {/* Day Filter and Clear Filters */}
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 min-w-fit">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-muted-foreground">{t('days')}</span>
+                  </div>
+                  <div className="flex gap-1">
+                    {days.map((day) => (
+                      <Button
+                        key={day.key}
+                        variant={selectedDay === day.key ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedDay(day.key)}
+                        className="transition-smooth"
+                      >
+                        {day.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Clear Filters Button inline with Days */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  {t('clearFilters')}
+                </Button>
+              </div>
+            </div>
+
+            {/* Venue and Event Type Filters */}
+            <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-center">
+              {/* Venue Filter */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 min-w-fit">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">{t('venues')}</span>
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                  {venues.map((venue) => (
+                    <Button
+                      key={venue.id}
+                      variant={selectedVenues.includes(venue.id) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleVenueToggle(venue.id)}
+                      className="transition-smooth"
+                    >
+                      {venue.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Event Type Filter */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 min-w-fit">
+                  <Music2 className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">{t('events')}</span>
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                  {eventTypes.map((eventType) => (
+                    <Button
+                      key={eventType.id}
+                      variant={selectedEventTypes.includes(eventType.id) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleEventTypeToggle(eventType.id)}
+                      className="transition-smooth"
+                    >
+                      {eventType.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Filter Button */}
+          <div className="block md:hidden">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="min-h-[44px]">
+                  <Filter className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4" align="end">
+                <div className="space-y-4">
+                  
+                  {/* Day Filter in Mobile */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">{t('days')}</span>
+                    </div>
+                    <div className="flex gap-1 flex-wrap">
+                      {days.map((day) => (
+                        <Button
+                          key={day.key}
+                          variant={selectedDay === day.key ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSelectedDay(day.key)}
+                          className="text-xs"
+                        >
+                          {day.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Venue Filter in Mobile */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">{t('venues')}</span>
+                    </div>
+                    <div className="flex gap-1 flex-wrap">
+                      {venues.map((venue) => (
+                        <Button
+                          key={venue.id}
+                          variant={selectedVenues.includes(venue.id) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleVenueToggle(venue.id)}
+                          className="text-xs transition-smooth"
+                        >
+                          {venue.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Event Type Filter in Mobile */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Music2 className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">{t('events')}</span>
+                    </div>
+                    <div className="flex gap-1 flex-wrap">
+                      {eventTypes.map((eventType) => (
+                        <Button
+                          key={eventType.id}
+                          variant={selectedEventTypes.includes(eventType.id) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleEventTypeToggle(eventType.id)}
+                          className="text-xs transition-smooth"
+                        >
+                          {eventType.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Clear Filters Button in Mobile */}
+                  <div className="pt-2 border-t border-border">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      className="w-full text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      {t('clearFilters')}
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
         {view === "list" ? (
           <ChronologicalTimetable
             events={events}

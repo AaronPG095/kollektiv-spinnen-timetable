@@ -1,7 +1,6 @@
-import { Grid, List, HelpCircle } from "lucide-react";
+import { Grid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useNavigate } from "react-router-dom";
 
 interface HeaderActionsProps {
   view: "grid" | "list";
@@ -10,7 +9,6 @@ interface HeaderActionsProps {
 
 export const HeaderActions = ({ view, onViewChange }: HeaderActionsProps) => {
   const { t } = useLanguage();
-  const navigate = useNavigate();
   
   return (
     <div className="flex items-center gap-2">
@@ -35,17 +33,6 @@ export const HeaderActions = ({ view, onViewChange }: HeaderActionsProps) => {
           {t('gridView')}
         </Button>
       </div>
-      
-      {/* FAQ Button */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => navigate('/faq')}
-        className="gap-2 bg-card/50 border-border/30"
-      >
-        <HelpCircle className="h-4 w-4" />
-        {t('faq')}
-      </Button>
     </div>
   );
 };
