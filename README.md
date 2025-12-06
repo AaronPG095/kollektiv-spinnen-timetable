@@ -1,4 +1,4 @@
-# Kollektiv Spinnen Timetable
+# Kollektiv Spinnen Website
 
 A modern, responsive festival timetable application built with React and TypeScript. This application provides an interactive way to browse and filter festival events with support for multiple views, languages, and real-time updates.
 
@@ -35,7 +35,7 @@ A modern, responsive festival timetable application built with React and TypeScr
 1. **Clone the repository**
    ```sh
    git clone <YOUR_GIT_URL>
-   cd kollektiv-spinnen-timetable
+   cd kollektiv-spinnen-website
    ```
 
 2. **Install dependencies**

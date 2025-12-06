@@ -17,7 +17,8 @@ const Tickets = () => {
   const navigate = useNavigate();
   const [earlyBirdRole, setEarlyBirdRole] = useState<string>("");
   const [normalRole, setNormalRole] = useState<string>("");
-  const [reducedRole, setReducedRole] = useState<string>("");
+  const [earlyBirdReducedRole, setEarlyBirdReducedRole] = useState<string>("");
+  const [normalReducedRole, setNormalReducedRole] = useState<string>("");
 
   const standardRoles = [
     { value: "bar", label: t("bar") },
@@ -32,6 +33,19 @@ const Tickets = () => {
     { value: "awareness", label: t("awareness") },
     { value: "schichtleitung", label: t("schichtleitung") },
     { value: "techHelfer", label: t("techHelfer") },
+  ];
+
+  // Roles to display in the main list (excluding those requiring experience)
+  const reducedRolesMainList = [
+    { value: "abbau", label: t("abbau") },
+    { value: "aufbau", label: t("aufbau") },
+    { value: "techHelfer", label: t("techHelfer") },
+  ];
+
+  // Roles requiring experience / organiser consent
+  const reducedRolesRequiringExperience = [
+    { value: "awareness", label: t("awareness") },
+    { value: "schichtleitung", label: t("schichtleitung") },
   ];
 
   const handleChooseTicket = (type: string, role: string) => {
@@ -59,6 +73,21 @@ const Tickets = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Role Descriptions */}
+              <div className="p-4 bg-background/50 rounded-lg border border-border/30">
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  {t("roleDescriptions")}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {t("roleDescriptionsDesc") || "Detailed role descriptions will be available here."}
+                </p>
+                <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                  {standardRoles.map((role) => (
+                    <li key={role.value}>{role.label}</li>
+                  ))}
+                </ul>
+              </div>
+
               {/* Early Bird */}
               <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
                 <h3 className="text-lg font-semibold text-foreground">
@@ -127,10 +156,41 @@ const Tickets = () => {
                 {t("reducedTicketsDesc")}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+              {/* Role Descriptions */}
+              <div className="p-4 bg-background/50 rounded-lg border border-border/30">
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  {t("roleDescriptions")}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {t("roleDescriptionsDesc") || "Detailed role descriptions will be available here."}
+                </p>
+                <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1 mb-4">
+                  {reducedRolesMainList.map((role) => (
+                    <li key={role.value}>{role.label}</li>
+                  ))}
+                </ul>
+                
+                {/* Only with experience / organiser consent */}
+                <div className="mt-4 pt-4 border-t border-border/30">
+                  <h4 className="text-sm font-semibold text-foreground mb-2">
+                    {t("onlyWithExperience")}
+                  </h4>
+                  <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                    {reducedRolesRequiringExperience.map((role) => (
+                      <li key={role.value}>{role.label}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Early Bird */}
               <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
+                <h3 className="text-lg font-semibold text-foreground">
+                  {t("earlyBird")}
+                </h3>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Select value={reducedRole} onValueChange={setReducedRole}>
+                  <Select value={earlyBirdReducedRole} onValueChange={setEarlyBirdReducedRole}>
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder={t("selectRole") || "Select a role..."} />
                     </SelectTrigger>
@@ -143,29 +203,41 @@ const Tickets = () => {
                     </SelectContent>
                   </Select>
                   <Button
-                    onClick={() => handleChooseTicket("reduced", reducedRole)}
-                    disabled={!reducedRole}
+                    onClick={() => handleChooseTicket("reducedEarlyBird", earlyBirdReducedRole)}
+                    disabled={!earlyBirdReducedRole}
                     className="w-full sm:w-auto"
                   >
                     {t("chooseThisTicket")}
                   </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Role Descriptions Section */}
-          <Card className="bg-card/30 backdrop-blur-sm border-border/50">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                {t("roleDescriptions")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4 text-muted-foreground">
-                <p className="text-sm">
-                  {t("roleDescriptionsDesc") || "Detailed role descriptions will be available here."}
-                </p>
+              {/* Normal */}
+              <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
+                <h3 className="text-lg font-semibold text-foreground">
+                  {t("normal")}
+                </h3>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Select value={normalReducedRole} onValueChange={setNormalReducedRole}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder={t("selectRole") || "Select a role..."} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {reducedRoles.map((role) => (
+                        <SelectItem key={role.value} value={role.value}>
+                          {role.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={() => handleChooseTicket("reducedNormal", normalReducedRole)}
+                    disabled={!normalReducedRole}
+                    className="w-full sm:w-auto"
+                  >
+                    {t("chooseThisTicket")}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

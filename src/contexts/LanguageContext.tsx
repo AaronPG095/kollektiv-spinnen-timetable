@@ -102,7 +102,8 @@ const translations = {
     schichtleitung: 'Schichtleitung',
     techHelfer: 'Tech Helfer',
     selectRole: 'Rolle auswählen...',
-    roleDescriptionsDesc: 'Detaillierte Rollenbeschreibungen werden hier verfügbar sein.'
+    roleDescriptionsDesc: 'Detaillierte Rollenbeschreibungen werden hier verfügbar sein.',
+    onlyWithExperience: 'Nur mit Erfahrung / Organisatoren-Zustimmung'
   },
   en: {
     // Header
@@ -195,7 +196,8 @@ const translations = {
     schichtleitung: 'Shift Management',
     techHelfer: 'Tech Helper',
     selectRole: 'Select a role...',
-    roleDescriptionsDesc: 'Detailed role descriptions will be available here.'
+    roleDescriptionsDesc: 'Detailed role descriptions will be available here.',
+    onlyWithExperience: 'Only with experience / organiser consent'
   }
 };
 

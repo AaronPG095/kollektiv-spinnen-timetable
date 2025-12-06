@@ -7,7 +7,7 @@ const serverUrl = 'https://37c50176-120f-4e58-b7e6-f5ebc448d1f1.lovableproject.c
 
 const config: CapacitorConfig = {
   appId: 'app.kollektivspinnen.timetable',
-  appName: 'Kollektiv Spinnen',
+  appName: 'Kollektiv Spinnen Website',
   webDir: 'dist',
   server: {
     url: serverUrl,
