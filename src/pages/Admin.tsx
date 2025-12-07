@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, ArrowUpDown, Calendar } from 'lucide-react';
 import { Footer } from '@/components/Footer';
+import { FestivalHeader } from '@/components/FestivalHeader';
 
 interface DatabaseEvent {
   id: string;
@@ -34,6 +35,9 @@ interface FAQItem {
   answer: string;
   order_index: number;
   is_visible: boolean;
+  category?: string;
+  subcategory?: string;
+  language?: string;
 }
 
 const Admin = () => {
@@ -358,6 +362,28 @@ const Admin = () => {
     );
   });
 
+  // Group events by day
+  const eventsByDay = filteredEvents.reduce((acc, event) => {
+    if (!acc[event.day]) {
+      acc[event.day] = [];
+    }
+    acc[event.day].push(event);
+    return acc;
+  }, {} as Record<string, DatabaseEvent[]>);
+
+  // Sort events within each day by time
+  Object.keys(eventsByDay).forEach(day => {
+    eventsByDay[day].sort((a, b) => {
+      const timeA = a.time.split(' - ')[0];
+      const timeB = b.time.split(' - ')[0];
+      return timeA.localeCompare(timeB);
+    });
+  });
+
+  // Define day order
+  const dayOrder = ["Freitag", "Samstag", "Sonntag"];
+  const sortedDays = dayOrder.filter(day => eventsByDay[day] && eventsByDay[day].length > 0);
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -371,50 +397,53 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-3 md:p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background flex flex-col">
+      <FestivalHeader />
+      <div className="flex-1 p-3 md:p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              Admin Dashboard
+            </h1>
+            <div className="flex items-center gap-4">
+              {/* Tab Navigation */}
+              <div className="flex gap-1 bg-muted rounded-lg p-1 w-fit">
+                <Button
+                  variant={activeTab === "events" ? "default" : "ghost"}
+                  onClick={() => setActiveTab("events")}
+                  className="gap-2 text-sm py-2 px-3"
+                  size="sm"
+                >
+                  <Calendar className="h-3 w-3" />
+                  Events
+                </Button>
+                <Button
+                  variant={activeTab === "faqs" ? "default" : "ghost"}
+                  onClick={() => setActiveTab("faqs")}
+                  className="gap-2 text-sm py-2 px-3"
+                  size="sm"
+                >
+                  <HelpCircle className="h-3 w-3" />
+                  FAQs
+                </Button>
+              </div>
+              <div className="flex gap-3">
+                <Button onClick={() => navigate('/')} variant="outline">
+                  Back to Festival
+                </Button>
+                <Button onClick={handleSignOut} variant="outline">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
+            </div>
+          </div>
+
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Admin Dashboard
-          </h1>
-          <div className="flex gap-2">
-            <Button onClick={() => navigate('/')} variant="outline">
-              Back to Festival
-            </Button>
-            <Button onClick={handleSignOut} variant="outline">
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="mb-6">
-          <div className="flex gap-1 bg-muted rounded-lg p-1">
-            <Button
-              variant={activeTab === "events" ? "default" : "ghost"}
-              onClick={() => setActiveTab("events")}
-              className="flex-1 gap-2"
-            >
-              <Calendar className="h-4 w-4" />
-              Events
-            </Button>
-            <Button
-              variant={activeTab === "faqs" ? "default" : "ghost"}
-              onClick={() => setActiveTab("faqs")}
-              className="flex-1 gap-2"
-            >
-              <HelpCircle className="h-4 w-4" />
-              FAQs
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
           <h2 className="text-lg md:text-xl font-semibold">
             {activeTab === "events" ? "Events Management" : "FAQ Management"}
           </h2>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             {activeTab === "events" ? (
               <>
                 <Button
@@ -473,7 +502,7 @@ const Admin = () => {
         </div>
 
         {/* Search Bar */}
-        <div className="mb-6">
+        <div className="mb-8">
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
@@ -484,164 +513,369 @@ const Admin = () => {
             />
           </div>
           {searchQuery && (
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-muted-foreground mt-3">
               Showing {filteredEvents.length} of {events.length} events
             </p>
           )}
         </div>
 
         {activeTab === "events" ? (
-          <div className="grid gap-4">
-            {filteredEvents.map((event) => (
-              <Card key={event.id} className={event.is_visible === false ? "border-destructive/50 bg-destructive/5" : ""}>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-lg">{event.title}</h3>
-                        {event.is_visible === false && (
-                          <div className="flex items-center text-destructive text-xs">
-                            <EyeOff className="h-3 w-3 mr-1" />
-                            Hidden
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-muted-foreground">
-                        {event.day} • {event.time} • {event.venue} • {event.type}
-                      </p>
-                      {event.description && (
-                        <div className="text-sm text-muted-foreground mt-1">
-                          {(() => {
-                            try {
-                              const parsed = JSON.parse(event.description);
-                              if (typeof parsed === 'object' && (parsed.en || parsed.de)) {
-                                return (
-                                  <div className="space-y-1">
-                                    {parsed.de && <div><strong>DE:</strong> {parsed.de}</div>}
-                                    {parsed.en && <div><strong>EN:</strong> {parsed.en}</div>}
-                                  </div>
-                                );
-                              }
-                            } catch {
-                              // If not JSON, display as is
-                            }
-                            return <div>{event.description}</div>;
-                          })()}
-                        </div>
-                      )}
+          <div className="w-full">
+            {sortedDays.length === 0 ? (
+              <div className="text-center text-muted-foreground py-12">
+                <p>No events found</p>
+              </div>
+            ) : (
+              <div className="flex gap-6 overflow-x-auto pb-4">
+                {sortedDays.map((day) => (
+                  <div key={day} className="flex-shrink-0 w-[calc(50%-12px)] min-w-[400px] space-y-4">
+                    {/* Day Header */}
+                    <div className="flex items-center gap-3 pb-2 border-b border-border">
+                      <h3 className="text-xl md:text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                        {day}
+                      </h3>
+                      <span className="text-sm text-muted-foreground">
+                        ({eventsByDay[day].length} {eventsByDay[day].length === 1 ? 'event' : 'events'})
+                      </span>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant={event.is_visible === false ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleToggleVisibility(event.id, event.is_visible !== false)}
-                        title={event.is_visible === false ? "Make visible to public" : "Hide from public"}
-                      >
-                        {event.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                      </Button>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setEditingEvent(event)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Edit Event</DialogTitle>
-                          </DialogHeader>
-                          <div className="max-h-[75vh] overflow-y-auto pr-2">
-                            <EventForm 
-                              onSave={handleSaveEvent} 
-                              initialEvent={event}
-                            />
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleDeleteEvent(event.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+
+                    {/* Events for this day */}
+                    <div className="space-y-6">
+                      {eventsByDay[day].map((event) => {
+                        const typeConfig = {
+                          performance: { label: "Performance", color: "type-performance" },
+                          dj: { label: "DJ", color: "type-dj" },
+                          workshop: { label: "Workshop", color: "type-workshop" },
+                          live: { label: "Live", color: "type-live" },
+                          interaktiv: { label: "Interaktiv", color: "type-interaktiv" }
+                        };
+                        const type = typeConfig[event.type as keyof typeof typeConfig] || typeConfig.performance;
+                        
+                        return (
+                        <Card 
+                          key={event.id} 
+                          className={event.is_visible === false ? "border-destructive/50 bg-destructive/5" : "border-2"}
+                          style={event.is_visible !== false ? {
+                            backgroundColor: `hsl(var(--${type.color}) / 0.2)`,
+                            borderColor: `hsl(var(--${type.color}) / 0.6)`
+                          } : {}}
+                        >
+                          <CardContent className="p-6">
+                            <div className="flex justify-between items-start gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <h3 className="font-semibold text-lg">{event.title}</h3>
+                                  {event.is_visible === false ? (
+                                    <div className="flex items-center text-destructive text-xs">
+                                      <EyeOff className="h-3 w-3 mr-1" />
+                                      Hidden
+                                    </div>
+                                  ) : (
+                                    <div 
+                                      className="px-2 py-1 rounded text-xs font-medium border shrink-0"
+                                      style={{
+                                        backgroundColor: `hsl(var(--${type.color}) / 0.3)`,
+                                        color: `hsl(var(--${type.color}))`,
+                                        borderColor: `hsl(var(--${type.color}) / 0.5)`
+                                      }}
+                                    >
+                                      {type.label}
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-muted-foreground mb-2">
+                                  {event.time} • {event.venue} • {event.type}
+                                </p>
+                                {event.description && (
+                                  <div className="text-sm text-muted-foreground mt-2">
+                                    {(() => {
+                                      try {
+                                        const parsed = JSON.parse(event.description);
+                                        if (typeof parsed === 'object' && (parsed.en || parsed.de)) {
+                                          return (
+                                            <div className="space-y-1">
+                                              {parsed.de && <div><strong>DE:</strong> {parsed.de}</div>}
+                                              {parsed.en && <div><strong>EN:</strong> {parsed.en}</div>}
+                                            </div>
+                                          );
+                                        }
+                                      } catch {
+                                        // If not JSON, display as is
+                                      }
+                                      return <div>{event.description}</div>;
+                                    })()}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex gap-3">
+                                <Button
+                                  variant={event.is_visible === false ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => handleToggleVisibility(event.id, event.is_visible !== false)}
+                                  title={event.is_visible === false ? "Make visible to public" : "Hide from public"}
+                                >
+                                  {event.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                                </Button>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => setEditingEvent(event)}
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
+                                    <DialogHeader>
+                                      <DialogTitle>Edit Event</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="max-h-[75vh] overflow-y-auto pr-2">
+                                      <EventForm 
+                                        onSave={handleSaveEvent} 
+                                        initialEvent={event}
+                                      />
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  onClick={() => handleDeleteEvent(event.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        );
+                      })}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                ))}
+              </div>
+            )}
           </div>
         ) : (
-          <div className="grid gap-4">
-            {faqs.map((faq) => (
-              <Card key={faq.id} className={faq.is_visible === false ? "border-destructive/50 bg-destructive/5" : ""}>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-lg">{faq.question}</h3>
-                        {faq.is_visible === false && (
-                          <div className="flex items-center text-destructive text-xs">
-                            <EyeOff className="h-3 w-3 mr-1" />
-                            Hidden
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-muted-foreground text-sm">
-                        Order: {faq.order_index}
-                      </p>
-                      <div className="text-sm text-muted-foreground mt-2">
-                        {faq.answer}
-                      </div>
+          <div className="space-y-8">
+            {(() => {
+              // Group FAQs by category
+              const faqsByCategory = faqs.reduce((acc, faq) => {
+                const category = faq.category || 'Uncategorized';
+                if (!acc[category]) {
+                  acc[category] = [];
+                }
+                acc[category].push(faq);
+                return acc;
+              }, {} as Record<string, FAQItem[]>);
+
+              // Sort categories
+              const sortedCategories = Object.keys(faqsByCategory).sort();
+
+              return sortedCategories.map((category) => {
+                const categoryFAQs = faqsByCategory[category];
+                
+                // Group FAQs by subcategory within category
+                const faqsBySubcategory = categoryFAQs.reduce((acc, faq) => {
+                  const subcategory = faq.subcategory || 'General';
+                  if (!acc[subcategory]) {
+                    acc[subcategory] = [];
+                  }
+                  acc[subcategory].push(faq);
+                  return acc;
+                }, {} as Record<string, FAQItem[]>);
+
+                // Sort subcategories
+                const sortedSubcategories = Object.keys(faqsBySubcategory).sort();
+
+                return (
+                  <div key={category} className="space-y-6">
+                    {/* Category Header */}
+                    <div className="flex items-center gap-3 pb-2 border-b border-border">
+                      <h3 className="text-xl md:text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                        {category}
+                      </h3>
+                      <span className="text-sm text-muted-foreground">
+                        ({categoryFAQs.length} {categoryFAQs.length === 1 ? 'FAQ' : 'FAQs'})
+                      </span>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant={faq.is_visible === false ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleToggleFAQVisibility(faq.id, faq.is_visible !== false)}
-                        title={faq.is_visible === false ? "Make visible to public" : "Hide from public"}
-                      >
-                        {faq.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                      </Button>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setEditingFAQ(faq)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Edit FAQ</DialogTitle>
-                          </DialogHeader>
-                          <div className="max-h-[75vh] overflow-y-auto pr-2">
-                            <FAQForm 
-                              onSave={handleSaveFAQ} 
-                              initialFAQ={faq}
-                            />
+
+                    {/* Subcategories */}
+                    {sortedSubcategories.map((subcategory) => {
+                      const subcategoryFAQs = faqsBySubcategory[subcategory];
+                      
+                      // Group FAQs by order_index (matching questions in different languages)
+                      const faqsByOrder = subcategoryFAQs.reduce((acc, faq) => {
+                        const orderKey = faq.order_index.toString();
+                        if (!acc[orderKey]) {
+                          acc[orderKey] = [];
+                        }
+                        acc[orderKey].push(faq);
+                        return acc;
+                      }, {} as Record<string, FAQItem[]>);
+
+                      // Sort by order_index
+                      const sortedOrders = Object.keys(faqsByOrder).sort((a, b) => parseInt(a) - parseInt(b));
+
+                      return (
+                        <div key={subcategory} className="space-y-4 ml-4">
+                          {/* Subcategory Header */}
+                          <div className="flex items-center gap-2 pb-1 border-b border-border/50">
+                            <h4 className="text-lg md:text-xl font-semibold text-foreground">
+                              {subcategory}
+                            </h4>
+                            <span className="text-xs text-muted-foreground">
+                              ({subcategoryFAQs.length} {subcategoryFAQs.length === 1 ? 'FAQ' : 'FAQs'})
+                            </span>
                           </div>
-                        </DialogContent>
-                      </Dialog>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleDeleteFAQ(faq.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+
+                          {/* FAQs grouped by question (order_index) */}
+                          <div className="space-y-4">
+                            {sortedOrders.map((orderKey) => {
+                              const questionFAQs = faqsByOrder[orderKey];
+                              const germanFAQ = questionFAQs.find(faq => faq.language === 'de') || questionFAQs[0];
+                              const englishFAQ = questionFAQs.find(faq => faq.language === 'en') || questionFAQs[0];
+
+                        return (
+                          <div key={orderKey} className="flex gap-4">
+                            {/* German FAQ Card */}
+                            <Card className={`flex-1 ${germanFAQ.is_visible === false ? "border-destructive/50 bg-destructive/5" : ""}`}>
+                              <CardContent className="p-4">
+                                <div className="flex justify-between items-start gap-4">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <span className="text-xs font-semibold text-muted-foreground uppercase">DE</span>
+                                      {germanFAQ.is_visible === false && (
+                                        <div className="flex items-center text-destructive text-xs">
+                                          <EyeOff className="h-3 w-3 mr-1" />
+                                          Hidden
+                                        </div>
+                                      )}
+                                    </div>
+                                    <h3 className="font-semibold text-base mb-1">{germanFAQ.question}</h3>
+                                    <div className="text-sm text-muted-foreground mt-2">
+                                      {germanFAQ.answer}
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2 flex-shrink-0">
+                                    <Button
+                                      variant={germanFAQ.is_visible === false ? "default" : "outline"}
+                                      size="sm"
+                                      onClick={() => handleToggleFAQVisibility(germanFAQ.id, germanFAQ.is_visible !== false)}
+                                      title={germanFAQ.is_visible === false ? "Make visible to public" : "Hide from public"}
+                                    >
+                                      {germanFAQ.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                                    </Button>
+                                    <Dialog>
+                                      <DialogTrigger asChild>
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm"
+                                          onClick={() => setEditingFAQ(germanFAQ)}
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                        </Button>
+                                      </DialogTrigger>
+                                      <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
+                                        <DialogHeader>
+                                          <DialogTitle>Edit FAQ</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="max-h-[75vh] overflow-y-auto pr-2">
+                                          <FAQForm 
+                                            onSave={handleSaveFAQ} 
+                                            initialFAQ={germanFAQ}
+                                          />
+                                        </div>
+                                      </DialogContent>
+                                    </Dialog>
+                                    <Button 
+                                      variant="destructive" 
+                                      size="sm"
+                                      onClick={() => handleDeleteFAQ(germanFAQ.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+
+                            {/* English FAQ Card */}
+                            <Card className={`flex-1 ${englishFAQ.is_visible === false ? "border-destructive/50 bg-destructive/5" : ""}`}>
+                              <CardContent className="p-4">
+                                <div className="flex justify-between items-start gap-4">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <span className="text-xs font-semibold text-muted-foreground uppercase">EN</span>
+                                      {englishFAQ.is_visible === false && (
+                                        <div className="flex items-center text-destructive text-xs">
+                                          <EyeOff className="h-3 w-3 mr-1" />
+                                          Hidden
+                                        </div>
+                                      )}
+                                    </div>
+                                    <h3 className="font-semibold text-base mb-1">{englishFAQ.question}</h3>
+                                    <div className="text-sm text-muted-foreground mt-2">
+                                      {englishFAQ.answer}
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2 flex-shrink-0">
+                                    <Button
+                                      variant={englishFAQ.is_visible === false ? "default" : "outline"}
+                                      size="sm"
+                                      onClick={() => handleToggleFAQVisibility(englishFAQ.id, englishFAQ.is_visible !== false)}
+                                      title={englishFAQ.is_visible === false ? "Make visible to public" : "Hide from public"}
+                                    >
+                                      {englishFAQ.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                                    </Button>
+                                    <Dialog>
+                                      <DialogTrigger asChild>
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm"
+                                          onClick={() => setEditingFAQ(englishFAQ)}
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                        </Button>
+                                      </DialogTrigger>
+                                      <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
+                                        <DialogHeader>
+                                          <DialogTitle>Edit FAQ</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="max-h-[75vh] overflow-y-auto pr-2">
+                                          <FAQForm 
+                                            onSave={handleSaveFAQ} 
+                                            initialFAQ={englishFAQ}
+                                          />
+                                        </div>
+                                      </DialogContent>
+                                    </Dialog>
+                                    <Button 
+                                      variant="destructive" 
+                                      size="sm"
+                                      onClick={() => handleDeleteFAQ(englishFAQ.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        );
+                      })}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                );
+              });
+            })()}
           </div>
         )}
+        </div>
       </div>
       <Footer />
     </div>
