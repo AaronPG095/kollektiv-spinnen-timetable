@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,7 @@ interface FAQItem {
 
 const Admin = () => {
   const { user, isAdmin, signOut, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [events, setEvents] = useState<DatabaseEvent[]>([]);
@@ -59,8 +61,8 @@ const Admin = () => {
     if (!authLoading && user && !isAdmin) {
       navigate('/');
       toast({
-        title: "Access Denied",
-        description: "You don't have admin permissions.",
+        title: t("accessDenied"),
+        description: t("noAdminPermissions"),
         variant: "destructive",
       });
       return;

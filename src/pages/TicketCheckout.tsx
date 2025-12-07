@@ -32,18 +32,18 @@ const TicketCheckout = () => {
                 </Button>
               </div>
               <CardTitle className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Checkout
+                {t("checkout")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                Ticket type: {type || "N/A"}
+                {t("ticketType")}: {type || t("nA")}
               </p>
               <p className="text-muted-foreground">
-                Selected role: {role ? t(role) : "N/A"}
+                {t("selectedRole")}: {role ? t(role) : t("nA")}
               </p>
               <p className="text-muted-foreground mt-4">
-                This is a placeholder checkout page. The full checkout functionality will be implemented here.
+                {t("checkoutPlaceholder")}
               </p>
             </CardContent>
           </Card>

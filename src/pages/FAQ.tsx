@@ -92,8 +92,8 @@ const FAQ = () => {
 
   // Group filtered FAQs by category and subcategory
   const groupedFAQs = filteredFaqs.reduce((acc, faq) => {
-    const category = faq.category || 'Allgemein';
-    const subcategory = faq.subcategory || 'Allgemein';
+    const category = faq.category || t('allgemein');
+    const subcategory = faq.subcategory || t('allgemein');
     
     if (!acc[category]) {
       acc[category] = {};
@@ -129,9 +129,9 @@ const FAQ = () => {
             <Card>
               <CardContent className="p-12 text-center">
                 <div className="text-4xl mb-4">❓</div>
-                <h3 className="text-xl font-semibold mb-2">No FAQs Available</h3>
+                <h3 className="text-xl font-semibold mb-2">{t("noFAQsAvailable")}</h3>
                 <p className="text-muted-foreground">
-                  Check back later for frequently asked questions.
+                  {t("checkBackLater")}
                 </p>
               </CardContent>
             </Card>
@@ -174,7 +174,7 @@ const FAQ = () => {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder={language === 'de' ? 'FAQs durchsuchen...' : 'Search FAQs...'}
+                      placeholder={t("searchFAQs")}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10 pr-10 bg-background/50"
@@ -192,10 +192,7 @@ const FAQ = () => {
                   </div>
                   {searchTerm && (
                     <p className="text-sm text-muted-foreground mt-2">
-                      {language === 'de' 
-                        ? `${filteredFaqs.length} Ergebnis${filteredFaqs.length !== 1 ? 'se' : ''} gefunden`
-                        : `${filteredFaqs.length} result${filteredFaqs.length !== 1 ? 's' : ''} found`
-                      }
+                      {filteredFaqs.length} {filteredFaqs.length !== 1 ? t("results") : t("result")} {t("found")}
                     </p>
                   )}
                 </CardContent>
@@ -207,16 +204,13 @@ const FAQ = () => {
                   <CardContent className="p-12 text-center">
                     <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                     <h3 className="text-xl font-semibold mb-2">
-                      {language === 'de' ? 'Keine Ergebnisse gefunden' : 'No results found'}
+                      {t("noResultsFound")}
                     </h3>
                     <p className="text-muted-foreground mb-4">
-                      {language === 'de' 
-                        ? `Keine FAQs entsprechen der Suche "${searchTerm}"`
-                        : `No FAQs match your search for "${searchTerm}"`
-                      }
+                      {t("noFAQsMatchSearch")} "{searchTerm}"
                     </p>
                     <Button variant="outline" onClick={clearSearch}>
-                      {language === 'de' ? 'Suche zurücksetzen' : 'Clear search'}
+                      {t("clearSearch")}
                     </Button>
                   </CardContent>
                 </Card>
@@ -235,7 +229,7 @@ const FAQ = () => {
                   <CardContent className="space-y-4">
                     {Object.entries(subcategories).map(([subcategory, subcategoryFaqs]) => (
                       <div key={subcategory}>
-                        {subcategory !== 'Allgemein' && (
+                        {subcategory !== t('allgemein') && (
                           <h3 className="text-lg font-semibold mb-3 text-primary">
                             {subcategory}
                           </h3>

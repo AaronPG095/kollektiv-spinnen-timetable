@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +16,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -29,7 +31,7 @@ const Auth = () => {
 
       if (error) {
         toast({
-          title: "Authentication Error",
+          title: t("authenticationError"),
           description: error.message,
           variant: "destructive",
         });
@@ -37,20 +39,20 @@ const Auth = () => {
         if (isLogin) {
           navigate('/');
           toast({
-            title: "Welcome back!",
-            description: "You have successfully signed in.",
+            title: t("welcomeBackToast"),
+            description: t("signedInSuccessfully"),
           });
         } else {
           toast({
-            title: "Account created!",
-            description: "Please check your email to verify your account.",
+            title: t("accountCreated"),
+            description: t("checkEmailVerify"),
           });
         }
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: t("error"),
+        description: t("unexpectedError"),
         variant: "destructive",
       });
     } finally {
@@ -64,16 +66,16 @@ const Auth = () => {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl bg-gradient-primary bg-clip-text text-transparent">
-              {isLogin ? 'Sign In' : 'Sign Up'}
+              {isLogin ? t("signIn") : t("signUp")}
             </CardTitle>
             <CardDescription>
-              {isLogin ? 'Welcome back to Kollektiv Spinnen' : 'Create your account'}
+              {isLogin ? t("welcomeBack") : t("createAccount")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("email")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -84,7 +86,7 @@ const Auth = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("password")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -101,7 +103,7 @@ const Auth = () => {
                 disabled={loading}
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isLogin ? 'Sign In' : 'Sign Up'}
+                {isLogin ? t("signIn") : t("signUp")}
               </Button>
             </form>
             
@@ -112,8 +114,8 @@ const Auth = () => {
                 className="text-sm text-muted-foreground hover:text-primary transition-colors"
               >
                 {isLogin 
-                  ? "Don't have an account? Sign up" 
-                  : "Already have an account? Sign in"
+                  ? t("dontHaveAccount")
+                  : t("alreadyHaveAccount")
                 }
               </button>
             </div>
@@ -124,7 +126,7 @@ const Auth = () => {
                 onClick={() => navigate('/')}
                 className="text-sm"
               >
-                Back to Festival
+                {t("backToFestival")}
               </Button>
             </div>
           </CardContent>

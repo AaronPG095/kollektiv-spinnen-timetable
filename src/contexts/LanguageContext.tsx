@@ -85,7 +85,7 @@ const translations = {
     
     // Tickets
     standardTickets: 'Standard Tickets',
-    standardTicketsDesc: 'Aufgrund der inhärenten Non-Profit / Community-basierten Natur von Kollektiv Spinnen beinhalten alle "Standard"-Tickets bei uns die Übernahme einer 2-Stunden-Schicht. Du kannst deine bevorzugte Option im nächsten Schritt auswählen.',
+    standardTicketsDesc: 'Standard-Tickets beinhalten eine generell sehr entspannte 2-Stunden-Schicht in den unten aufgeführten Rollen. Du kannst deine bevorzugte Option im nächsten Schritt auswählen.',
     earlyBird: 'Early Bird',
     normal: 'Normal',
     reducedTickets: 'Reduzierte Tickets',
@@ -103,7 +103,72 @@ const translations = {
     techHelfer: 'Tech Helfer',
     selectRole: 'Rolle auswählen...',
     roleDescriptionsDesc: 'Detaillierte Rollenbeschreibungen werden hier verfügbar sein.',
-    onlyWithExperience: 'Nur mit Erfahrung / Organisatoren-Zustimmung'
+    onlyWithExperience: 'Nur mit Erfahrung / Organisatoren-Zustimmung',
+    clearSelection: 'Auswahl entfernen',
+    ticketTypesExplanation: 'Ticket-Typen Erklärung',
+    ticketTypesExplanationDesc: 'Hier findest du eine Übersicht über die verschiedenen Ticket-Typen, die für das Kollektiv Spinnen Festival verfügbar sind.',
+    ticketTypesNote: 'Hinweis: Aufgrund der inhärenten Non-Profit / Community-basierten Natur von Kollektiv Spinnen beinhalten alle Tickets für unser Festival die Übernahme einer Schicht in einer der verschiedenen Rollen, die benötigt werden, um all dies möglich zu machen. Die Länge der Schichten variiert zwischen Standard-Tickets & Reduzierten Tickets.',
+    earlyBirdNormalTitle: 'Early Bird / Normal',
+    earlyBirdNormalDesc: 'Beide Ticket-Typen sind als Early Bird oder Normal erhältlich, abhängig davon, wann du dein Ticket kaufst / Verfügbarkeit (Es wird eine begrenzte Anzahl von Early-Bird-Tickets geben).',
+    whatIsIncludedTitle: 'Was ist in meinem Ticket enthalten?',
+    whatIsIncludedDesc: 'Alle Tickets beinhalten:',
+    ticketIncludesAccess: 'Zugang zum Festival',
+    ticketIncludesSleeping: 'Zugang zu Indoor-Schlafmöglichkeiten (abhängig von Ankunftszeit / Tag)',
+    ticketIncludesDrinks: 'Alkoholfreie & alkoholische Getränke an der Bar',
+    ticketIncludesMeals: '2 Mahlzeiten pro Tag in der Kantine',
+    standardTicketType: 'Standard Tickets',
+    standardTicketTypeDesc: 'Standard Tickets beinhalten die Übernahme einer 2-Stunden-Schicht während des Festivals. Du kannst zwischen Early Bird und Normal wählen.',
+    reducedTicketType: 'Reduzierte Tickets',
+    reducedTicketTypeDesc: 'Reduzierte Tickets bieten einen Preisnachlass aufgrund der Intensität oder zusätzlichen Verantwortung der zugehörigen Positionen. Diese Tickets sind für spezielle Rollen wie Aufbau, Abbau, Tech Helfer, Awareness oder Schichtleitung verfügbar.',
+    
+    // FAQ Page
+    searchFAQs: 'FAQs durchsuchen...',
+    noFAQsAvailable: 'Keine FAQs verfügbar',
+    checkBackLater: 'Schau später nochmal vorbei für häufig gestellte Fragen.',
+    found: 'gefunden',
+    result: 'Ergebnis',
+    results: 'Ergebnisse',
+    noResultsFound: 'Keine Ergebnisse gefunden',
+    noFAQsMatchSearch: 'Keine FAQs entsprechen der Suche',
+    clearSearch: 'Suche zurücksetzen',
+    allgemein: 'Allgemein',
+    
+    // Ticket Checkout
+    checkout: 'Checkout',
+    ticketType: 'Ticket-Typ',
+    selectedRole: 'Ausgewählte Rolle',
+    nA: 'N/A',
+    checkoutPlaceholder: 'Dies ist eine Platzhalter-Checkout-Seite. Die vollständige Checkout-Funktionalität wird hier implementiert.',
+    
+    // Footer
+    sitemap: 'Sitemap',
+    sitemapShort: 'Map',
+    backToTop: 'Nach oben',
+    backToTopShort: 'Oben',
+    
+    // Header
+    admin: 'Admin',
+    login: 'Anmelden',
+    
+    // Auth
+    signIn: 'Anmelden',
+    signUp: 'Registrieren',
+    welcomeBack: 'Willkommen zurück bei Kollektiv Spinnen',
+    createAccount: 'Erstelle dein Konto',
+    email: 'E-Mail',
+    password: 'Passwort',
+    dontHaveAccount: 'Noch kein Konto? Registrieren',
+    alreadyHaveAccount: 'Bereits ein Konto? Anmelden',
+    backToFestival: 'Zurück zum Festival',
+    authenticationError: 'Authentifizierungsfehler',
+    welcomeBackToast: 'Willkommen zurück!',
+    signedInSuccessfully: 'Du hast dich erfolgreich angemeldet.',
+    accountCreated: 'Konto erstellt!',
+    checkEmailVerify: 'Bitte überprüfe deine E-Mail, um dein Konto zu verifizieren.',
+    error: 'Fehler',
+    unexpectedError: 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.',
+    accessDenied: 'Zugriff verweigert',
+    noAdminPermissions: 'Du hast keine Administratorrechte.'
   },
   en: {
     // Header
@@ -179,7 +244,7 @@ const translations = {
     
     // Tickets
     standardTickets: 'Standard Tickets',
-    standardTicketsDesc: 'Due to the inherent non-profit / community based nature of Kollektiv Spinnen, all \'standard\' tickets with us include taking over one 2hr shift, you can select your preferred option in the next step.',
+    standardTicketsDesc: 'Standard tickets include one generally very relaxed 2hr shift in the roles listed below, you can select your preferred option in the next step.',
     earlyBird: 'Early Bird',
     normal: 'Normal',
     reducedTickets: 'Reduced Tickets',
@@ -197,7 +262,72 @@ const translations = {
     techHelfer: 'Tech Helper',
     selectRole: 'Select a role...',
     roleDescriptionsDesc: 'Detailed role descriptions will be available here.',
-    onlyWithExperience: 'Only with experience / organiser consent'
+    onlyWithExperience: 'Only with experience / organiser consent',
+    clearSelection: 'Clear selection',
+    ticketTypesExplanation: 'Ticket Types Explanation',
+    ticketTypesExplanationDesc: 'Here you can find an overview of the different ticket types available for the Kollektiv Spinnen Festival.',
+    ticketTypesNote: 'Note: Due to the inherent non-profit / community based nature of Kollektiv Spinnen, all tickets for our festival include taking over a shift in one of the various roles needed to make all of this happen. Lengths of shifts vary between Standard Tickets & Reduced Tickets.',
+    earlyBirdNormalTitle: 'Early Bird / Normal',
+    earlyBirdNormalDesc: 'Both ticket types are available in Early Bird or Normal varieties depending on when you purchase your ticket / availability (There will be a limited amount of Early-Bird Tickets available).',
+    whatIsIncludedTitle: 'What is included in my Ticket?',
+    whatIsIncludedDesc: 'All tickets include:',
+    ticketIncludesAccess: 'Access to the festival',
+    ticketIncludesSleeping: 'Access to indoor sleeping options (depending on arrival time / day)',
+    ticketIncludesDrinks: 'Non-Alcoholic & Alcoholic Drinks available at the Bar',
+    ticketIncludesMeals: '2 Meals per Day available in the Kantine',
+    standardTicketType: 'Standard Tickets',
+    standardTicketTypeDesc: 'Standard Tickets include taking over one 2-hour shift during the festival. You can choose between Early Bird and Normal.',
+    reducedTicketType: 'Reduced Tickets',
+    reducedTicketTypeDesc: 'Reduced Tickets offer a price discount due to the intensity or additional responsibility of the related positions. These tickets are available for special roles such as Setup, Breakdown, Tech Helper, Awareness, or Shift Management.',
+    
+    // FAQ Page
+    searchFAQs: 'Search FAQs...',
+    noFAQsAvailable: 'No FAQs Available',
+    checkBackLater: 'Check back later for frequently asked questions.',
+    found: 'found',
+    result: 'result',
+    results: 'results',
+    noResultsFound: 'No results found',
+    noFAQsMatchSearch: 'No FAQs match your search for',
+    clearSearch: 'Clear search',
+    allgemein: 'General',
+    
+    // Ticket Checkout
+    checkout: 'Checkout',
+    ticketType: 'Ticket type',
+    selectedRole: 'Selected role',
+    nA: 'N/A',
+    checkoutPlaceholder: 'This is a placeholder checkout page. The full checkout functionality will be implemented here.',
+    
+    // Footer
+    sitemap: 'Sitemap',
+    sitemapShort: 'Map',
+    backToTop: 'Back to Top',
+    backToTopShort: 'Top',
+    
+    // Header
+    admin: 'Admin',
+    login: 'Login',
+    
+    // Auth
+    signIn: 'Sign In',
+    signUp: 'Sign Up',
+    welcomeBack: 'Welcome back to Kollektiv Spinnen',
+    createAccount: 'Create your account',
+    email: 'Email',
+    password: 'Password',
+    dontHaveAccount: 'Don\'t have an account? Sign up',
+    alreadyHaveAccount: 'Already have an account? Sign in',
+    backToFestival: 'Back to Festival',
+    authenticationError: 'Authentication Error',
+    welcomeBackToast: 'Welcome back!',
+    signedInSuccessfully: 'You have successfully signed in.',
+    accountCreated: 'Account created!',
+    checkEmailVerify: 'Please check your email to verify your account.',
+    error: 'Error',
+    unexpectedError: 'An unexpected error occurred. Please try again.',
+    accessDenied: 'Access Denied',
+    noAdminPermissions: 'You don\'t have admin permissions.'
   }
 };
 

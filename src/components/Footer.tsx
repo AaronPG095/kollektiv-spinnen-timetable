@@ -37,8 +37,8 @@ export const Footer = () => {
                   className="text-sm md:text-base font-medium text-muted-foreground hover:text-festival-light min-h-[44px]"
                 >
                   <Map className="h-4 w-4 mr-2" />
-                  <span className="hidden md:inline">Sitemap</span>
-                  <span className="md:hidden">Map</span>
+                  <span className="hidden md:inline">{t("sitemap")}</span>
+                  <span className="md:hidden">{t("sitemapShort")}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -63,8 +63,8 @@ export const Footer = () => {
               className="text-sm md:text-base font-medium text-muted-foreground hover:text-festival-light min-h-[44px]"
             >
               <ArrowUp className="h-4 w-4 mr-2" />
-              <span className="hidden md:inline">Back to Top</span>
-              <span className="md:hidden">Top</span>
+              <span className="hidden md:inline">{t("backToTop")}</span>
+              <span className="md:hidden">{t("backToTopShort")}</span>
             </Button>
           </div>
 

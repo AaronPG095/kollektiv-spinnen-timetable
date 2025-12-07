@@ -58,7 +58,7 @@ export const FestivalHeader = ({
                       className="min-h-[44px] px-2 md:px-3"
                     >
                       <Settings className="h-4 w-4 md:mr-2" />
-                      <span className="hidden md:inline">Admin</span>
+                      <span className="hidden md:inline">{t("admin")}</span>
                     </Button>
                   )}
                 </>
@@ -70,7 +70,7 @@ export const FestivalHeader = ({
                   className="min-h-[44px] px-2 md:px-3"
                 >
                   <LogIn className="h-4 w-4 md:mr-2" />
-                  <span className="hidden md:inline">Login</span>
+                  <span className="hidden md:inline">{t("login")}</span>
                 </Button>
               )}
             </div>
