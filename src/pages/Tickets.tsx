@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Footer } from "@/components/Footer";
 
 const Tickets = () => {
   const { t } = useLanguage();
@@ -251,6 +252,8 @@ const Tickets = () => {
         <div className="absolute top-3/4 left-1/2 w-80 h-80 bg-festival-deep/20 rounded-full blur-3xl animate-pulse delay-2000" />
         <div className="absolute inset-0 bg-gradient-hero opacity-5" />
       </div>
+
+      <Footer />
     </div>
   );
 };

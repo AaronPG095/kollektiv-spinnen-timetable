@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Clock, Calendar, MapPin, Instagram, Youtube, ExternalLink, Music, Headphones, Filter, Music2, X, Search } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Input } from "@/components/ui/input";
+import { Footer } from "@/components/Footer";
 
 const Index = () => {
   const { t, language } = useLanguage();
@@ -437,6 +438,8 @@ const Index = () => {
         <div className="absolute top-3/4 left-1/2 w-80 h-80 bg-festival-deep/20 rounded-full blur-3xl animate-pulse delay-2000" />
         <div className="absolute inset-0 bg-gradient-hero opacity-5" />
       </div>
+
+      <Footer />
     </div>
   );
 };

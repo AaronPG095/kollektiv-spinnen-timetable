@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, ArrowUpDown, Calendar } from 'lucide-react';
+import { Footer } from '@/components/Footer';
 
 interface DatabaseEvent {
   id: string;
@@ -640,6 +641,7 @@ const Admin = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };
