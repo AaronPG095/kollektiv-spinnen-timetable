@@ -11,7 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, ArrowUpDown, Calendar } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { getTicketSettings, updateTicketSettings, type TicketSettings } from '@/lib/ticketSettings';
+import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, ArrowUpDown, Calendar, Ticket } from 'lucide-react';
 import { Footer } from '@/components/Footer';
 import { FestivalHeader } from '@/components/FestivalHeader';
 
@@ -54,7 +56,9 @@ const Admin = () => {
   const [isFAQCreateOpen, setIsFAQCreateOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showHiddenMode, setShowHiddenMode] = useState(false);
-  const [activeTab, setActiveTab] = useState<"events" | "faqs">("events");
+  const [activeTab, setActiveTab] = useState<"events" | "faqs" | "tickets">("events");
+  const [ticketSettings, setTicketSettings] = useState<TicketSettings | null>(null);
+  const [ticketSettingsLoading, setTicketSettingsLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -75,6 +79,7 @@ const Admin = () => {
     if (isAdmin) {
       loadEvents();
       loadFAQs();
+      loadTicketSettings();
     }
   }, [user, isAdmin, authLoading, navigate]);
 
@@ -158,6 +163,42 @@ const Admin = () => {
         variant: "destructive",
       });
       setFaqs([]);
+    }
+  };
+
+  const loadTicketSettings = async () => {
+    try {
+      setTicketSettingsLoading(true);
+      const settings = await getTicketSettings();
+      setTicketSettings(settings);
+    } catch (error: any) {
+      console.error('[Admin] Error loading ticket settings:', error);
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to load ticket settings. Please check your connection and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setTicketSettingsLoading(false);
+    }
+  };
+
+  const handleSaveTicketSettings = async (settings: Partial<TicketSettings>) => {
+    try {
+      const success = await updateTicketSettings(settings);
+      if (success) {
+        toast({ title: "Ticket settings updated successfully" });
+        loadTicketSettings();
+      } else {
+        throw new Error("Failed to update ticket settings");
+      }
+    } catch (error: any) {
+      console.error('[Admin] Error saving ticket settings:', error);
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to save ticket settings. Please check your connection and try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -401,47 +442,54 @@ const Admin = () => {
       <FestivalHeader />
       <div className="flex-1 p-3 md:p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
             <h1 className="text-2xl md:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
               Admin Dashboard
             </h1>
+            {/* Tab Navigation - Centered */}
+            <div className="flex gap-1 bg-muted rounded-lg p-1 w-fit">
+              <Button
+                variant={activeTab === "events" ? "default" : "ghost"}
+                onClick={() => setActiveTab("events")}
+                className="gap-2 text-sm py-2 px-3"
+                size="sm"
+              >
+                <Calendar className="h-3 w-3" />
+                Events
+              </Button>
+              <Button
+                variant={activeTab === "faqs" ? "default" : "ghost"}
+                onClick={() => setActiveTab("faqs")}
+                className="gap-2 text-sm py-2 px-3"
+                size="sm"
+              >
+                <HelpCircle className="h-3 w-3" />
+                FAQs
+              </Button>
+              <Button
+                variant={activeTab === "tickets" ? "default" : "ghost"}
+                onClick={() => setActiveTab("tickets")}
+                className="gap-2 text-sm py-2 px-3"
+                size="sm"
+              >
+                <Ticket className="h-3 w-3" />
+                Tickets
+              </Button>
+            </div>
             <div className="flex items-center gap-4">
-              {/* Tab Navigation */}
-              <div className="flex gap-1 bg-muted rounded-lg p-1 w-fit">
-                <Button
-                  variant={activeTab === "events" ? "default" : "ghost"}
-                  onClick={() => setActiveTab("events")}
-                  className="gap-2 text-sm py-2 px-3"
-                  size="sm"
-                >
-                  <Calendar className="h-3 w-3" />
-                  Events
-                </Button>
-                <Button
-                  variant={activeTab === "faqs" ? "default" : "ghost"}
-                  onClick={() => setActiveTab("faqs")}
-                  className="gap-2 text-sm py-2 px-3"
-                  size="sm"
-                >
-                  <HelpCircle className="h-3 w-3" />
-                  FAQs
-                </Button>
-              </div>
-              <div className="flex gap-3">
-                <Button onClick={() => navigate('/')} variant="outline">
-                  Back to Festival
-                </Button>
-                <Button onClick={handleSignOut} variant="outline">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
-                </Button>
-              </div>
+              <Button onClick={() => navigate('/')} variant="outline">
+                Back to Festival
+              </Button>
+              <Button onClick={handleSignOut} variant="outline">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
             </div>
           </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <h2 className="text-lg md:text-xl font-semibold">
-            {activeTab === "events" ? "Events Management" : "FAQ Management"}
+            {activeTab === "events" ? "Events Management" : activeTab === "faqs" ? "FAQ Management" : "Ticket Settings"}
           </h2>
           <div className="flex gap-3">
             {activeTab === "events" ? (
@@ -480,7 +528,7 @@ const Admin = () => {
                   </DialogContent>
                 </Dialog>
               </>
-            ) : (
+            ) : activeTab === "faqs" ? (
               <Dialog open={isFAQCreateOpen} onOpenChange={setIsFAQCreateOpen}>
                 <DialogTrigger asChild>
                   <Button className="min-h-[44px]">
@@ -497,27 +545,29 @@ const Admin = () => {
                   </div>
                 </DialogContent>
               </Dialog>
-            )}
+            ) : null}
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-8">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search events by title, venue, day, type, or description..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+        {/* Search Bar - only show for events tab */}
+        {activeTab === "events" && (
+          <div className="mb-8">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search events by title, venue, day, type, or description..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            {searchQuery && (
+              <p className="text-sm text-muted-foreground mt-3">
+                Showing {filteredEvents.length} of {events.length} events
+              </p>
+            )}
           </div>
-          {searchQuery && (
-            <p className="text-sm text-muted-foreground mt-3">
-              Showing {filteredEvents.length} of {events.length} events
-            </p>
-          )}
-        </div>
+        )}
 
         {activeTab === "events" ? (
           <div className="w-full">
@@ -657,7 +707,7 @@ const Admin = () => {
               </div>
             )}
           </div>
-        ) : (
+        ) : activeTab === "faqs" ? (
           <div className="space-y-8">
             {(() => {
               // Group FAQs by category
@@ -874,7 +924,25 @@ const Admin = () => {
               });
             })()}
           </div>
-        )}
+        ) : activeTab === "tickets" ? (
+          <div className="w-full">
+            {ticketSettingsLoading ? (
+              <div className="text-center text-muted-foreground py-12">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                <p>Loading ticket settings...</p>
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="p-6">
+                  <TicketSettingsForm 
+                    onSave={handleSaveTicketSettings}
+                    initialSettings={ticketSettings}
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        ) : null}
         </div>
       </div>
       <Footer />
@@ -1236,6 +1304,329 @@ const FAQForm = ({ onSave, initialFAQ }: FAQFormProps) => {
 
       <Button type="submit" className="w-full">
         {initialFAQ ? 'Update FAQ' : 'Create FAQ'}
+      </Button>
+    </form>
+  );
+};
+
+interface TicketSettingsFormProps {
+  onSave: (settings: Partial<TicketSettings>) => void;
+  initialSettings?: TicketSettings | null;
+}
+
+const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps) => {
+  const standardRoles = [
+    { key: "bar", label: "Bar Helper" },
+    { key: "kuechenhilfe", label: "Kitchen Helper" },
+    { key: "springerRunner", label: "Springer Runner" },
+    { key: "springerToilet", label: "Springer Toilet" },
+  ] as const;
+
+  const reducedRoles = [
+    { key: "abbau", label: "Abbau" },
+    { key: "aufbau", label: "Aufbau" },
+    { key: "awareness", label: "Awareness" },
+    { key: "schichtleitung", label: "Schichtleitung" },
+    { key: "techHelfer", label: "Tech Helper" },
+  ] as const;
+
+  type RoleKey = typeof standardRoles[number]["key"] | typeof reducedRoles[number]["key"];
+
+  const limitFieldByRole: Record<RoleKey, keyof TicketSettings> = {
+    bar: "bar_limit",
+    kuechenhilfe: "kuechenhilfe_limit",
+    springerRunner: "springer_runner_limit",
+    springerToilet: "springer_toilet_limit",
+    abbau: "abbau_limit",
+    aufbau: "aufbau_limit",
+    awareness: "awareness_limit",
+    schichtleitung: "schichtleitung_limit",
+    techHelfer: "tech_limit",
+  };
+
+  const priceFieldByRole: Record<RoleKey, { early: keyof TicketSettings; normal: keyof TicketSettings }> = {
+    bar: { early: "bar_price_early", normal: "bar_price_normal" },
+    kuechenhilfe: { early: "kuechenhilfe_price_early", normal: "kuechenhilfe_price_normal" },
+    springerRunner: { early: "springer_runner_price_early", normal: "springer_runner_price_normal" },
+    springerToilet: { early: "springer_toilet_price_early", normal: "springer_toilet_price_normal" },
+    abbau: { early: "abbau_price_early", normal: "abbau_price_normal" },
+    aufbau: { early: "aufbau_price_early", normal: "aufbau_price_normal" },
+    awareness: { early: "awareness_price_early", normal: "awareness_price_normal" },
+    schichtleitung: { early: "schichtleitung_price_early", normal: "schichtleitung_price_normal" },
+    techHelfer: { early: "tech_price_early", normal: "tech_price_normal" },
+  };
+
+  const [earlyBirdEnabled, setEarlyBirdEnabled] = useState(initialSettings?.early_bird_enabled ?? false);
+  const [earlyBirdCutoff, setEarlyBirdCutoff] = useState(
+    initialSettings?.early_bird_cutoff ? new Date(initialSettings.early_bird_cutoff).toISOString().slice(0, 16) : ""
+  );
+
+  const [limitValues, setLimitValues] = useState<Record<RoleKey, string>>(() => {
+    const initial: Record<RoleKey, string> = {
+      bar: "",
+      kuechenhilfe: "",
+      springerRunner: "",
+      springerToilet: "",
+      abbau: "",
+      aufbau: "",
+      awareness: "",
+      schichtleitung: "",
+      techHelfer: "",
+    };
+
+    if (initialSettings) {
+      (Object.keys(initial) as RoleKey[]).forEach((role) => {
+        const field = limitFieldByRole[role];
+        const value = initialSettings[field];
+        initial[role] = value !== null && value !== undefined ? value.toString() : "";
+      });
+    }
+
+    return initial;
+  });
+
+  const [priceValues, setPriceValues] = useState<Record<`${RoleKey}_early` | `${RoleKey}_normal`, string>>(() => {
+    const initial: Record<`${RoleKey}_early` | `${RoleKey}_normal`, string> = {
+      bar_early: "",
+      bar_normal: "",
+      kuechenhilfe_early: "",
+      kuechenhilfe_normal: "",
+      springerRunner_early: "",
+      springerRunner_normal: "",
+      springerToilet_early: "",
+      springerToilet_normal: "",
+      abbau_early: "",
+      abbau_normal: "",
+      aufbau_early: "",
+      aufbau_normal: "",
+      awareness_early: "",
+      awareness_normal: "",
+      schichtleitung_early: "",
+      schichtleitung_normal: "",
+      techHelfer_early: "",
+      techHelfer_normal: "",
+    };
+
+    if (initialSettings) {
+      (Object.keys(priceFieldByRole) as RoleKey[]).forEach((role) => {
+        const fields = priceFieldByRole[role];
+        const earlyVal = initialSettings[fields.early];
+        const normalVal = initialSettings[fields.normal];
+        initial[`${role}_early`] = earlyVal !== null && earlyVal !== undefined ? earlyVal.toString() : "";
+        initial[`${role}_normal`] = normalVal !== null && normalVal !== undefined ? normalVal.toString() : "";
+      });
+    }
+
+    return initial;
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const settings: Partial<TicketSettings> = {
+      early_bird_enabled: earlyBirdEnabled,
+      early_bird_cutoff: earlyBirdCutoff ? new Date(earlyBirdCutoff).toISOString() : null,
+    };
+
+    // Limits
+    (Object.keys(limitValues) as RoleKey[]).forEach((role) => {
+      const field = limitFieldByRole[role];
+      const raw = limitValues[role];
+      (settings as any)[field] = raw ? parseInt(raw) : null;
+    });
+
+    // Prices
+    (Object.keys(priceFieldByRole) as RoleKey[]).forEach((role) => {
+      const fields = priceFieldByRole[role];
+      const early = priceValues[`${role}_early`];
+      const normal = priceValues[`${role}_normal`];
+      (settings as any)[fields.early] = early ? parseFloat(early) : null;
+      (settings as any)[fields.normal] = normal ? parseFloat(normal) : null;
+    });
+
+    onSave(settings);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Early Bird Settings */}
+      <div className="space-y-4 p-4 border rounded-lg">
+        <h3 className="text-lg font-semibold">Early Bird Ticket Settings</h3>
+        
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label htmlFor="early_bird_enabled">Enable Early Bird Tickets</Label>
+            <p className="text-sm text-muted-foreground">
+              When enabled, early bird ticket options will be available to guests
+            </p>
+          </div>
+          <Switch
+            id="early_bird_enabled"
+            checked={earlyBirdEnabled}
+            onCheckedChange={setEarlyBirdEnabled}
+          />
+        </div>
+
+        {earlyBirdEnabled && (
+          <div className="space-y-2">
+            <Label htmlFor="early_bird_cutoff">Early Bird Cutoff Date & Time</Label>
+            <Input
+              id="early_bird_cutoff"
+              type="datetime-local"
+              value={earlyBirdCutoff}
+              onChange={(e) => setEarlyBirdCutoff(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Early bird tickets will no longer be available after this date and time
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Ticket Limits */}
+      <div className="space-y-4 p-4 border rounded-lg">
+        <h3 className="text-lg font-semibold">Ticket Availability Limits</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Set the maximum number of tickets available for each role. Leave empty for unlimited.
+        </p>
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <h4 className="font-semibold">Standard Tickets</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {standardRoles.map((role) => (
+                <div key={role.key} className="space-y-2">
+                  <Label htmlFor={`${role.key}_limit`}>{role.label} Limit</Label>
+                  <Input
+                    id={`${role.key}_limit`}
+                    type="number"
+                    min="0"
+                    value={limitValues[role.key]}
+                    onChange={(e) =>
+                      setLimitValues((prev) => ({ ...prev, [role.key]: e.target.value }))
+                    }
+                    placeholder="Unlimited"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="font-semibold">Reduced Tickets</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {reducedRoles.map((role) => (
+                <div key={role.key} className="space-y-2">
+                  <Label htmlFor={`${role.key}_limit`}>{role.label} Limit</Label>
+                  <Input
+                    id={`${role.key}_limit`}
+                    type="number"
+                    min="0"
+                    value={limitValues[role.key]}
+                    onChange={(e) =>
+                      setLimitValues((prev) => ({ ...prev, [role.key]: e.target.value }))
+                    }
+                    placeholder="Unlimited"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Pricing Settings */}
+      <div className="space-y-4 p-4 border rounded-lg">
+        <h3 className="text-lg font-semibold">Ticket Pricing</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Set prices for each ticket role (in euros). Leave empty to use default pricing.
+        </p>
+
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <h4 className="font-semibold">Standard Tickets</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {standardRoles.map((role) => (
+                <div key={role.key} className="space-y-3 p-3 rounded-lg border">
+                  <div className="font-medium">{role.label}</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor={`${role.key}_price_early`}>Early Bird Price (€)</Label>
+                      <Input
+                        id={`${role.key}_price_early`}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={priceValues[`${role.key}_early`]}
+                        onChange={(e) =>
+                          setPriceValues((prev) => ({ ...prev, [`${role.key}_early`]: e.target.value }))
+                        }
+                        placeholder="100.00"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`${role.key}_price_normal`}>Normal Price (€)</Label>
+                      <Input
+                        id={`${role.key}_price_normal`}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={priceValues[`${role.key}_normal`]}
+                        onChange={(e) =>
+                          setPriceValues((prev) => ({ ...prev, [`${role.key}_normal`]: e.target.value }))
+                        }
+                        placeholder="120.00"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="font-semibold">Reduced Tickets</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {reducedRoles.map((role) => (
+                <div key={role.key} className="space-y-3 p-3 rounded-lg border">
+                  <div className="font-medium">{role.label}</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor={`${role.key}_price_early`}>Early Bird Price (€)</Label>
+                      <Input
+                        id={`${role.key}_price_early`}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={priceValues[`${role.key}_early`]}
+                        onChange={(e) =>
+                          setPriceValues((prev) => ({ ...prev, [`${role.key}_early`]: e.target.value }))
+                        }
+                        placeholder="100.00"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`${role.key}_price_normal`}>Normal Price (€)</Label>
+                      <Input
+                        id={`${role.key}_price_normal`}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={priceValues[`${role.key}_normal`]}
+                        onChange={(e) =>
+                          setPriceValues((prev) => ({ ...prev, [`${role.key}_normal`]: e.target.value }))
+                        }
+                        placeholder="120.00"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Button type="submit" className="w-full">
+        Save Ticket Settings
       </Button>
     </form>
   );

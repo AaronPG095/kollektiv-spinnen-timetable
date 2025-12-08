@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { FestivalHeader } from "@/components/FestivalHeader";
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Footer } from "@/components/Footer";
 import { X } from "lucide-react";
+import { getTicketSettings, type TicketSettings } from "@/lib/ticketSettings";
 
 const Tickets = () => {
   const { t } = useLanguage();
@@ -21,6 +22,39 @@ const Tickets = () => {
   const [normalRole, setNormalRole] = useState<string>("");
   const [earlyBirdReducedRole, setEarlyBirdReducedRole] = useState<string>("");
   const [normalReducedRole, setNormalReducedRole] = useState<string>("");
+  const [ticketSettings, setTicketSettings] = useState<TicketSettings | null>(null);
+
+  const limitFieldByRole: Record<string, keyof TicketSettings> = {
+    bar: "bar_limit",
+    kuechenhilfe: "kuechenhilfe_limit",
+    springerRunner: "springer_runner_limit",
+    springerToilet: "springer_toilet_limit",
+    abbau: "abbau_limit",
+    aufbau: "aufbau_limit",
+    awareness: "awareness_limit",
+    schichtleitung: "schichtleitung_limit",
+    techHelfer: "tech_limit",
+  };
+
+  const priceFieldByRole: Record<string, { early: keyof TicketSettings; normal: keyof TicketSettings }> = {
+    bar: { early: "bar_price_early", normal: "bar_price_normal" },
+    kuechenhilfe: { early: "kuechenhilfe_price_early", normal: "kuechenhilfe_price_normal" },
+    springerRunner: { early: "springer_runner_price_early", normal: "springer_runner_price_normal" },
+    springerToilet: { early: "springer_toilet_price_early", normal: "springer_toilet_price_normal" },
+    abbau: { early: "abbau_price_early", normal: "abbau_price_normal" },
+    aufbau: { early: "aufbau_price_early", normal: "aufbau_price_normal" },
+    awareness: { early: "awareness_price_early", normal: "awareness_price_normal" },
+    schichtleitung: { early: "schichtleitung_price_early", normal: "schichtleitung_price_normal" },
+    techHelfer: { early: "tech_price_early", normal: "tech_price_normal" },
+  };
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      const settings = await getTicketSettings();
+      setTicketSettings(settings);
+    };
+    loadSettings();
+  }, []);
 
   const standardRoles = [
     { value: "bar", label: t("bar") },
@@ -49,6 +83,41 @@ const Tickets = () => {
     { value: "awareness", label: t("awareness") },
     { value: "schichtleitung", label: t("schichtleitung") },
   ];
+
+  // Check if early bird tickets are available
+  const isEarlyBirdAvailable = (): boolean => {
+    if (!ticketSettings?.early_bird_enabled) return false;
+    if (!ticketSettings.early_bird_cutoff) return true;
+    return new Date(ticketSettings.early_bird_cutoff) > new Date();
+  };
+
+  // Get price for a role and ticket type
+  const getPrice = (role: string, isEarlyBird: boolean): string => {
+    const fields = priceFieldByRole[role];
+    if (ticketSettings && fields) {
+      const price = ticketSettings[isEarlyBird ? fields.early : fields.normal] as number | null | undefined;
+      if (price !== null && price !== undefined) {
+        return `${price.toFixed(2)}€`;
+      }
+    }
+
+    // Fallback to defaults if not configured
+    return isEarlyBird ? "100€" : "120€";
+  };
+
+  // Check if a role is available (limit not reached)
+  const isRoleAvailable = (role: string): boolean => {
+    if (!ticketSettings) return true; // Default to available if no settings
+
+    const field = limitFieldByRole[role];
+    const limit = field ? (ticketSettings[field] as number | null | undefined) : null;
+
+    // If no limit set, role is available
+    if (limit === null || limit === undefined) return true;
+
+    // Placeholder: treat limit of 0 as sold out until real inventory wiring
+    return limit > 0;
+  };
 
   const handleChooseTicket = (type: string, role: string) => {
     if (!role) {
@@ -150,8 +219,10 @@ const Tickets = () => {
                   {t("standardTicketTypeDesc")}
                 </p>
                 <div className="mt-3 text-sm text-muted-foreground space-y-1">
-                  <p>100€ - for the Early Bird variant</p>
-                  <p>120€ - for the Normal variant</p>
+                  {isEarlyBirdAvailable() && (
+                    <p>{getPrice("bar", true)} - for the Early Bird variant</p>
+                  )}
+                  <p>{getPrice("bar", false)} - for the Normal variant</p>
                 </div>
               </div>
 
@@ -207,65 +278,85 @@ const Tickets = () => {
               </div>
 
               {/* Early Bird */}
-              <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
-                <h3 className="text-lg font-semibold text-foreground">
-                  {t("earlyBird")}
-                </h3>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex-1 relative">
-                    <Select 
-                      key={`earlyBird-${earlyBirdRole || 'empty'}`}
-                      {...(earlyBirdRole ? { value: earlyBirdRole } : {})}
-                      onValueChange={(value) => handleRoleChange(setEarlyBirdRole, value, clearAllExceptEarlyBird)}
-                      disabled={isDisabled(earlyBirdRole)}
-                    >
-                      <SelectTrigger className="flex-1 pr-8" disabled={isDisabled(earlyBirdRole)}>
-                        <SelectValue placeholder={t("selectRole") || "Select a role..."} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {standardRoles.map((role) => (
-                          <SelectItem key={role.value} value={role.value}>
-                            {role.label}
-                          </SelectItem>
-                        ))}
-                        {earlyBirdRole && (
-                          <SelectItem value="__clear__" className="text-muted-foreground">
-                            {t("clearSelection")}
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
+              {isEarlyBirdAvailable() && (
+                <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-foreground">
+                      {t("earlyBird")}
+                    </h3>
                     {earlyBirdRole && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleClearSelection(setEarlyBirdRole);
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-festival-light/20 rounded-full z-10"
-                        title={t("clearSelection")}
-                      >
-                        <X className="h-5 w-5 text-festival-light hover:text-festival-medium" />
-                      </Button>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {getPrice(earlyBirdRole, true)}
+                      </span>
                     )}
                   </div>
-                  <Button
-                    onClick={() => handleChooseTicket("earlyBird", earlyBirdRole)}
-                    disabled={!earlyBirdRole}
-                    className="w-full sm:w-auto"
-                  >
-                    {t("chooseThisTicket")}
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1 relative">
+                      <Select 
+                        key={`earlyBird-${earlyBirdRole || 'empty'}`}
+                        {...(earlyBirdRole ? { value: earlyBirdRole } : {})}
+                        onValueChange={(value) => handleRoleChange(setEarlyBirdRole, value, clearAllExceptEarlyBird)}
+                        disabled={isDisabled(earlyBirdRole)}
+                      >
+                        <SelectTrigger className="flex-1 pr-8" disabled={isDisabled(earlyBirdRole)}>
+                          <SelectValue placeholder={t("selectRole") || "Select a role..."} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {standardRoles.map((role) => (
+                            <SelectItem 
+                              key={role.value} 
+                              value={role.value}
+                              disabled={!isRoleAvailable(role.value)}
+                            >
+                              {role.label} {!isRoleAvailable(role.value) && "(Sold Out)"}
+                            </SelectItem>
+                          ))}
+                          {earlyBirdRole && (
+                            <SelectItem value="__clear__" className="text-muted-foreground">
+                              {t("clearSelection")}
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      {earlyBirdRole && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleClearSelection(setEarlyBirdRole);
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-festival-light/20 rounded-full z-10"
+                          title={t("clearSelection")}
+                        >
+                          <X className="h-5 w-5 text-festival-light hover:text-festival-medium" />
+                        </Button>
+                      )}
+                    </div>
+                    <Button
+                      onClick={() => handleChooseTicket("earlyBird", earlyBirdRole)}
+                      disabled={!earlyBirdRole || !isRoleAvailable(earlyBirdRole)}
+                      className="w-full sm:w-auto"
+                    >
+                      {t("chooseThisTicket")}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Normal */}
               <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
-                <h3 className="text-lg font-semibold text-foreground">
-                  {t("normal")}
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {t("normal")}
+                  </h3>
+                  {normalRole && (
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {getPrice(normalRole, false)}
+                    </span>
+                  )}
+                </div>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1 relative">
                     <Select 
@@ -279,8 +370,12 @@ const Tickets = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {standardRoles.map((role) => (
-                          <SelectItem key={role.value} value={role.value}>
-                            {role.label}
+                          <SelectItem 
+                            key={role.value} 
+                            value={role.value}
+                            disabled={!isRoleAvailable(role.value)}
+                          >
+                            {role.label} {!isRoleAvailable(role.value) && "(Sold Out)"}
                           </SelectItem>
                         ))}
                         {normalRole && (
@@ -308,7 +403,7 @@ const Tickets = () => {
                   </div>
                   <Button
                     onClick={() => handleChooseTicket("normal", normalRole)}
-                    disabled={!normalRole}
+                    disabled={!normalRole || !isRoleAvailable(normalRole)}
                     className="w-full sm:w-auto"
                   >
                     {t("chooseThisTicket")}
@@ -354,65 +449,85 @@ const Tickets = () => {
               </div>
 
               {/* Early Bird */}
-              <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
-                <h3 className="text-lg font-semibold text-foreground">
-                  {t("earlyBird")}
-                </h3>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex-1 relative">
-                    <Select 
-                      key={`earlyBirdReduced-${earlyBirdReducedRole || 'empty'}`}
-                      {...(earlyBirdReducedRole ? { value: earlyBirdReducedRole } : {})}
-                      onValueChange={(value) => handleRoleChange(setEarlyBirdReducedRole, value, clearAllExceptEarlyBirdReduced)}
-                      disabled={isDisabled(earlyBirdReducedRole)}
-                    >
-                      <SelectTrigger className="flex-1 pr-8" disabled={isDisabled(earlyBirdReducedRole)}>
-                        <SelectValue placeholder={t("selectRole") || "Select a role..."} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {reducedRoles.map((role) => (
-                          <SelectItem key={role.value} value={role.value}>
-                            {role.label}
-                          </SelectItem>
-                        ))}
-                        {earlyBirdReducedRole && (
-                          <SelectItem value="__clear__" className="text-muted-foreground">
-                            {t("clearSelection")}
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
+              {isEarlyBirdAvailable() && (
+                <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-foreground">
+                      {t("earlyBird")}
+                    </h3>
                     {earlyBirdReducedRole && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleClearSelection(setEarlyBirdReducedRole);
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-festival-light/20 rounded-full z-10"
-                        title={t("clearSelection")}
-                      >
-                        <X className="h-5 w-5 text-festival-light hover:text-festival-medium" />
-                      </Button>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {getPrice(earlyBirdReducedRole, true)}
+                      </span>
                     )}
                   </div>
-                  <Button
-                    onClick={() => handleChooseTicket("reducedEarlyBird", earlyBirdReducedRole)}
-                    disabled={!earlyBirdReducedRole}
-                    className="w-full sm:w-auto"
-                  >
-                    {t("chooseThisTicket")}
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1 relative">
+                      <Select 
+                        key={`earlyBirdReduced-${earlyBirdReducedRole || 'empty'}`}
+                        {...(earlyBirdReducedRole ? { value: earlyBirdReducedRole } : {})}
+                        onValueChange={(value) => handleRoleChange(setEarlyBirdReducedRole, value, clearAllExceptEarlyBirdReduced)}
+                        disabled={isDisabled(earlyBirdReducedRole)}
+                      >
+                        <SelectTrigger className="flex-1 pr-8" disabled={isDisabled(earlyBirdReducedRole)}>
+                          <SelectValue placeholder={t("selectRole") || "Select a role..."} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {reducedRoles.map((role) => (
+                            <SelectItem 
+                              key={role.value} 
+                              value={role.value}
+                              disabled={!isRoleAvailable(role.value)}
+                            >
+                              {role.label} {!isRoleAvailable(role.value) && "(Sold Out)"}
+                            </SelectItem>
+                          ))}
+                          {earlyBirdReducedRole && (
+                            <SelectItem value="__clear__" className="text-muted-foreground">
+                              {t("clearSelection")}
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      {earlyBirdReducedRole && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleClearSelection(setEarlyBirdReducedRole);
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-festival-light/20 rounded-full z-10"
+                          title={t("clearSelection")}
+                        >
+                          <X className="h-5 w-5 text-festival-light hover:text-festival-medium" />
+                        </Button>
+                      )}
+                    </div>
+                    <Button
+                      onClick={() => handleChooseTicket("reducedEarlyBird", earlyBirdReducedRole)}
+                      disabled={!earlyBirdReducedRole || !isRoleAvailable(earlyBirdReducedRole)}
+                      className="w-full sm:w-auto"
+                    >
+                      {t("chooseThisTicket")}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Normal */}
               <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
-                <h3 className="text-lg font-semibold text-foreground">
-                  {t("normal")}
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {t("normal")}
+                  </h3>
+                  {normalReducedRole && (
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {getPrice(normalReducedRole, false)}
+                    </span>
+                  )}
+                </div>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1 relative">
                     <Select 
@@ -426,8 +541,12 @@ const Tickets = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {reducedRoles.map((role) => (
-                          <SelectItem key={role.value} value={role.value}>
-                            {role.label}
+                          <SelectItem 
+                            key={role.value} 
+                            value={role.value}
+                            disabled={!isRoleAvailable(role.value)}
+                          >
+                            {role.label} {!isRoleAvailable(role.value) && "(Sold Out)"}
                           </SelectItem>
                         ))}
                         {normalReducedRole && (
@@ -455,7 +574,7 @@ const Tickets = () => {
                   </div>
                   <Button
                     onClick={() => handleChooseTicket("reducedNormal", normalReducedRole)}
-                    disabled={!normalReducedRole}
+                    disabled={!normalReducedRole || !isRoleAvailable(normalReducedRole)}
                     className="w-full sm:w-auto"
                   >
                     {t("chooseThisTicket")}
