@@ -119,10 +119,10 @@ const Tickets = () => {
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Festival Banner */}
           <div className="text-center py-4 md:py-6 px-4">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 tracking-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-6 tracking-tight">
               Kollektiv Spinnen Festival II
             </h1>
-            <p className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
+            <p className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
               07.08.2026 - 09.08.2026
             </p>
           </div>
@@ -149,6 +149,10 @@ const Tickets = () => {
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {t("standardTicketTypeDesc")}
                 </p>
+                <div className="mt-3 text-sm text-muted-foreground space-y-1">
+                  <p>100€ - for the Early Bird variant</p>
+                  <p>120€ - for the Normal variant</p>
+                </div>
               </div>
 
               {/* Reduced Ticket Type */}
@@ -158,16 +162,6 @@ const Tickets = () => {
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {t("reducedTicketTypeDesc")}
-                </p>
-              </div>
-
-              {/* Early Bird / Normal */}
-              <div className="p-4 bg-background/50 rounded-lg border border-border/30">
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  {t("earlyBirdNormalTitle")}
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {t("earlyBirdNormalDesc")}
                 </p>
               </div>
 
