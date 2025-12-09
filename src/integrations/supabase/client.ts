@@ -2,19 +2,98 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Use environment variables with fallback to hardcoded values for backward compatibility
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://ndhfsjroztkhlupzvjzh.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kaGZzanJvenRraGx1cHp2anpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4NzEwNTAsImV4cCI6MjA2OTQ0NzA1MH0.yv347okmpPHvFajXo1-ap5tjzbP-gCgMb3fCYcFhVkg";
+// Use environment variables from .env file
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  throw new Error(
+    'Missing required environment variables: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set. ' +
+    'Please ensure your .env file exists in the project root and contains these variables.'
+  );
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
+
+// Note: Timeout is now handled inline in the fetch wrapper
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  }
+  },
+  global: {
+    fetch: async (url, options = {}) => {
+      console.log(`[Supabase] Fetch called for: ${url}`);
+      console.log(`[Supabase] Fetch options:`, { method: options.method || 'GET', signal: !!options.signal });
+      
+      // Add 10 second timeout for faster testing (can increase later)
+      const timeoutMs = 10000;
+      let timeoutId: NodeJS.Timeout | null = null;
+      const timeoutController = new AbortController();
+      
+      console.log(`[Supabase] Timeout set for ${timeoutMs}ms`);
+      
+      // Set up timeout
+      timeoutId = setTimeout(() => {
+        console.warn(`[Supabase] Request timeout after ${timeoutMs}ms`);
+        timeoutController.abort();
+      }, timeoutMs);
+      
+      // Merge with existing signal if present
+      const existingSignal = options.signal;
+      if (existingSignal) {
+        console.log('[Supabase] Existing signal found, merging...');
+        // Abort timeout if existing signal aborts
+        existingSignal.addEventListener('abort', () => {
+          console.log('[Supabase] Existing signal aborted');
+          if (timeoutId) clearTimeout(timeoutId);
+          timeoutController.abort();
+        });
+      }
+      
+      const fetchStartTime = Date.now();
+      try {
+        console.log(`[Supabase] Starting fetch request to ${url}...`);
+        const response = await fetch(url, {
+          ...options,
+          signal: existingSignal || timeoutController.signal,
+        });
+        
+        // Clear timeout on success
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        
+        const fetchDuration = Date.now() - fetchStartTime;
+        console.log(`[Supabase] Fetch completed in ${fetchDuration}ms, status: ${response.status}`);
+        return response;
+      } catch (error: any) {
+        // Clear timeout on error
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        
+        const fetchDuration = Date.now() - fetchStartTime;
+        console.error(`[Supabase] Fetch failed after ${fetchDuration}ms:`, {
+          name: error.name,
+          message: error.message,
+          timeoutAborted: timeoutController.signal.aborted
+        });
+        
+        if (error.name === 'AbortError' && timeoutController.signal.aborted) {
+          const errorMsg = `Request timeout after ${timeoutMs}ms: ${url}`;
+          console.error(`[Supabase] ${errorMsg}`);
+          throw new Error(errorMsg);
+        }
+        throw error;
+      }
+    },
+  },
 });
 
 /**
@@ -26,27 +105,44 @@ export const testSupabaseConnection = async () => {
     console.log('[Supabase] Testing connection...');
     console.log('[Supabase] URL:', SUPABASE_URL);
     console.log('[Supabase] Key present:', !!SUPABASE_PUBLISHABLE_KEY);
+    console.log('[Supabase] Key length:', SUPABASE_PUBLISHABLE_KEY?.length);
     
     // Try a simple query to test connection
-    const { data, error } = await supabase
+    const { data, error, status, statusText } = await supabase
       .from('events')
       .select('id')
       .limit(1);
+    
+    console.log('[Supabase] Query response:', { 
+      hasData: !!data, 
+      dataCount: data?.length || 0,
+      error: error ? {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      } : null,
+      status,
+      statusText
+    });
     
     if (error) {
       console.error('[Supabase] Connection test failed:', {
         message: error.message,
         details: error.details,
         hint: error.hint,
-        code: error.code
+        code: error.code,
+        status,
+        statusText
       });
       return { success: false, error };
     }
     
-    console.log('[Supabase] Connection test successful');
-    return { success: true };
+    console.log('[Supabase] Connection test successful - found', data?.length || 0, 'events');
+    return { success: true, data };
   } catch (err: any) {
     console.error('[Supabase] Connection test error:', err);
+    console.error('[Supabase] Error stack:', err?.stack);
     return { success: false, error: err };
   }
 };

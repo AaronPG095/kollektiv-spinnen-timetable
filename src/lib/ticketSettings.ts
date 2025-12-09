@@ -1,9 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
+import { cache } from '@/lib/cache';
+import { formatSupabaseError, logError } from '@/lib/errorHandler';
 
 export interface TicketSettings {
   id: string;
   early_bird_enabled: boolean;
   early_bird_cutoff: string | null;
+  early_bird_total_limit: number | null;
   // Limits
   bar_limit: number | null;
   kuechenhilfe_limit: number | null;
@@ -39,8 +42,17 @@ export interface TicketSettings {
 
 const DEFAULT_SETTINGS_ID = '00000000-0000-0000-0000-000000000001';
 
-export const getTicketSettings = async (): Promise<TicketSettings | null> => {
+const CACHE_KEY = 'ticket_settings';
+const CACHE_TTL = 30000; // 30 seconds
+
+export const getTicketSettings = async (): Promise<TicketSettings> => {
   try {
+    // Check cache first
+    const cached = cache.get<TicketSettings>(CACHE_KEY);
+    if (cached) {
+      return cached;
+    }
+
     const { data, error } = await supabase
       .from('ticket_settings')
       .select('*')
@@ -48,38 +60,159 @@ export const getTicketSettings = async (): Promise<TicketSettings | null> => {
       .single();
 
     if (error) {
-      console.error('[TicketSettings] Error loading settings:', error);
-      return null;
+      logError('TicketSettings', error, { operation: 'getTicketSettings' });
+      // If row doesn't exist, try to create it
+      if (error.code === 'PGRST116') {
+        console.log('[TicketSettings] Default row not found, attempting to create...');
+        const { data: inserted, error: insertError } = await supabase
+          .from('ticket_settings')
+          .insert({ id: DEFAULT_SETTINGS_ID })
+          .select()
+          .single();
+
+        if (insertError) {
+          logError('TicketSettings', insertError, { operation: 'insertDefaultSettings' });
+          // If insert fails due to conflict (row was created between check and insert), try to fetch again
+          if (insertError.code === '23505') {
+            const { data: retryData, error: retryError } = await supabase
+              .from('ticket_settings')
+              .select('*')
+              .eq('id', DEFAULT_SETTINGS_ID)
+              .single();
+            
+            if (!retryError && retryData) {
+              cache.set(CACHE_KEY, retryData, CACHE_TTL);
+              return retryData;
+            }
+          }
+          throw new Error(formatSupabaseError(insertError));
+        }
+
+        if (inserted) {
+          cache.set(CACHE_KEY, inserted, CACHE_TTL);
+          return inserted;
+        }
+        throw new Error('Failed to create default ticket settings');
+      }
+      throw new Error(formatSupabaseError(error));
     }
 
+    // If no data returned, attempt to insert the default row once
+    if (!data) {
+      console.log('[TicketSettings] Default row not found, attempting to create...');
+      const { data: inserted, error: insertError } = await supabase
+        .from('ticket_settings')
+        .insert({ id: DEFAULT_SETTINGS_ID })
+        .select()
+        .single();
+
+      if (insertError) {
+        logError('TicketSettings', insertError, { operation: 'insertDefaultSettings' });
+        // If insert fails due to conflict (row was created between check and insert), try to fetch again
+        if (insertError.code === '23505') {
+          const { data: retryData, error: retryError } = await supabase
+            .from('ticket_settings')
+            .select('*')
+            .eq('id', DEFAULT_SETTINGS_ID)
+            .single();
+          
+          if (!retryError && retryData) {
+            cache.set(CACHE_KEY, retryData, CACHE_TTL);
+            return retryData;
+          }
+        }
+        throw new Error(formatSupabaseError(insertError));
+      }
+
+      if (!inserted) {
+        throw new Error('Failed to create default ticket settings');
+      }
+
+      cache.set(CACHE_KEY, inserted, CACHE_TTL);
+      return inserted;
+    }
+
+    // Cache the result
+    cache.set(CACHE_KEY, data, CACHE_TTL);
     return data;
   } catch (error) {
-    console.error('[TicketSettings] Error loading settings:', error);
-    return null;
+    logError('TicketSettings', error, { operation: 'getTicketSettings' });
+    throw error instanceof Error ? error : new Error(formatSupabaseError(error));
   }
 };
 
-export const updateTicketSettings = async (settings: Partial<TicketSettings>): Promise<boolean> => {
+export const updateTicketSettings = async (settings: Partial<TicketSettings>): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { error } = await supabase
+    // Remove updated_at and id from settings since trigger handles updated_at and we'll set id explicitly
+    const { updated_at, id, ...settingsWithoutTimestamp } = settings;
+    
+    // First, try to UPDATE the existing row
+    const updateResponse = await supabase
       .from('ticket_settings')
-      .upsert({
-        id: DEFAULT_SETTINGS_ID,
-        ...settings,
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'id'
-      });
+      .update(settingsWithoutTimestamp)
+      .eq('id', DEFAULT_SETTINGS_ID)
+      .select()
+      .single();
 
-    if (error) {
-      console.error('[TicketSettings] Error updating settings:', error);
-      return false;
+    const { data: updateData, error: updateError, status: updateStatus } = updateResponse;
+
+    // If update succeeds, we're done
+    if (!updateError && updateData) {
+      // Clear cache and set new data
+      cache.delete(CACHE_KEY);
+      cache.set(CACHE_KEY, updateData, CACHE_TTL);
+      return { success: true };
     }
 
-    return true;
-  } catch (error) {
-    console.error('[TicketSettings] Error updating settings:', error);
-    return false;
+    // If update failed and we got no data, the row likely doesn't exist - try INSERT
+    // This handles cases where error object has undefined properties (404 responses)
+    const shouldTryInsert = !updateData && (
+      updateError?.code === 'PGRST116' ||
+      updateStatus === 404 ||
+      (updateError && !updateError.message && !updateError.code)
+    );
+
+    if (shouldTryInsert) {
+      const { data: insertData, error: insertError, status: insertStatus } = await supabase
+        .from('ticket_settings')
+        .insert({
+          id: DEFAULT_SETTINGS_ID,
+          ...settingsWithoutTimestamp,
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        logError('TicketSettings', insertError, { operation: 'insertSettings', status: insertStatus });
+        const errorMessage = formatSupabaseError(insertError);
+        return {
+          success: false,
+          error: errorMessage,
+        };
+      }
+
+      if (insertData) {
+        // Clear cache and set new data
+        cache.delete(CACHE_KEY);
+        cache.set(CACHE_KEY, insertData, CACHE_TTL);
+        return { success: true };
+      }
+    }
+
+    // If update failed for another reason, return the error
+    logError('TicketSettings', updateError, { operation: 'updateSettings', status: updateStatus });
+    const errorMessage = formatSupabaseError(updateError);
+    
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  } catch (error: any) {
+    logError('TicketSettings', error, { operation: 'updateTicketSettings' });
+    return { 
+      success: false, 
+      error: formatSupabaseError(error)
+    };
   }
 };
 

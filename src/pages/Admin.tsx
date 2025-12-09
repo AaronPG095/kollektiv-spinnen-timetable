@@ -12,10 +12,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Upload, X as XIcon } from 'lucide-react';
 import { getTicketSettings, updateTicketSettings, type TicketSettings } from '@/lib/ticketSettings';
-import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, ArrowUpDown, Calendar, Ticket } from 'lucide-react';
+import { getAllPurchases, confirmTicketPurchase, type TicketPurchase } from '@/lib/ticketPurchases';
+import { 
+  getAboutPageContent, 
+  updateAboutPageContent, 
+  getAboutPagePhotos, 
+  uploadAboutPagePhoto, 
+  updateAboutPagePhoto, 
+  deleteAboutPagePhoto,
+  type AboutPageContent as AboutPageContentType,
+  type AboutPagePhoto 
+} from '@/lib/aboutPage';
+import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, ArrowUpDown, Calendar, Ticket, Info } from 'lucide-react';
 import { Footer } from '@/components/Footer';
 import { FestivalHeader } from '@/components/FestivalHeader';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface DatabaseEvent {
   id: string;
@@ -55,33 +68,61 @@ const Admin = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isFAQCreateOpen, setIsFAQCreateOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [showHiddenMode, setShowHiddenMode] = useState(false);
-  const [activeTab, setActiveTab] = useState<"events" | "faqs" | "tickets">("events");
+  const [activeTab, setActiveTab] = useState<"events" | "faqs" | "tickets" | "about">("events");
   const [ticketSettings, setTicketSettings] = useState<TicketSettings | null>(null);
   const [ticketSettingsLoading, setTicketSettingsLoading] = useState(false);
+  const [ticketPurchases, setTicketPurchases] = useState<TicketPurchase[]>([]);
+  const [purchasesLoading, setPurchasesLoading] = useState(false);
+  const [ticketSubTab, setTicketSubTab] = useState<"settings" | "purchases">("settings");
+  const [aboutPageContent, setAboutPageContent] = useState<AboutPageContentType | null>(null);
+  const [aboutPagePhotos, setAboutPagePhotos] = useState<AboutPagePhoto[]>([]);
+  const [aboutPageLoading, setAboutPageLoading] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-      return;
-    }
-    
-    if (!authLoading && user && !isAdmin) {
-      navigate('/');
-      toast({
-        title: t("accessDenied"),
-        description: t("noAdminPermissions"),
-        variant: "destructive",
-      });
-      return;
-    }
+    // Allow all users to access admin page, but only load data if admin
+    if (!authLoading) {
+      if (isAdmin) {
+        // Load all data in parallel for better performance
+        // Use Promise.allSettled to handle partial failures gracefully
+        Promise.allSettled([
+          loadEvents(),
+          loadFAQs(),
+          loadTicketSettings(),
+          loadAboutPageData(),
+          loadTicketPurchases(),
+        ]).then((results) => {
+          // Check each result individually
+          const errors = results
+            .map((result, index) => ({ result, index }))
+            .filter(({ result }) => result.status === 'rejected')
+            .map(({ result, index }) => {
+              const names = ['Events', 'FAQs', 'Ticket Settings', 'About Page', 'Ticket Purchases'];
+              return {
+                name: names[index] || `Data source ${index + 1}`,
+                error: result.status === 'rejected' ? result.reason : null,
+              };
+            });
 
-    if (isAdmin) {
-      loadEvents();
-      loadFAQs();
-      loadTicketSettings();
+          if (errors.length > 0) {
+            console.error('[Admin] Some data sources failed to load:', errors);
+            // Only show toast if multiple failures or critical ones
+            if (errors.length > 1 || errors.some(e => e.name === 'Ticket Settings')) {
+              toast({
+                title: "Warning",
+                description: `Failed to load ${errors.length} data source(s). Some features may be unavailable.`,
+                variant: "destructive",
+              });
+            }
+          }
+        });
+      } else {
+        // Non-admin users can view the page but see a message
+        setLoading(false);
+      }
     }
-  }, [user, isAdmin, authLoading, navigate]);
+  }, [isAdmin, authLoading]);
 
   const loadEvents = async () => {
     try {
@@ -117,7 +158,7 @@ const Admin = () => {
       });
       toast({
         title: "Error",
-        description: error?.message || "Failed to load events. Please check your connection and try again.",
+        description: error?.message || t("failedToLoadEvents"),
         variant: "destructive",
       });
       setEvents([]);
@@ -159,7 +200,7 @@ const Admin = () => {
       });
       toast({
         title: "Error",
-        description: error?.message || "Failed to load FAQs. Please check your connection and try again.",
+        description: error?.message || t("failedToLoadFAQs"),
         variant: "destructive",
       });
       setFaqs([]);
@@ -175,7 +216,7 @@ const Admin = () => {
       console.error('[Admin] Error loading ticket settings:', error);
       toast({
         title: "Error",
-        description: error?.message || "Failed to load ticket settings. Please check your connection and try again.",
+        description: error?.message || t("failedToLoadTicketSettings"),
         variant: "destructive",
       });
     } finally {
@@ -183,20 +224,111 @@ const Admin = () => {
     }
   };
 
-  const handleSaveTicketSettings = async (settings: Partial<TicketSettings>) => {
+  const loadTicketPurchases = async () => {
     try {
-      const success = await updateTicketSettings(settings);
-      if (success) {
-        toast({ title: "Ticket settings updated successfully" });
-        loadTicketSettings();
-      } else {
-        throw new Error("Failed to update ticket settings");
-      }
+      setPurchasesLoading(true);
+      const purchases = await getAllPurchases();
+      setTicketPurchases(purchases);
     } catch (error: any) {
-      console.error('[Admin] Error saving ticket settings:', error);
+      console.error('[Admin] Error loading ticket purchases:', error);
       toast({
         title: "Error",
-        description: error?.message || "Failed to save ticket settings. Please check your connection and try again.",
+        description: error?.message || t("failedToLoadTicketPurchases"),
+        variant: "destructive",
+      });
+    } finally {
+      setPurchasesLoading(false);
+    }
+  };
+
+  const handleConfirmPurchase = async (purchaseId: string) => {
+    try {
+      const result = await confirmTicketPurchase(purchaseId);
+      if (result.success) {
+        toast({ title: t("purchaseConfirmedSuccessfully") });
+        loadTicketPurchases();
+      } else {
+        throw new Error(result.error || "Failed to confirm purchase");
+      }
+    } catch (error: any) {
+      console.error('[Admin] Error confirming purchase:', error);
+      toast({
+        title: "Error",
+        description: error?.message || t("failedToConfirmPurchase"),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveTicketSettings = async (settings: Partial<TicketSettings>) => {
+    try {
+      console.log('[Admin] Saving ticket settings:', {
+        settingsKeys: Object.keys(settings),
+        settingsPreview: Object.entries(settings).slice(0, 5).reduce((acc, [key, value]) => {
+          acc[key] = value;
+          return acc;
+        }, {} as Record<string, any>),
+      });
+      
+      const result = await updateTicketSettings(settings);
+      if (result.success) {
+        console.log('[Admin] Ticket settings saved successfully');
+        toast({ title: t("ticketSettingsUpdatedSuccessfully") });
+        // Reload settings after a short delay to ensure database has updated
+        setTimeout(() => {
+          loadTicketSettings();
+        }, 500);
+      } else {
+        console.error('[Admin] Failed to save ticket settings:', result.error);
+        // Show the specific error message from the database
+        toast({
+          title: "Error",
+          description: result.error || t("failedToSaveTicketSettings"),
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error('[Admin] Exception saving ticket settings:', error);
+      toast({
+        title: "Error",
+        description: error?.message || t("failedToSaveTicketSettings"),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loadAboutPageData = async () => {
+    try {
+      setAboutPageLoading(true);
+      const [content, photos] = await Promise.all([
+        getAboutPageContent(),
+        getAboutPagePhotos()
+      ]);
+      setAboutPageContent(content);
+      setAboutPagePhotos(photos);
+    } catch (error: any) {
+      console.error('[Admin] Error loading about page data:', error);
+      toast({
+        title: "Error",
+        description: error?.message || t("failedToLoadAboutPageData"),
+        variant: "destructive",
+      });
+    } finally {
+      setAboutPageLoading(false);
+    }
+  };
+
+  const handleSaveAboutPageContent = async (content: Partial<AboutPageContentType>) => {
+    try {
+      await updateAboutPageContent(content);
+      toast({ title: t("aboutPageContentUpdatedSuccessfully") });
+      // Reload data to get updated content
+      await loadAboutPageData();
+    } catch (error: any) {
+      console.error('[Admin] Error saving about page content:', error);
+      toast({
+        title: "Error",
+        description: error?.message || error?.details || t("failedToSaveAboutPageContent"),
         variant: "destructive",
       });
     }
@@ -215,7 +347,7 @@ const Admin = () => {
           console.error('[Admin] Error updating event:', error);
           throw error;
         }
-        toast({ title: "Event updated successfully" });
+        toast({ title: t("eventUpdatedSuccessfully") });
       } else {
         console.log('[Admin] Creating new event');
         const { error } = await supabase
@@ -226,7 +358,7 @@ const Admin = () => {
           console.error('[Admin] Error creating event:', error);
           throw error;
         }
-        toast({ title: "Event created successfully" });
+        toast({ title: t("eventCreatedSuccessfully") });
       }
       
       loadEvents();
@@ -236,14 +368,14 @@ const Admin = () => {
       console.error('[Admin] Error saving event:', error);
       toast({
         title: "Error",
-        description: error?.message || "Failed to save event. Please check your connection and try again.",
+        description: error?.message || t("failedToSaveEvent"),
         variant: "destructive",
       });
     }
   };
 
   const handleDeleteEvent = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this event?')) return;
+    if (!confirm(t("areYouSureDeleteEvent"))) return;
     
     try {
       console.log('[Admin] Deleting event:', id);
@@ -256,13 +388,13 @@ const Admin = () => {
         console.error('[Admin] Error deleting event:', error);
         throw error;
       }
-      toast({ title: "Event deleted successfully" });
+      toast({ title: t("eventDeletedSuccessfully") });
       loadEvents();
     } catch (error: any) {
       console.error('[Admin] Error deleting event:', error);
       toast({
         title: "Error",
-        description: error?.message || "Failed to delete event. Please check your connection and try again.",
+        description: error?.message || t("failedToDeleteEvent"),
         variant: "destructive",
       });
     }
@@ -281,14 +413,14 @@ const Admin = () => {
         throw error;
       }
       toast({ 
-        title: currentVisibility ? "Event hidden from public" : "Event made visible to public" 
+        title: currentVisibility ? t("eventHiddenFromPublic") : t("eventMadeVisibleToPublic") 
       });
       loadEvents();
     } catch (error: any) {
       console.error('[Admin] Error toggling event visibility:', error);
       toast({
         title: "Error",
-        description: error?.message || "Failed to update event visibility. Please check your connection and try again.",
+        description: error?.message || t("failedToUpdateEventVisibility"),
         variant: "destructive",
       });
     }
@@ -307,7 +439,7 @@ const Admin = () => {
           console.error('[Admin] Error updating FAQ:', error);
           throw error;
         }
-        toast({ title: "FAQ updated successfully" });
+        toast({ title: t("faqUpdatedSuccessfully") });
       } else {
         console.log('[Admin] Creating new FAQ');
         const { error } = await supabase
@@ -318,7 +450,7 @@ const Admin = () => {
           console.error('[Admin] Error creating FAQ:', error);
           throw error;
         }
-        toast({ title: "FAQ created successfully" });
+        toast({ title: t("faqCreatedSuccessfully") });
       }
       
       loadFAQs();
@@ -328,14 +460,14 @@ const Admin = () => {
       console.error('[Admin] Error saving FAQ:', error);
       toast({
         title: "Error",
-        description: error?.message || "Failed to save FAQ. Please check your connection and try again.",
+        description: error?.message || t("failedToSaveFAQ"),
         variant: "destructive",
       });
     }
   };
 
   const handleDeleteFAQ = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this FAQ?')) return;
+    if (!confirm(t("areYouSureDeleteFAQ"))) return;
     
     try {
       console.log('[Admin] Deleting FAQ:', id);
@@ -348,13 +480,13 @@ const Admin = () => {
         console.error('[Admin] Error deleting FAQ:', error);
         throw error;
       }
-      toast({ title: "FAQ deleted successfully" });
+      toast({ title: t("faqDeletedSuccessfully") });
       loadFAQs();
     } catch (error: any) {
       console.error('[Admin] Error deleting FAQ:', error);
       toast({
         title: "Error",
-        description: error?.message || "Failed to delete FAQ. Please check your connection and try again.",
+        description: error?.message || t("failedToDeleteFAQ"),
         variant: "destructive",
       });
     }
@@ -373,14 +505,14 @@ const Admin = () => {
         throw error;
       }
       toast({ 
-        title: currentVisibility ? "FAQ hidden from public" : "FAQ made visible to public" 
+        title: currentVisibility ? t("faqHiddenFromPublic") : t("faqMadeVisibleToPublic") 
       });
       loadFAQs();
     } catch (error: any) {
       console.error('[Admin] Error toggling FAQ visibility:', error);
       toast({
         title: "Error",
-        description: error?.message || "Failed to update FAQ visibility. Please check your connection and try again.",
+        description: error?.message || t("failedToUpdateFAQVisibility"),
         variant: "destructive",
       });
     }
@@ -391,9 +523,9 @@ const Admin = () => {
     navigate('/');
   };
 
-  // Filter events based on search query
+  // Filter events based on debounced search query
   const filteredEvents = events.filter(event => {
-    const query = searchQuery.toLowerCase();
+    const query = debouncedSearchQuery.toLowerCase();
     return (
       event.title.toLowerCase().includes(query) ||
       event.venue.toLowerCase().includes(query) ||
@@ -425,7 +557,7 @@ const Admin = () => {
   const dayOrder = ["Freitag", "Samstag", "Sonntag"];
   const sortedDays = dayOrder.filter(day => eventsByDay[day] && eventsByDay[day].length > 0);
 
-  if (authLoading || loading) {
+  if (authLoading || (loading && isAdmin)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -433,8 +565,25 @@ const Admin = () => {
     );
   }
 
+  // Show message to non-admin users
   if (!isAdmin) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <FestivalHeader />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <Card className="max-w-md">
+            <CardContent className="p-6 text-center">
+              <h2 className="text-2xl font-bold mb-4">{t("accessDenied")}</h2>
+              <p className="text-muted-foreground mb-4">{t("noAdminPermissions")}</p>
+              <Button onClick={() => navigate('/')} variant="default">
+                {t("backToFestival")}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </div>
+    );
   }
 
   return (
@@ -444,10 +593,19 @@ const Admin = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
             <h1 className="text-2xl md:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              Admin Dashboard
+              {t("adminDashboard")}
             </h1>
             {/* Tab Navigation - Centered */}
             <div className="flex gap-1 bg-muted rounded-lg p-1 w-fit">
+              <Button
+                variant={activeTab === "about" ? "default" : "ghost"}
+                onClick={() => setActiveTab("about")}
+                className="gap-2 text-sm py-2 px-3"
+                size="sm"
+              >
+                <Info className="h-3 w-3" />
+                {t("aboutUs")}
+              </Button>
               <Button
                 variant={activeTab === "events" ? "default" : "ghost"}
                 onClick={() => setActiveTab("events")}
@@ -455,7 +613,7 @@ const Admin = () => {
                 size="sm"
               >
                 <Calendar className="h-3 w-3" />
-                Events
+                {t("events")}
               </Button>
               <Button
                 variant={activeTab === "faqs" ? "default" : "ghost"}
@@ -473,23 +631,23 @@ const Admin = () => {
                 size="sm"
               >
                 <Ticket className="h-3 w-3" />
-                Tickets
+                {t("tickets")}
               </Button>
             </div>
             <div className="flex items-center gap-4">
               <Button onClick={() => navigate('/')} variant="outline">
-                Back to Festival
+                {t("backToFestival")}
               </Button>
               <Button onClick={handleSignOut} variant="outline">
                 <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+                {t("signOut")}
               </Button>
             </div>
           </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <h2 className="text-lg md:text-xl font-semibold">
-            {activeTab === "events" ? "Events Management" : activeTab === "faqs" ? "FAQ Management" : "Ticket Settings"}
+            {activeTab === "events" ? t("eventsManagement") : activeTab === "faqs" ? t("faqManagement") : activeTab === "tickets" ? t("ticketSettings") : t("aboutUsManagement")}
           </h2>
           <div className="flex gap-3">
             {activeTab === "events" ? (
@@ -502,12 +660,12 @@ const Admin = () => {
                   {showHiddenMode ? (
                     <>
                       <EyeOff className="h-4 w-4 mr-2" />
-                      Hidden Mode
+                      {t("hiddenMode")}
                     </>
                   ) : (
                     <>
                       <Eye className="h-4 w-4 mr-2" />
-                      Show All
+                      {t("showAll")}
                     </>
                   )}
                 </Button>
@@ -515,12 +673,12 @@ const Admin = () => {
                   <DialogTrigger asChild>
                     <Button className="min-h-[44px]">
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Event
+                      {t("addEvent")}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
                     <DialogHeader>
-                      <DialogTitle>Create New Event</DialogTitle>
+                      <DialogTitle>{t("createNewEvent")}</DialogTitle>
                     </DialogHeader>
                     <div className="max-h-[75vh] overflow-y-auto pr-2">
                       <EventForm onSave={handleSaveEvent} />
@@ -533,12 +691,12 @@ const Admin = () => {
                 <DialogTrigger asChild>
                   <Button className="min-h-[44px]">
                     <Plus className="h-4 w-4 mr-2" />
-                    Add FAQ
+                    {t("addFAQ")}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Create New FAQ</DialogTitle>
+                    <DialogTitle>{t("createNewFAQ")}</DialogTitle>
                   </DialogHeader>
                   <div className="max-h-[75vh] overflow-y-auto pr-2">
                     <FAQForm onSave={handleSaveFAQ} />
@@ -554,18 +712,18 @@ const Admin = () => {
           <div className="mb-8">
             <div className="relative max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search events by title, venue, day, type, or description..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            {searchQuery && (
-              <p className="text-sm text-muted-foreground mt-3">
-                Showing {filteredEvents.length} of {events.length} events
-              </p>
-            )}
+            <Input
+              placeholder={t("searchEvents")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-muted-foreground mt-3">
+              {t("showing")} {filteredEvents.length} {t("of")} {events.length} {filteredEvents.length === 1 ? t("event") : t("events_plural")}
+            </p>
+          )}
           </div>
         )}
 
@@ -573,7 +731,7 @@ const Admin = () => {
           <div className="w-full">
             {sortedDays.length === 0 ? (
               <div className="text-center text-muted-foreground py-12">
-                <p>No events found</p>
+                <p>{t("noEventsFound")}</p>
               </div>
             ) : (
               <div className="flex gap-6 overflow-x-auto pb-4">
@@ -584,9 +742,9 @@ const Admin = () => {
                       <h3 className="text-xl md:text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                         {day}
                       </h3>
-                      <span className="text-sm text-muted-foreground">
-                        ({eventsByDay[day].length} {eventsByDay[day].length === 1 ? 'event' : 'events'})
-                      </span>
+                       <span className="text-sm text-muted-foreground">
+                         ({eventsByDay[day].length} {eventsByDay[day].length === 1 ? t("event") : t("events_plural")})
+                       </span>
                     </div>
 
                     {/* Events for this day */}
@@ -615,11 +773,11 @@ const Admin = () => {
                               <div className="flex-1">
                                 <div className="flex items-center gap-3 mb-2">
                                   <h3 className="font-semibold text-lg">{event.title}</h3>
-                                  {event.is_visible === false ? (
-                                    <div className="flex items-center text-destructive text-xs">
-                                      <EyeOff className="h-3 w-3 mr-1" />
-                                      Hidden
-                                    </div>
+                                   {event.is_visible === false ? (
+                                     <div className="flex items-center text-destructive text-xs">
+                                       <EyeOff className="h-3 w-3 mr-1" />
+                                       {t("hidden")}
+                                     </div>
                                   ) : (
                                     <div 
                                       className="px-2 py-1 rounded text-xs font-medium border shrink-0"
@@ -661,8 +819,8 @@ const Admin = () => {
                                 <Button
                                   variant={event.is_visible === false ? "default" : "outline"}
                                   size="sm"
-                                  onClick={() => handleToggleVisibility(event.id, event.is_visible !== false)}
-                                  title={event.is_visible === false ? "Make visible to public" : "Hide from public"}
+                                   onClick={() => handleToggleVisibility(event.id, event.is_visible !== false)}
+                                   title={event.is_visible === false ? t("makeVisible") : t("hideFromPublic")}
                                 >
                                   {event.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                                 </Button>
@@ -676,10 +834,10 @@ const Admin = () => {
                                       <Edit className="h-4 w-4" />
                                     </Button>
                                   </DialogTrigger>
-                                  <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
-                                    <DialogHeader>
-                                      <DialogTitle>Edit Event</DialogTitle>
-                                    </DialogHeader>
+                        <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>{t("editEvent")}</DialogTitle>
+                          </DialogHeader>
                                     <div className="max-h-[75vh] overflow-y-auto pr-2">
                                       <EventForm 
                                         onSave={handleSaveEvent} 
@@ -747,7 +905,7 @@ const Admin = () => {
                         {category}
                       </h3>
                       <span className="text-sm text-muted-foreground">
-                        ({categoryFAQs.length} {categoryFAQs.length === 1 ? 'FAQ' : 'FAQs'})
+                         ({categoryFAQs.length} {categoryFAQs.length === 1 ? t("faq") : t("faqs")})
                       </span>
                     </div>
 
@@ -775,9 +933,9 @@ const Admin = () => {
                             <h4 className="text-lg md:text-xl font-semibold text-foreground">
                               {subcategory}
                             </h4>
-                            <span className="text-xs text-muted-foreground">
-                              ({subcategoryFAQs.length} {subcategoryFAQs.length === 1 ? 'FAQ' : 'FAQs'})
-                            </span>
+                             <span className="text-xs text-muted-foreground">
+                               ({subcategoryFAQs.length} {subcategoryFAQs.length === 1 ? t("faq") : t("faqs")})
+                             </span>
                           </div>
 
                           {/* FAQs grouped by question (order_index) */}
@@ -796,12 +954,12 @@ const Admin = () => {
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-2">
                                       <span className="text-xs font-semibold text-muted-foreground uppercase">DE</span>
-                                      {germanFAQ.is_visible === false && (
-                                        <div className="flex items-center text-destructive text-xs">
-                                          <EyeOff className="h-3 w-3 mr-1" />
-                                          Hidden
-                                        </div>
-                                      )}
+                                       {germanFAQ.is_visible === false && (
+                                         <div className="flex items-center text-destructive text-xs">
+                                           <EyeOff className="h-3 w-3 mr-1" />
+                                           {t("hidden")}
+                                         </div>
+                                       )}
                                     </div>
                                     <h3 className="font-semibold text-base mb-1">{germanFAQ.question}</h3>
                                     <div className="text-sm text-muted-foreground mt-2">
@@ -812,8 +970,8 @@ const Admin = () => {
                                     <Button
                                       variant={germanFAQ.is_visible === false ? "default" : "outline"}
                                       size="sm"
-                                      onClick={() => handleToggleFAQVisibility(germanFAQ.id, germanFAQ.is_visible !== false)}
-                                      title={germanFAQ.is_visible === false ? "Make visible to public" : "Hide from public"}
+                                       onClick={() => handleToggleFAQVisibility(germanFAQ.id, germanFAQ.is_visible !== false)}
+                                       title={germanFAQ.is_visible === false ? t("makeVisible") : t("hideFromPublic")}
                                     >
                                       {germanFAQ.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                                     </Button>
@@ -858,12 +1016,12 @@ const Admin = () => {
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-2">
                                       <span className="text-xs font-semibold text-muted-foreground uppercase">EN</span>
-                                      {englishFAQ.is_visible === false && (
-                                        <div className="flex items-center text-destructive text-xs">
-                                          <EyeOff className="h-3 w-3 mr-1" />
-                                          Hidden
-                                        </div>
-                                      )}
+                                       {englishFAQ.is_visible === false && (
+                                         <div className="flex items-center text-destructive text-xs">
+                                           <EyeOff className="h-3 w-3 mr-1" />
+                                           {t("hidden")}
+                                         </div>
+                                       )}
                                     </div>
                                     <h3 className="font-semibold text-base mb-1">{englishFAQ.question}</h3>
                                     <div className="text-sm text-muted-foreground mt-2">
@@ -874,8 +1032,8 @@ const Admin = () => {
                                     <Button
                                       variant={englishFAQ.is_visible === false ? "default" : "outline"}
                                       size="sm"
-                                      onClick={() => handleToggleFAQVisibility(englishFAQ.id, englishFAQ.is_visible !== false)}
-                                      title={englishFAQ.is_visible === false ? "Make visible to public" : "Hide from public"}
+                                       onClick={() => handleToggleFAQVisibility(englishFAQ.id, englishFAQ.is_visible !== false)}
+                                       title={englishFAQ.is_visible === false ? t("makeVisible") : t("hideFromPublic")}
                                     >
                                       {englishFAQ.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                                     </Button>
@@ -925,21 +1083,124 @@ const Admin = () => {
             })()}
           </div>
         ) : activeTab === "tickets" ? (
-          <div className="w-full">
-            {ticketSettingsLoading ? (
-              <div className="text-center text-muted-foreground py-12">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                <p>Loading ticket settings...</p>
-              </div>
+          <div className="w-full space-y-4">
+            {/* Sub-tabs for Tickets */}
+            <div className="flex gap-2 border-b border-border pb-2">
+              <Button
+                variant={ticketSubTab === "settings" ? "default" : "ghost"}
+                onClick={() => setTicketSubTab("settings")}
+                size="sm"
+              >
+                {t("ticketSettings")}
+              </Button>
+              <Button
+                variant={ticketSubTab === "purchases" ? "default" : "ghost"}
+                onClick={() => {
+                  setTicketSubTab("purchases");
+                  loadTicketPurchases();
+                }}
+                size="sm"
+              >
+                {t("purchases")} ({ticketPurchases.length})
+              </Button>
+            </div>
+
+            {ticketSubTab === "settings" ? (
+              ticketSettingsLoading ? (
+                <div className="text-center text-muted-foreground py-12">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                  <p>{t("loadingTicketSettings")}</p>
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="p-6">
+                    <TicketSettingsForm 
+                      onSave={handleSaveTicketSettings}
+                      initialSettings={ticketSettings}
+                    />
+                  </CardContent>
+                </Card>
+              )
             ) : (
-              <Card>
-                <CardContent className="p-6">
-                  <TicketSettingsForm 
-                    onSave={handleSaveTicketSettings}
-                    initialSettings={ticketSettings}
-                  />
-                </CardContent>
-              </Card>
+              purchasesLoading ? (
+                <div className="text-center text-muted-foreground py-12">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                  <p>{t("loadingPurchases")}</p>
+                </div>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("ticketPurchases")}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {ticketPurchases.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">{t("noPurchasesYet")}</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {ticketPurchases.map((purchase) => (
+                          <Card key={purchase.id} className={purchase.status === 'pending' ? 'border-yellow-500' : purchase.status === 'confirmed' ? 'border-green-500' : 'border-gray-500'}>
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-start">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold">{purchase.purchaser_name}</span>
+                                    <span className={`px-2 py-1 rounded text-xs ${
+                                      purchase.status === 'confirmed' ? 'bg-green-500/20 text-green-700' :
+                                      purchase.status === 'pending' ? 'bg-yellow-500/20 text-yellow-700' :
+                                      'bg-gray-500/20 text-gray-700'
+                                    }`}>
+                                      {purchase.status === 'pending' ? t("pending") : 
+                                       purchase.status === 'confirmed' ? t("confirmed") : 
+                                       t("cancelled")}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground">{purchase.purchaser_email}</p>
+                                  <p className="text-sm">
+                                    <span className="font-medium">{purchase.ticket_type}</span> - {purchase.role} - {purchase.price.toFixed(2)}€
+                                  </p>
+                                  {purchase.payment_reference && (
+                                    <p className="text-xs text-muted-foreground">Payment: {purchase.payment_reference}</p>
+                                  )}
+                                  {purchase.notes && (
+                                    <p className="text-xs text-muted-foreground">Notes: {purchase.notes}</p>
+                                  )}
+                                  <p className="text-xs text-muted-foreground">
+                                    {new Date(purchase.created_at).toLocaleString()}
+                                  </p>
+                                </div>
+                                {purchase.status === 'pending' && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleConfirmPurchase(purchase.id)}
+                                  >
+                                    {t("confirm")}
+                                  </Button>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            )}
+          </div>
+        ) : activeTab === "about" ? (
+          <div className="w-full">
+             {aboutPageLoading ? (
+               <div className="text-center text-muted-foreground py-12">
+                 <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                 <p>{t("loadingAboutPageData")}</p>
+               </div>
+            ) : (
+              <AboutPageForm 
+                onSaveContent={handleSaveAboutPageContent}
+                initialContent={aboutPageContent}
+                photos={aboutPagePhotos}
+                onPhotosChange={loadAboutPageData}
+              />
             )}
           </div>
         ) : null}
@@ -956,6 +1217,8 @@ interface EventFormProps {
 }
 
 const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
+  const { toast } = useToast();
+  
   // Parse description to get separate language versions
   const parseDescription = (desc: string | null) => {
     if (!desc) return { en: '', de: '' };
@@ -1005,6 +1268,26 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
 
   const addLink = () => {
     if (newLink.platform.trim() && newLink.url.trim()) {
+      // Validate URL
+      try {
+        const urlObj = new URL(newLink.url.trim());
+        if (!['http:', 'https:'].includes(urlObj.protocol)) {
+          toast({
+            title: "Invalid URL",
+            description: "URL must start with http:// or https://",
+            variant: "destructive",
+          });
+          return;
+        }
+      } catch {
+        toast({
+          title: "Invalid URL",
+          description: "Please enter a valid URL",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       const linkObj = {
         id: `${newLink.platform}-${Date.now()}`,
         platform: newLink.platform.trim(),
@@ -1315,6 +1598,7 @@ interface TicketSettingsFormProps {
 }
 
 const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps) => {
+  const { t } = useLanguage();
   const standardRoles = [
     { key: "bar", label: "Bar Helper" },
     { key: "kuechenhilfe", label: "Kitchen Helper" },
@@ -1359,6 +1643,11 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
   const [earlyBirdEnabled, setEarlyBirdEnabled] = useState(initialSettings?.early_bird_enabled ?? false);
   const [earlyBirdCutoff, setEarlyBirdCutoff] = useState(
     initialSettings?.early_bird_cutoff ? new Date(initialSettings.early_bird_cutoff).toISOString().slice(0, 16) : ""
+  );
+  const [earlyBirdTotalLimit, setEarlyBirdTotalLimit] = useState(
+    initialSettings?.early_bird_total_limit !== null && initialSettings?.early_bird_total_limit !== undefined
+      ? initialSettings.early_bird_total_limit.toString()
+      : ""
   );
 
   const [limitValues, setLimitValues] = useState<Record<RoleKey, string>>(() => {
@@ -1420,27 +1709,144 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     return initial;
   });
 
+  // Sync form state when initialSettings changes (e.g., after loading)
+  useEffect(() => {
+    if (initialSettings) {
+      setEarlyBirdEnabled(initialSettings.early_bird_enabled ?? false);
+      setEarlyBirdCutoff(
+        initialSettings.early_bird_cutoff 
+          ? new Date(initialSettings.early_bird_cutoff).toISOString().slice(0, 16) 
+          : ""
+      );
+      setEarlyBirdTotalLimit(
+        initialSettings.early_bird_total_limit !== null && initialSettings.early_bird_total_limit !== undefined
+          ? initialSettings.early_bird_total_limit.toString()
+          : ""
+      );
+
+      // Update limit values
+      const newLimitValues: Record<RoleKey, string> = {
+        bar: "",
+        kuechenhilfe: "",
+        springerRunner: "",
+        springerToilet: "",
+        abbau: "",
+        aufbau: "",
+        awareness: "",
+        schichtleitung: "",
+        techHelfer: "",
+      };
+      (Object.keys(newLimitValues) as RoleKey[]).forEach((role) => {
+        const field = limitFieldByRole[role];
+        const value = initialSettings[field];
+        newLimitValues[role] = value !== null && value !== undefined ? value.toString() : "";
+      });
+      setLimitValues(newLimitValues);
+
+      // Update price values
+      const newPriceValues: Record<`${RoleKey}_early` | `${RoleKey}_normal`, string> = {
+        bar_early: "",
+        bar_normal: "",
+        kuechenhilfe_early: "",
+        kuechenhilfe_normal: "",
+        springerRunner_early: "",
+        springerRunner_normal: "",
+        springerToilet_early: "",
+        springerToilet_normal: "",
+        abbau_early: "",
+        abbau_normal: "",
+        aufbau_early: "",
+        aufbau_normal: "",
+        awareness_early: "",
+        awareness_normal: "",
+        schichtleitung_early: "",
+        schichtleitung_normal: "",
+        techHelfer_early: "",
+        techHelfer_normal: "",
+      };
+      (Object.keys(priceFieldByRole) as RoleKey[]).forEach((role) => {
+        const fields = priceFieldByRole[role];
+        const earlyVal = initialSettings[fields.early];
+        const normalVal = initialSettings[fields.normal];
+        newPriceValues[`${role}_early`] = earlyVal !== null && earlyVal !== undefined ? earlyVal.toString() : "";
+        newPriceValues[`${role}_normal`] = normalVal !== null && normalVal !== undefined ? normalVal.toString() : "";
+      });
+      setPriceValues(newPriceValues);
+    }
+  }, [initialSettings]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const settings: Partial<TicketSettings> = {
       early_bird_enabled: earlyBirdEnabled,
       early_bird_cutoff: earlyBirdCutoff ? new Date(earlyBirdCutoff).toISOString() : null,
+      early_bird_total_limit: earlyBirdTotalLimit.trim() 
+        ? (() => {
+            const parsed = parseInt(earlyBirdTotalLimit.trim(), 10);
+            return !isNaN(parsed) && parsed >= 0 ? parsed : null;
+          })()
+        : null,
     };
 
-    // Limits
+    // Limits - include all fields explicitly (even if null)
     (Object.keys(limitValues) as RoleKey[]).forEach((role) => {
       const field = limitFieldByRole[role];
-      const raw = limitValues[role];
-      (settings as any)[field] = raw ? parseInt(raw) : null;
+      const raw = limitValues[role]?.trim() || "";
+      
+      if (raw === "") {
+        // Empty string means unlimited (null)
+        (settings as any)[field] = null;
+      } else {
+        const parsed = parseInt(raw, 10);
+        if (!isNaN(parsed) && parsed >= 0) {
+          (settings as any)[field] = parsed;
+        } else {
+          // Invalid number, set to null to clear it
+          console.warn(`[TicketSettingsForm] Invalid limit value for ${role}: "${raw}", setting to null`);
+          (settings as any)[field] = null;
+        }
+      }
     });
 
-    // Prices
+    // Prices - include all fields explicitly (even if null)
     (Object.keys(priceFieldByRole) as RoleKey[]).forEach((role) => {
       const fields = priceFieldByRole[role];
-      const early = priceValues[`${role}_early`];
-      const normal = priceValues[`${role}_normal`];
-      (settings as any)[fields.early] = early ? parseFloat(early) : null;
-      (settings as any)[fields.normal] = normal ? parseFloat(normal) : null;
+      const early = priceValues[`${role}_early`]?.trim() || "";
+      const normal = priceValues[`${role}_normal`]?.trim() || "";
+      
+      if (early === "") {
+        (settings as any)[fields.early] = null;
+      } else {
+        const parsed = parseFloat(early);
+        if (!isNaN(parsed) && parsed >= 0) {
+          (settings as any)[fields.early] = parsed;
+        } else {
+          console.warn(`[TicketSettingsForm] Invalid early price for ${role}: "${early}", setting to null`);
+          (settings as any)[fields.early] = null;
+        }
+      }
+      
+      if (normal === "") {
+        (settings as any)[fields.normal] = null;
+      } else {
+        const parsed = parseFloat(normal);
+        if (!isNaN(parsed) && parsed >= 0) {
+          (settings as any)[fields.normal] = parsed;
+        } else {
+          console.warn(`[TicketSettingsForm] Invalid normal price for ${role}: "${normal}", setting to null`);
+          (settings as any)[fields.normal] = null;
+        }
+      }
+    });
+
+    // Log the aufbau limit specifically for debugging
+    console.log('[TicketSettingsForm] Submitting settings:', {
+      aufbau_limit: settings.aufbau_limit,
+      aufbau_limit_raw: limitValues.aufbau,
+      allLimits: Object.entries(limitValues).reduce((acc, [role, value]) => {
+        acc[role] = { raw: value, parsed: (settings as any)[limitFieldByRole[role as RoleKey]] };
+        return acc;
+      }, {} as Record<string, { raw: string; parsed: any }>),
     });
 
     onSave(settings);
@@ -1450,13 +1856,13 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Early Bird Settings */}
       <div className="space-y-4 p-4 border rounded-lg">
-        <h3 className="text-lg font-semibold">Early Bird Ticket Settings</h3>
+        <h3 className="text-lg font-semibold">{t("earlyBirdTicketSettings")}</h3>
         
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label htmlFor="early_bird_enabled">Enable Early Bird Tickets</Label>
+            <Label htmlFor="early_bird_enabled">{t("enableEarlyBirdTickets")}</Label>
             <p className="text-sm text-muted-foreground">
-              When enabled, early bird ticket options will be available to guests
+              {t("enableEarlyBirdTicketsDesc")}
             </p>
           </div>
           <Switch
@@ -1467,30 +1873,47 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         </div>
 
         {earlyBirdEnabled && (
-          <div className="space-y-2">
-            <Label htmlFor="early_bird_cutoff">Early Bird Cutoff Date & Time</Label>
-            <Input
-              id="early_bird_cutoff"
-              type="datetime-local"
-              value={earlyBirdCutoff}
-              onChange={(e) => setEarlyBirdCutoff(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Early bird tickets will no longer be available after this date and time
-            </p>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="early_bird_cutoff">{t("earlyBirdCutoffDate")}</Label>
+              <Input
+                id="early_bird_cutoff"
+                type="datetime-local"
+                value={earlyBirdCutoff}
+                onChange={(e) => setEarlyBirdCutoff(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("earlyBirdCutoffDesc")}
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="early_bird_total_limit">{t("earlyBirdTotalLimit")}</Label>
+              <Input
+                id="early_bird_total_limit"
+                type="number"
+                min="0"
+                value={earlyBirdTotalLimit}
+                onChange={(e) => setEarlyBirdTotalLimit(e.target.value)}
+                placeholder={t("unlimited")}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("earlyBirdTotalLimitDesc")}
+              </p>
+            </div>
           </div>
         )}
       </div>
 
       {/* Ticket Limits */}
       <div className="space-y-4 p-4 border rounded-lg">
-        <h3 className="text-lg font-semibold">Ticket Availability Limits</h3>
+        <h3 className="text-lg font-semibold">{t("ticketAvailabilityLimits")}</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Set the maximum number of tickets available for each role. Leave empty for unlimited.
+          {t("setMaximumTickets")}
         </p>
         <div className="space-y-6">
           <div className="space-y-3">
-            <h4 className="font-semibold">Standard Tickets</h4>
+            <h4 className="font-semibold">{t("standardTickets_plural")}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {standardRoles.map((role) => (
                 <div key={role.key} className="space-y-2">
@@ -1535,9 +1958,9 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
 
       {/* Pricing Settings */}
       <div className="space-y-4 p-4 border rounded-lg">
-        <h3 className="text-lg font-semibold">Ticket Pricing</h3>
+        <h3 className="text-lg font-semibold">{t("ticketPricing")}</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Set prices for each ticket role (in euros). Leave empty to use default pricing.
+          {t("setPricesForRoles")}
         </p>
 
         <div className="space-y-6">
@@ -1549,7 +1972,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                   <div className="font-medium">{role.label}</div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor={`${role.key}_price_early`}>Early Bird Price (€)</Label>
+                      <Label htmlFor={`${role.key}_price_early`}>{t("earlyBirdPrice")}</Label>
                       <Input
                         id={`${role.key}_price_early`}
                         type="number"
@@ -1563,7 +1986,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor={`${role.key}_price_normal`}>Normal Price (€)</Label>
+                      <Label htmlFor={`${role.key}_price_normal`}>{t("normalPrice")}</Label>
                       <Input
                         id={`${role.key}_price_normal`}
                         type="number"
@@ -1590,7 +2013,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                   <div className="font-medium">{role.label}</div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor={`${role.key}_price_early`}>Early Bird Price (€)</Label>
+                      <Label htmlFor={`${role.key}_price_early`}>{t("earlyBirdPrice")}</Label>
                       <Input
                         id={`${role.key}_price_early`}
                         type="number"
@@ -1604,7 +2027,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor={`${role.key}_price_normal`}>Normal Price (€)</Label>
+                      <Label htmlFor={`${role.key}_price_normal`}>{t("normalPrice")}</Label>
                       <Input
                         id={`${role.key}_price_normal`}
                         type="number"
@@ -1626,9 +2049,292 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
       </div>
 
       <Button type="submit" className="w-full">
-        Save Ticket Settings
+        {t("saveTicketSettings")}
       </Button>
     </form>
+  );
+};
+
+interface AboutPageFormProps {
+  onSaveContent: (content: Partial<AboutPageContentType>) => void;
+  initialContent?: AboutPageContentType | null;
+  photos: AboutPagePhoto[];
+  onPhotosChange: () => void;
+}
+
+const AboutPageForm = ({ onSaveContent, initialContent, photos, onPhotosChange }: AboutPageFormProps) => {
+  const { t } = useLanguage();
+  const { toast } = useToast();
+  const [contentTitle, setContentTitle] = useState(initialContent?.title || '');
+  const [contentText, setContentText] = useState(initialContent?.content || '');
+  const [uploading, setUploading] = useState(false);
+  const [editingPhoto, setEditingPhoto] = useState<AboutPagePhoto | null>(null);
+
+  // Sync form state when initialContent updates after save
+  useEffect(() => {
+    setContentTitle(initialContent?.title || '');
+    setContentText(initialContent?.content || '');
+  }, [initialContent]);
+
+  const handleContentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSaveContent({
+      title: contentTitle,
+      content: contentText,
+    });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        toast({
+          title: t("error"),
+          description: "Please upload an image file",
+          variant: "destructive",
+        });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const maxOrderIndex = photos.length > 0 ? Math.max(...photos.map(p => p.order_index)) : -1;
+      await uploadAboutPagePhoto(
+        file,
+        'center',
+        'medium',
+        null,
+        maxOrderIndex + 1
+      );
+
+      toast({ title: t("photoUploadedSuccessfully") });
+      onPhotosChange();
+    } catch (error: any) {
+      toast({
+        title: t("error"),
+        description: error?.message || t("failedToUploadPhoto"),
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleUpdatePhoto = async (photo: AboutPagePhoto, updates: Partial<AboutPagePhoto>) => {
+    try {
+      await updateAboutPagePhoto(photo.id, updates);
+      toast({ title: t("photoUpdatedSuccessfully") });
+      onPhotosChange();
+      setEditingPhoto(null);
+    } catch (error: any) {
+      toast({
+        title: t("error"),
+        description: error?.message || t("failedToUpdatePhoto"),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeletePhoto = async (photo: AboutPagePhoto) => {
+    if (!confirm(t("areYouSureDeletePhoto"))) return;
+
+    try {
+      await deleteAboutPagePhoto(photo.id, photo.image_path);
+      toast({ title: t("photoDeletedSuccessfully") });
+      onPhotosChange();
+    } catch (error: any) {
+      toast({
+        title: t("error"),
+        description: error?.message || t("failedToDeletePhoto"),
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Content Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("pageContent")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleContentSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="about_title">{t("title")}</Label>
+              <Input
+                id="about_title"
+                value={contentTitle}
+                onChange={(e) => setContentTitle(e.target.value)}
+                placeholder="About Us"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="about_content">{t("content")}</Label>
+              <Textarea
+                id="about_content"
+                value={contentText}
+                onChange={(e) => setContentText(e.target.value)}
+                rows={8}
+                placeholder="Enter the about page content..."
+              />
+            </div>
+            <Button type="submit">{t("saveContent")}</Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Photo Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("festivalPhotos")}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Upload Section */}
+          <div className="space-y-2">
+            <Label htmlFor="photo_upload">{t("uploadNewPhoto")}</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                id="photo_upload"
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                disabled={uploading}
+                className="cursor-pointer"
+              />
+              {uploading && (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              )}
+            </div>
+          </div>
+
+          {/* Photos List */}
+          <div className="space-y-4">
+            {photos.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">{t("noPhotosUploaded")}</p>
+            ) : (
+              photos.map((photo) => (
+                <Card key={photo.id}>
+                  <CardContent className="p-4">
+                    <div className="flex gap-4">
+                      <img
+                        src={photo.image_url}
+                        alt={photo.caption || "Festival photo"}
+                        className="w-32 h-32 object-cover rounded-lg"
+                      />
+                      <div className="flex-1 space-y-3">
+                        {editingPhoto?.id === photo.id ? (
+                          <div className="space-y-3">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                  <Label>{t("alignment")}</Label>
+                                  <Select
+                                    value={editingPhoto.alignment}
+                                    onValueChange={(value: 'left' | 'center' | 'right') =>
+                                      setEditingPhoto({ ...editingPhoto, alignment: value })
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="left">{t("left")}</SelectItem>
+                                      <SelectItem value="center">{t("center")}</SelectItem>
+                                      <SelectItem value="right">{t("right")}</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>{t("size")}</Label>
+                                  <Select
+                                    value={editingPhoto.size}
+                                    onValueChange={(value: 'small' | 'medium' | 'large' | 'full') =>
+                                      setEditingPhoto({ ...editingPhoto, size: value })
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="small">{t("small")}</SelectItem>
+                                      <SelectItem value="medium">{t("medium")}</SelectItem>
+                                      <SelectItem value="large">{t("large")}</SelectItem>
+                                      <SelectItem value="full">{t("fullWidth")}</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <Label>{t("caption")}</Label>
+                                <Input
+                                  value={editingPhoto.caption || ''}
+                                  onChange={(e) =>
+                                    setEditingPhoto({ ...editingPhoto, caption: e.target.value })
+                                  }
+                                  placeholder={t("optionalCaption")}
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    if (editingPhoto) {
+                                      handleUpdatePhoto(photo, editingPhoto);
+                                    }
+                                  }}
+                                >
+                                  {t("save")}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setEditingPhoto(null)}
+                                >
+                                  {t("cancel")}
+                                </Button>
+                              </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium">Alignment: {photo.alignment}</p>
+                                <p className="text-sm text-muted-foreground">Size: {photo.size}</p>
+                                {photo.caption && (
+                                  <p className="text-sm mt-1">{photo.caption}</p>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setEditingPhoto(photo)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleDeletePhoto(photo)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

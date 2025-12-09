@@ -1,4 +1,4 @@
-import { Search, Languages, LogIn, Settings } from "lucide-react";
+import { Search, Languages, LogIn, LogOut, Settings, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -16,8 +16,13 @@ export const FestivalHeader = ({
   onSearchChange
 }: FestivalHeaderProps) => {
   const { language, setLanguage, t } = useLanguage();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -48,20 +53,30 @@ export const FestivalHeader = ({
                 <span className="hidden md:inline">{language.toUpperCase()}</span>
               </Button>
               
+              {/* Show admin button if user is admin */}
+              {user && isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/admin')}
+                  className="min-h-[44px] px-2 md:px-3"
+                >
+                  <Settings className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">{t("admin")}</span>
+                </Button>
+              )}
+              
+              {/* Show login or sign out based on auth state */}
               {user ? (
-                <>
-                  {isAdmin && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate('/admin')}
-                      className="min-h-[44px] px-2 md:px-3"
-                    >
-                      <Settings className="h-4 w-4 md:mr-2" />
-                      <span className="hidden md:inline">{t("admin")}</span>
-                    </Button>
-                  )}
-                </>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="min-h-[44px] px-2 md:px-3"
+                >
+                  <LogOut className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">{t("signOut")}</span>
+                </Button>
               ) : (
                 <Button
                   variant="outline"

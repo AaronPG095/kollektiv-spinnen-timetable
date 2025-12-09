@@ -25,23 +25,54 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = isLogin 
-        ? await signIn(email, password)
-        : await signUp(email, password);
+      console.log('[Auth] Attempting to', isLogin ? 'sign in' : 'sign up', 'with email:', email);
+      
+      let result;
+      if (isLogin) {
+        console.log('[Auth] Calling signIn...');
+        result = await signIn(email, password);
+        console.log('[Auth] signIn returned:', { hasError: !!result.error, hasData: !!result.data });
+      } else {
+        console.log('[Auth] Calling signUp...');
+        result = await signUp(email, password);
+        console.log('[Auth] signUp returned:', { hasError: !!result.error });
+      }
+
+      const { error } = result;
 
       if (error) {
+        console.error('[Auth] Authentication error:', {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+        });
+        
+        // Provide user-friendly error messages
+        let errorMessage = error.message || 'Failed to authenticate. Please check your credentials.';
+        if (error.status === 400 || error.message?.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+        } else if (error.message?.includes('Email not confirmed')) {
+          errorMessage = 'Please verify your email address before signing in. Check your inbox for the verification link.';
+        }
+        
         toast({
           title: t("authenticationError"),
-          description: error.message,
+          description: errorMessage,
           variant: "destructive",
         });
       } else {
+        console.log('[Auth] ✅ Authentication successful! Navigating...');
         if (isLogin) {
-          navigate('/');
+          // Show success message
           toast({
             title: t("welcomeBackToast"),
             description: t("signedInSuccessfully"),
           });
+          
+          // Navigate immediately - auth state listener will handle the rest
+          console.log('[Auth] Calling navigate("/")...');
+          navigate('/', { replace: true });
+          console.log('[Auth] Navigation called');
         } else {
           toast({
             title: t("accountCreated"),
@@ -49,10 +80,12 @@ const Auth = () => {
           });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Auth] Unexpected error:', error);
+      console.error('[Auth] Error stack:', error?.stack);
       toast({
         title: t("error"),
-        description: t("unexpectedError"),
+        description: error?.message || t("unexpectedError"),
         variant: "destructive",
       });
     } finally {

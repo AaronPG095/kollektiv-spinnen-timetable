@@ -7,6 +7,7 @@ export const Navbar = () => {
   const location = useLocation();
 
   const navItems = [
+    { path: "/about", label: "About Us" },
     { path: "/faq", label: t("faq") },
     { path: "/", label: t("timetable") },
     { path: "/tickets", label: t("tickets") },

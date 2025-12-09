@@ -14,6 +14,7 @@ import {
 import { Footer } from "@/components/Footer";
 import { X } from "lucide-react";
 import { getTicketSettings, type TicketSettings } from "@/lib/ticketSettings";
+import { checkRoleAvailability, getRemainingTickets, getRemainingEarlyBirdTickets } from "@/lib/ticketPurchases";
 
 const Tickets = () => {
   const { t } = useLanguage();
@@ -23,6 +24,9 @@ const Tickets = () => {
   const [earlyBirdReducedRole, setEarlyBirdReducedRole] = useState<string>("");
   const [normalReducedRole, setNormalReducedRole] = useState<string>("");
   const [ticketSettings, setTicketSettings] = useState<TicketSettings | null>(null);
+  const [roleAvailability, setRoleAvailability] = useState<Record<string, boolean>>({});
+  const [remainingTickets, setRemainingTickets] = useState<Record<string, number | null>>({});
+  const [remainingEarlyBirdTickets, setRemainingEarlyBirdTickets] = useState<number | null>(null);
 
   const limitFieldByRole: Record<string, keyof TicketSettings> = {
     bar: "bar_limit",
@@ -50,8 +54,48 @@ const Tickets = () => {
 
   useEffect(() => {
     const loadSettings = async () => {
-      const settings = await getTicketSettings();
-      setTicketSettings(settings);
+      try {
+        const settings = await getTicketSettings();
+        setTicketSettings(settings);
+        
+        // Load availability for all roles
+        if (settings) {
+          const availability: Record<string, boolean> = {};
+          const remaining: Record<string, number | null> = {};
+          
+          // Define all roles here to avoid dependency issues
+          const allRoles = [
+            'bar', 'kuechenhilfe', 'springerRunner', 'springerToilet',
+            'abbau', 'aufbau', 'awareness', 'schichtleitung', 'techHelfer'
+          ];
+          
+          await Promise.all(
+            allRoles.map(async (role) => {
+              const field = limitFieldByRole[role];
+              const limit = field ? (settings[field] as number | null | undefined) : null;
+              const isAvailable = await checkRoleAvailability(role, limit);
+              const remainingCount = await getRemainingTickets(role, limit);
+              availability[role] = isAvailable;
+              remaining[role] = remainingCount;
+            })
+          );
+          
+          setRoleAvailability(availability);
+          setRemainingTickets(remaining);
+        }
+        
+        // Load remaining early-bird tickets (separate from role availability)
+        if (settings?.early_bird_total_limit !== null && settings?.early_bird_total_limit !== undefined) {
+          const earlyBirdRemaining = await getRemainingEarlyBirdTickets(settings.early_bird_total_limit);
+          setRemainingEarlyBirdTickets(earlyBirdRemaining);
+        } else {
+          setRemainingEarlyBirdTickets(null);
+        }
+      } catch (error: any) {
+        console.error('[Tickets] Error loading ticket settings:', error);
+        // Don't show toast here as it's not critical - page can still function
+        // Settings will be null and UI will handle it gracefully
+      }
     };
     loadSettings();
   }, []);
@@ -87,8 +131,25 @@ const Tickets = () => {
   // Check if early bird tickets are available
   const isEarlyBirdAvailable = (): boolean => {
     if (!ticketSettings?.early_bird_enabled) return false;
-    if (!ticketSettings.early_bird_cutoff) return true;
-    return new Date(ticketSettings.early_bird_cutoff) > new Date();
+    
+    // Check cutoff date
+    if (ticketSettings.early_bird_cutoff) {
+      if (new Date(ticketSettings.early_bird_cutoff) <= new Date()) {
+        return false;
+      }
+    }
+    
+    // Check total limit
+    if (ticketSettings.early_bird_total_limit !== null && ticketSettings.early_bird_total_limit !== undefined) {
+      // If we have the remaining count loaded, use it; otherwise return true (will be checked async)
+      if (remainingEarlyBirdTickets !== null) {
+        return remainingEarlyBirdTickets > 0;
+      }
+      // If count not loaded yet, assume available (will update when loaded)
+      return true;
+    }
+    
+    return true;
   };
 
   // Get price for a role and ticket type
@@ -105,18 +166,18 @@ const Tickets = () => {
     return isEarlyBird ? "100€" : "120€";
   };
 
-  // Check if a role is available (limit not reached)
+  // Check if a role is available (using real inventory tracking)
   const isRoleAvailable = (role: string): boolean => {
-    if (!ticketSettings) return true; // Default to available if no settings
-
-    const field = limitFieldByRole[role];
-    const limit = field ? (ticketSettings[field] as number | null | undefined) : null;
-
-    // If no limit set, role is available
-    if (limit === null || limit === undefined) return true;
-
-    // Placeholder: treat limit of 0 as sold out until real inventory wiring
-    return limit > 0;
+    // If availability hasn't been loaded yet, default to true
+    if (roleAvailability[role] === undefined) {
+      return true;
+    }
+    return roleAvailability[role];
+  };
+  
+  // Get remaining tickets for a role
+  const getRemainingForRole = (role: string): number | null => {
+    return remainingTickets[role] ?? null;
   };
 
   const handleChooseTicket = (type: string, role: string) => {
@@ -220,9 +281,9 @@ const Tickets = () => {
                 </p>
                 <div className="mt-3 text-sm text-muted-foreground space-y-1">
                   {isEarlyBirdAvailable() && (
-                    <p>{getPrice("bar", true)} - for the Early Bird variant</p>
+                    <p>{getPrice("bar", true)} - {t("forTheEarlyBirdVariant")}</p>
                   )}
-                  <p>{getPrice("bar", false)} - for the Normal variant</p>
+                  <p>{getPrice("bar", false)} - {t("forTheNormalVariant")}</p>
                 </div>
               </div>
 
@@ -281,9 +342,16 @@ const Tickets = () => {
               {isEarlyBirdAvailable() && (
                 <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {t("earlyBird")}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {t("earlyBird")}
+                      </h3>
+                      {remainingEarlyBirdTickets !== null && (
+                        <span className="text-sm font-medium text-muted-foreground">
+                          ({remainingEarlyBirdTickets} {t("remaining")})
+                        </span>
+                      )}
+                    </div>
                     {earlyBirdRole && (
                       <span className="text-sm font-medium text-muted-foreground">
                         {getPrice(earlyBirdRole, true)}
@@ -308,7 +376,16 @@ const Tickets = () => {
                               value={role.value}
                               disabled={!isRoleAvailable(role.value)}
                             >
-                              {role.label} {!isRoleAvailable(role.value) && "(Sold Out)"}
+                              {role.label} {(() => {
+                                const remaining = getRemainingForRole(role.value);
+                                if (!isRoleAvailable(role.value)) {
+                                  return `(${t("soldOut")})`;
+                                }
+                                if (remaining !== null) {
+                                  return ` (${remaining} ${t("remaining")})`;
+                                }
+                                return '';
+                              })()}
                             </SelectItem>
                           ))}
                           {earlyBirdRole && (
@@ -452,9 +529,16 @@ const Tickets = () => {
               {isEarlyBirdAvailable() && (
                 <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {t("earlyBird")}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {t("earlyBird")}
+                      </h3>
+                      {remainingEarlyBirdTickets !== null && (
+                        <span className="text-sm font-medium text-muted-foreground">
+                          ({remainingEarlyBirdTickets} {t("remaining")})
+                        </span>
+                      )}
+                    </div>
                     {earlyBirdReducedRole && (
                       <span className="text-sm font-medium text-muted-foreground">
                         {getPrice(earlyBirdReducedRole, true)}
@@ -479,7 +563,16 @@ const Tickets = () => {
                               value={role.value}
                               disabled={!isRoleAvailable(role.value)}
                             >
-                              {role.label} {!isRoleAvailable(role.value) && "(Sold Out)"}
+                              {role.label} {(() => {
+                                const remaining = getRemainingForRole(role.value);
+                                if (!isRoleAvailable(role.value)) {
+                                  return `(${t("soldOut")})`;
+                                }
+                                if (remaining !== null) {
+                                  return ` (${remaining} ${t("remaining")})`;
+                                }
+                                return '';
+                              })()}
                             </SelectItem>
                           ))}
                           {earlyBirdReducedRole && (
