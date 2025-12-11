@@ -98,9 +98,15 @@ const Admin = () => {
             .map((result, index) => ({ result, index }))
             .filter(({ result }) => result.status === 'rejected')
             .map(({ result, index }) => {
-              const names = ['Events', 'FAQs', 'Ticket Settings', 'About Page', 'Ticket Purchases'];
+              const names = [
+                t("dataSourceEvents"),
+                t("dataSourceFAQs"),
+                t("dataSourceTicketSettings"),
+                t("dataSourceAboutPage"),
+                t("dataSourceTicketPurchases")
+              ];
               return {
-                name: names[index] || `Data source ${index + 1}`,
+                name: names[index] || t("dataSourceUnknown").replace('{index}', (index + 1).toString()),
                 error: result.status === 'rejected' ? result.reason : null,
               };
             });
@@ -108,10 +114,10 @@ const Admin = () => {
           if (errors.length > 0) {
             console.error('[Admin] Some data sources failed to load:', errors);
             // Only show toast if multiple failures or critical ones
-            if (errors.length > 1 || errors.some(e => e.name === 'Ticket Settings')) {
+            if (errors.length > 1 || errors.some(e => e.name === t("dataSourceTicketSettings"))) {
               toast({
-                title: "Warning",
-                description: `Failed to load ${errors.length} data source(s). Some features may be unavailable.`,
+                title: t("warning"),
+                description: t("failedToLoadDataSources").replace('{count}', errors.length.toString()),
                 variant: "destructive",
               });
             }
@@ -622,7 +628,7 @@ const Admin = () => {
                 size="sm"
               >
                 <HelpCircle className="h-3 w-3" />
-                FAQs
+                {t("faqs")}
               </Button>
               <Button
                 variant={activeTab === "tickets" ? "default" : "ghost"}
@@ -1217,6 +1223,7 @@ interface EventFormProps {
 }
 
 const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
+  const { t } = useLanguage();
   const { toast } = useToast();
   
   // Parse description to get separate language versions
@@ -1268,25 +1275,25 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
 
   const addLink = () => {
     if (newLink.platform.trim() && newLink.url.trim()) {
-      // Validate URL
-      try {
-        const urlObj = new URL(newLink.url.trim());
-        if (!['http:', 'https:'].includes(urlObj.protocol)) {
+        // Validate URL
+        try {
+          const urlObj = new URL(newLink.url.trim());
+          if (!['http:', 'https:'].includes(urlObj.protocol)) {
+            toast({
+              title: t("invalidURL"),
+              description: t("urlMustStartWithHttp"),
+              variant: "destructive",
+            });
+            return;
+          }
+        } catch {
           toast({
-            title: "Invalid URL",
-            description: "URL must start with http:// or https://",
+            title: t("invalidURL"),
+            description: t("pleaseEnterValidURL"),
             variant: "destructive",
           });
           return;
         }
-      } catch {
-        toast({
-          title: "Invalid URL",
-          description: "Please enter a valid URL",
-          variant: "destructive",
-        });
-        return;
-      }
       
       const linkObj = {
         id: `${newLink.platform}-${Date.now()}`,
@@ -1522,6 +1529,7 @@ interface FAQFormProps {
 }
 
 const FAQForm = ({ onSave, initialFAQ }: FAQFormProps) => {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     question: initialFAQ?.question || '',
     answer: initialFAQ?.answer || '',
@@ -1570,7 +1578,7 @@ const FAQForm = ({ onSave, initialFAQ }: FAQFormProps) => {
           min="0"
         />
         <p className="text-xs text-muted-foreground">
-          Lower numbers appear first. Use this to control the order of FAQs.
+          {t("lowerNumbersAppearFirst") || "Lower numbers appear first. Use this to control the order of FAQs."}
         </p>
       </div>
 

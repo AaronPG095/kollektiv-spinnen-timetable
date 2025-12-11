@@ -81,7 +81,6 @@ const TicketCheckout = () => {
     enteredDetails: false,
     generatedReference: false,
     paidViaPayPal: false,
-    readyToConfirm: false,
   });
 
   // PayPal configuration - can be moved to env or ticket settings
@@ -204,7 +203,7 @@ const TicketCheckout = () => {
     if (!formData.first_name || !formData.last_name || !role || !type) {
       toast({
         title: t("validationError"),
-        description: "Please fill in first name and last name before generating reference code",
+        description: t("pleaseFillNameBeforeGenerating"),
         variant: "destructive",
       });
       return;
@@ -215,7 +214,7 @@ const TicketCheckout = () => {
     setChecklist(prev => ({ ...prev, generatedReference: true }));
     toast({
       title: t("referenceCodeGenerated"),
-      description: "Reference code generated successfully",
+      description: t("referenceCodeGeneratedSuccessfully"),
     });
   };
 
@@ -311,8 +310,7 @@ const TicketCheckout = () => {
     const allChecklistItemsCompleted = 
       checklist.enteredDetails && 
       checklist.generatedReference && 
-      checklist.paidViaPayPal && 
-      checklist.readyToConfirm;
+      checklist.paidViaPayPal;
     
     if (!allChecklistItemsCompleted) {
       toast({
@@ -327,7 +325,7 @@ const TicketCheckout = () => {
     if (!referenceCode) {
       toast({
         title: t("validationError"),
-        description: "Please generate a reference code before confirming payment",
+        description: t("pleaseGenerateReferenceBeforeConfirming"),
         variant: "destructive",
       });
       return;
@@ -450,72 +448,6 @@ const TicketCheckout = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Checklist */}
-                <div className="p-4 bg-background/50 rounded-lg border border-border/30">
-                  <h3 className="font-semibold mb-3">Checklist</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="checklist-1"
-                        checked={checklist.enteredDetails}
-                        onCheckedChange={(checked) => 
-                          setChecklist(prev => ({ ...prev, enteredDetails: checked === true }))
-                        }
-                      />
-                      <label
-                        htmlFor="checklist-1"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {t("checklistItem1")}
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="checklist-2"
-                        checked={checklist.generatedReference}
-                        onCheckedChange={(checked) => 
-                          setChecklist(prev => ({ ...prev, generatedReference: checked === true }))
-                        }
-                      />
-                      <label
-                        htmlFor="checklist-2"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {t("checklistItem2")}
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="checklist-3"
-                        checked={checklist.paidViaPayPal}
-                        onCheckedChange={(checked) => 
-                          setChecklist(prev => ({ ...prev, paidViaPayPal: checked === true }))
-                        }
-                      />
-                      <label
-                        htmlFor="checklist-3"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {t("checklistItem3")}
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="checklist-4"
-                        checked={checklist.readyToConfirm}
-                        onCheckedChange={(checked) => 
-                          setChecklist(prev => ({ ...prev, readyToConfirm: checked === true }))
-                        }
-                      />
-                      <label
-                        htmlFor="checklist-4"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {t("checklistItem4")}
-                      </label>
-                    </div>
-                  </div>
-                </div>
                 {/* Ticket Summary */}
                 <div className="p-4 bg-background/50 rounded-lg border border-border/30">
                   <h3 className="font-semibold mb-3">{t("ticketSummary")}</h3>
@@ -544,6 +476,64 @@ const TicketCheckout = () => {
                       <span className="font-bold text-lg">{getPrice().toFixed(2)}€</span>
                     </div>
                   </div>
+                </div>
+                
+                {/* Checklist */}
+                <div className="p-4 bg-background/50 rounded-lg border border-border/30">
+                  <h3 className="font-semibold mb-3">{t("checklist")}</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="checklist-1"
+                        checked={checklist.enteredDetails}
+                        onCheckedChange={(checked) => 
+                          setChecklist(prev => ({ ...prev, enteredDetails: checked === true }))
+                        }
+                        className="h-5 w-5"
+                      />
+                      <label
+                        htmlFor="checklist-1"
+                        className="text-lg font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {t("checklistItem1")}
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="checklist-2"
+                        checked={checklist.generatedReference}
+                        onCheckedChange={(checked) => 
+                          setChecklist(prev => ({ ...prev, generatedReference: checked === true }))
+                        }
+                        className="h-5 w-5"
+                      />
+                      <label
+                        htmlFor="checklist-2"
+                        className="text-lg font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {t("checklistItem2")}
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="checklist-3"
+                        checked={checklist.paidViaPayPal}
+                        onCheckedChange={(checked) => 
+                          setChecklist(prev => ({ ...prev, paidViaPayPal: checked === true }))
+                        }
+                        className="h-5 w-5"
+                      />
+                      <label
+                        htmlFor="checklist-3"
+                        className="text-lg font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {t("checklistItem3")}
+                      </label>
+                    </div>
+                  </div>
+                  <p className="text-sm text-red-500 mt-4 pt-4 border-2 border-destructive/50 dark:border-destructive rounded-lg p-4">
+                    {t("pleaseFollowChecklist")}
+                  </p>
                 </div>
                 
                 {/* Purchaser Information */}
@@ -626,7 +616,7 @@ const TicketCheckout = () => {
                     )}
                     {touched.purchaser_email && formData.purchaser_email && !formErrors.purchaser_email && (
                       <p id="purchaser_email-hint" className="text-xs text-green-600 dark:text-green-400">
-                        ✓ Valid email format
+                        {t("validEmailFormat")}
                       </p>
                     )}
                   </div>
@@ -689,8 +679,8 @@ const TicketCheckout = () => {
                         {qrCodeError ? (
                           <div className="text-muted-foreground text-sm text-center p-4">
                             <QrCode className="h-12 w-12 mx-auto mb-2" />
-                            <p>QR Code Image</p>
-                            <p className="text-xs mt-1">Place paypal-qr-code.png in public folder</p>
+                            <p>{t("qrCodeImage")}</p>
+                            <p className="text-xs mt-1">{t("placeQRCodeInPublicFolder")}</p>
                           </div>
                         ) : (
                           <img 
@@ -728,11 +718,11 @@ const TicketCheckout = () => {
                   </div>
                 </div>
                 
-                {/* Payment Note */}
-                <Alert>
+                {/* Important Warning */}
+                <Alert variant="destructive" className="border-2">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="text-sm">
-                    {t("paymentNote")}
+                  <AlertDescription className="text-sm font-semibold">
+                    {t("onlyClickAfterPayment")}
                   </AlertDescription>
                 </Alert>
                 
@@ -749,7 +739,7 @@ const TicketCheckout = () => {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={submitting || !checklist.enteredDetails || !checklist.generatedReference || !checklist.paidViaPayPal || !checklist.readyToConfirm || !referenceCode}
+                    disabled={submitting || !checklist.enteredDetails || !checklist.generatedReference || !checklist.paidViaPayPal || !referenceCode}
                     className="flex-1"
                   >
                     {submitting ? (

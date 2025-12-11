@@ -49,9 +49,9 @@ const translations = {
     time: 'ZEIT',
     
     // Event Details
-    eventDetails: 'Event Details',
+    eventDetails: 'Event-Details',
     day: 'Tag',
-    venue_label: 'Venue',
+    venue_label: 'Veranstaltungsort',
     description: 'Beschreibung',
     links: 'Links',
     
@@ -180,6 +180,15 @@ const translations = {
     scanQRCode: 'Scanne den QR-Code mit deinem Handy, um zu bezahlen',
     orClickLink: 'oder klicke auf den Link',
     paypalPaymentInstructions: 'Bitte bezahle den Betrag von {amount}€ über PayPal, bevor du das Formular absendest.',
+    pleaseFillNameBeforeGenerating: 'Bitte fülle Vorname und Nachname aus, bevor du den Referenzcode generierst',
+    referenceCodeGeneratedSuccessfully: 'Referenzcode erfolgreich generiert',
+    pleaseGenerateReferenceBeforeConfirming: 'Bitte generiere einen Referenzcode, bevor du die Zahlung bestätigst',
+    checklist: 'Checkliste',
+    pleaseFollowChecklist: 'Bitte folge der Checkliste oben, um sicherzustellen, dass der Zahlungsprozess korrekt abläuft',
+    validEmailFormat: '✓ Gültiges E-Mail-Format',
+    qrCodeImage: 'QR-Code Bild',
+    placeQRCodeInPublicFolder: 'Platziere paypal-qr-code.png im public Ordner',
+    onlyClickAfterPayment: 'Klicke nur auf den Button "Zahlung bestätigt", nachdem du über PayPal bezahlt hast und die Checkliste oben auf der Seite abgeschlossen hast',
     
     // Footer
     sitemap: 'Sitemap',
@@ -326,7 +335,23 @@ const translations = {
     confirmed: 'Bestätigt',
     cancelled: 'Storniert',
     earlyBirdTotalLimit: 'Early Bird Gesamtlimit',
-    earlyBirdTotalLimitDesc: 'Setze die Gesamtanzahl verfügbarer Early-Bird-Tickets für alle Rollen. Leer lassen für unbegrenzt. Early-Bird-Tickets werden automatisch nicht mehr verfügbar, wenn dieses Limit erreicht ist.'
+    earlyBirdTotalLimitDesc: 'Setze die Gesamtanzahl verfügbarer Early-Bird-Tickets für alle Rollen. Leer lassen für unbegrenzt. Early-Bird-Tickets werden automatisch nicht mehr verfügbar, wenn dieses Limit erreicht ist.',
+    
+    // Admin - Data Loading
+    warning: 'Warnung',
+    failedToLoadDataSources: 'Fehler beim Laden von {count} Datenquelle(n). Einige Funktionen sind möglicherweise nicht verfügbar.',
+    dataSourceEvents: 'Events',
+    dataSourceFAQs: 'FAQs',
+    dataSourceTicketSettings: 'Ticket-Einstellungen',
+    dataSourceAboutPage: 'Über uns Seite',
+    dataSourceTicketPurchases: 'Ticket-Käufe',
+    dataSourceUnknown: 'Datenquelle {index}',
+    
+    // Admin - URL Validation
+    invalidURL: 'Ungültige URL',
+    urlMustStartWithHttp: 'URL muss mit http:// oder https:// beginnen',
+    pleaseEnterValidURL: 'Bitte gib eine gültige URL ein',
+    lowerNumbersAppearFirst: 'Niedrigere Zahlen erscheinen zuerst. Verwende dies, um die Reihenfolge der FAQs zu steuern.'
   },
   en: {
     // Header
@@ -497,6 +522,15 @@ const translations = {
     scanQRCode: 'Scan the QR code with your phone to pay',
     orClickLink: 'or click the link',
     paypalPaymentInstructions: 'Please pay the amount of {amount}€ via PayPal before submitting the form.',
+    pleaseFillNameBeforeGenerating: 'Please fill in first name and last name before generating reference code',
+    referenceCodeGeneratedSuccessfully: 'Reference code generated successfully',
+    pleaseGenerateReferenceBeforeConfirming: 'Please generate a reference code before confirming payment',
+    checklist: 'Checklist',
+    pleaseFollowChecklist: 'Please follow the checklist above to ensure the payment process goes through correctly.',
+    validEmailFormat: '✓ Valid email format',
+    qrCodeImage: 'QR Code Image',
+    placeQRCodeInPublicFolder: 'Place paypal-qr-code.png in public folder',
+    onlyClickAfterPayment: 'Only click the payment confirmed button after paying over PayPal, and completing the checklist at the top of the page.',
     
     // Footer
     sitemap: 'Sitemap',
@@ -643,7 +677,23 @@ const translations = {
     confirmed: 'Confirmed',
     cancelled: 'Cancelled',
     earlyBirdTotalLimit: 'Early Bird Total Limit',
-    earlyBirdTotalLimitDesc: 'Set the total number of early-bird tickets available across all roles. Leave empty for unlimited. Early-bird tickets will automatically become unavailable when this limit is reached.'
+    earlyBirdTotalLimitDesc: 'Set the total number of early-bird tickets available across all roles. Leave empty for unlimited. Early-bird tickets will automatically become unavailable when this limit is reached.',
+    
+    // Admin - Data Loading
+    warning: 'Warning',
+    failedToLoadDataSources: 'Failed to load {count} data source(s). Some features may be unavailable.',
+    dataSourceEvents: 'Events',
+    dataSourceFAQs: 'FAQs',
+    dataSourceTicketSettings: 'Ticket Settings',
+    dataSourceAboutPage: 'About Page',
+    dataSourceTicketPurchases: 'Ticket Purchases',
+    dataSourceUnknown: 'Data source {index}',
+    
+    // Admin - URL Validation
+    invalidURL: 'Invalid URL',
+    urlMustStartWithHttp: 'URL must start with http:// or https://',
+    pleaseEnterValidURL: 'Please enter a valid URL',
+    lowerNumbersAppearFirst: 'Lower numbers appear first. Use this to control the order of FAQs.'
   }
 };
 
