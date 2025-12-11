@@ -13,29 +13,34 @@ import Tickets from "./pages/Tickets";
 import TicketCheckout from "./pages/TicketCheckout";
 import About from "./pages/About";
 
-const App = () => (
-  <ErrorBoundary>
-    <AuthProvider>
-      <LanguageProvider>
-        <TooltipProvider>
-          <Toaster />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/tickets" element={<Tickets />} />
-              <Route path="/tickets/checkout" element={<TicketCheckout />} />
-              <Route path="/about" element={<About />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </LanguageProvider>
-    </AuthProvider>
-  </ErrorBoundary>
-);
+const App = () => {
+  // #region agent log
+  console.log('[DEBUG] App component rendering');
+  // #endregion
+  return (
+    <ErrorBoundary>
+      <AuthProvider>
+        <LanguageProvider>
+          <TooltipProvider>
+            <Toaster />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/tickets" element={<Tickets />} />
+                <Route path="/tickets/checkout" element={<TicketCheckout />} />
+                <Route path="/about" element={<About />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </LanguageProvider>
+      </AuthProvider>
+    </ErrorBoundary>
+  );
+};
 
 export default App;

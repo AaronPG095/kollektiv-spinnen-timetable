@@ -3,11 +3,25 @@
  */
 
 /**
- * Validates email format
+ * Validates email format with more robust pattern
  */
 export const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
+  // More comprehensive email regex pattern
+  // Allows: letters, numbers, dots, hyphens, underscores, plus signs before @
+  // Requires: @ symbol, domain name, TLD (at least 2 characters)
+  const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const trimmed = email.trim();
+  
+  // Basic length checks
+  if (trimmed.length === 0) return false;
+  if (trimmed.length > 254) return false; // RFC 5321 limit
+  
+  // Check for common invalid patterns
+  if (trimmed.startsWith('.') || trimmed.startsWith('@') || trimmed.startsWith('+')) return false;
+  if (trimmed.includes('..')) return false; // No consecutive dots
+  if (trimmed.includes('@.') || trimmed.includes('.@')) return false;
+  
+  return emailRegex.test(trimmed);
 };
 
 /**
@@ -49,19 +63,58 @@ export const validateAndSanitizeName = (name: string): { valid: boolean; sanitiz
 };
 
 /**
- * Validates and sanitizes email input
+ * Validates and sanitizes email input with detailed error messages
  */
 export const validateAndSanitizeEmail = (email: string): { valid: boolean; sanitized: string; error?: string } => {
-  const sanitized = sanitizeEmail(email);
+  const trimmed = email.trim();
   
-  if (!sanitized) {
+  if (!trimmed) {
     return { valid: false, sanitized: '', error: 'Email is required' };
   }
   
-  if (!isValidEmail(sanitized)) {
-    return { valid: false, sanitized, error: 'Invalid email format' };
+  if (trimmed.length > 254) {
+    return { valid: false, sanitized: trimmed.slice(0, 254), error: 'Email is too long (maximum 254 characters)' };
   }
   
+  // Check for @ symbol
+  if (!trimmed.includes('@')) {
+    return { valid: false, sanitized: trimmed, error: 'Email must contain @ symbol' };
+  }
+  
+  // Check for domain part
+  const parts = trimmed.split('@');
+  if (parts.length !== 2) {
+    return { valid: false, sanitized: trimmed, error: 'Email must contain exactly one @ symbol' };
+  }
+  
+  const [localPart, domain] = parts;
+  
+  if (!localPart || localPart.length === 0) {
+    return { valid: false, sanitized: trimmed, error: 'Email must have a local part before @' };
+  }
+  
+  if (!domain || domain.length === 0) {
+    return { valid: false, sanitized: trimmed, error: 'Email must have a domain after @' };
+  }
+  
+  // Check for TLD
+  if (!domain.includes('.')) {
+    return { valid: false, sanitized: trimmed, error: 'Email domain must contain a dot (e.g., example.com)' };
+  }
+  
+  const domainParts = domain.split('.');
+  const tld = domainParts[domainParts.length - 1];
+  
+  if (!tld || tld.length < 2) {
+    return { valid: false, sanitized: trimmed, error: 'Email domain must have a valid top-level domain (e.g., .com, .org)' };
+  }
+  
+  // Final validation with regex
+  if (!isValidEmail(trimmed)) {
+    return { valid: false, sanitized: trimmed, error: 'Invalid email format. Please check your email address' };
+  }
+  
+  const sanitized = sanitizeEmail(trimmed);
   return { valid: true, sanitized };
 };
 

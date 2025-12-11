@@ -15,7 +15,13 @@ export const FestivalHeader = ({
   searchQuery,
   onSearchChange
 }: FestivalHeaderProps) => {
+  // #region agent log
+  console.log('[DEBUG] FestivalHeader rendering, about to call useLanguage');
+  // #endregion
   const { language, setLanguage, t } = useLanguage();
+  // #region agent log
+  console.log('[DEBUG] FestivalHeader useLanguage succeeded', { hasT: typeof t === 'function' });
+  // #endregion
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 

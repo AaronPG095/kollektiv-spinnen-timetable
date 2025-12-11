@@ -135,10 +135,51 @@ const translations = {
     
     // Ticket Checkout
     checkout: 'Checkout',
+    paymentProcess: 'Zahlungsprozess',
     ticketType: 'Ticket-Typ',
     selectedRole: 'Ausgewählte Rolle',
     nA: 'N/A',
     checkoutPlaceholder: 'Dies ist eine Platzhalter-Checkout-Seite. Die vollständige Checkout-Funktionalität wird hier implementiert.',
+    ticketSummary: 'Ticket-Zusammenfassung',
+    price: 'Preis',
+    purchaserInformation: 'Käuferinformationen',
+    fullName: 'Vollständiger Name',
+    firstName: 'Vorname',
+    lastName: 'Nachname',
+    enterFullName: 'Gib deinen vollständigen Namen ein',
+    enterEmail: 'Gib deine E-Mail-Adresse ein',
+    notes: 'Zusätzliche Notizen',
+    optional: 'Optional',
+    anyAdditionalInformation: 'Weitere Informationen...',
+    paymentNote: 'Hinweis: Die Zahlungsabwicklung erfolgt separat. Du erhältst Zahlungsanweisungen per E-Mail nach dem Absenden dieses Formulars.',
+    confirmPurchase: 'Kauf bestätigen',
+    paymentConfirmed: 'Zahlung bestätigt',
+    processing: 'Wird verarbeitet...',
+    ticketPurchaseCreated: 'Ticket-Kauf erstellt',
+    ticketPurchaseCreatedDesc: 'Dein Ticket-Kauf wurde registriert. Du erhältst in Kürze eine Bestätigungs-E-Mail.',
+    missingTicketInformation: 'Fehlende Ticket-Informationen',
+    soldOut: 'Ausverkauft',
+    soldOutDesc: 'Dieser Ticket-Typ ist nicht mehr verfügbar',
+    validationError: 'Validierungsfehler',
+    failedToProcessPurchase: 'Ticket-Kauf konnte nicht verarbeitet werden',
+    remainingTickets: 'Verbleibende Tickets',
+    unlimited: 'Unbegrenzt',
+    pleaseCheckFormErrors: 'Bitte überprüfe das Formular auf Fehler',
+    payWithPayPal: 'Mit PayPal bezahlen',
+    checklistItem1: 'Gib deine Daten in das Formular ein',
+    checklistItem2: 'Generiere deinen persönlichen Referenzcode (Drücke den Generieren-Button)',
+    checklistItem3: 'Bezahle dein Ticket über den/die PayPal-Link(s) zu unserem Money Pool mit deinem Referenzcode (Sehr wichtig!)',
+    checklistItem4: 'Klicke auf den Button "Zahlung bestätigt"',
+    generateReference: 'Referenzcode generieren',
+    referenceCodeGenerated: 'Ihr Referenzcode',
+    copyReferenceCode: 'Referenzcode kopieren',
+    referenceCodeCopied: 'Referenzcode kopiert!',
+    allChecklistItemsRequired: 'Bitte alle Checklistenpunkte abschließen',
+    paypalQRCode: 'PayPal QR-Code',
+    paypalLink: 'PayPal Link',
+    scanQRCode: 'Scanne den QR-Code mit deinem Handy, um zu bezahlen',
+    orClickLink: 'oder klicke auf den Link',
+    paypalPaymentInstructions: 'Bitte bezahle den Betrag von {amount}€ über PayPal, bevor du das Formular absendest.',
     
     // Footer
     sitemap: 'Sitemap',
@@ -411,10 +452,51 @@ const translations = {
     
     // Ticket Checkout
     checkout: 'Checkout',
+    paymentProcess: 'Payment Process',
     ticketType: 'Ticket type',
     selectedRole: 'Selected role',
     nA: 'N/A',
     checkoutPlaceholder: 'This is a placeholder checkout page. The full checkout functionality will be implemented here.',
+    ticketSummary: 'Ticket Summary',
+    price: 'Price',
+    purchaserInformation: 'Purchaser Information',
+    fullName: 'Full Name',
+    firstName: 'First Name',
+    lastName: 'Last Name',
+    enterFullName: 'Enter your full name',
+    enterEmail: 'Enter your email address',
+    notes: 'Additional Notes',
+    optional: 'Optional',
+    anyAdditionalInformation: 'Any additional information...',
+    paymentNote: 'Note: Payment processing will be handled separately. You will receive payment instructions via email after submitting this form.',
+    confirmPurchase: 'Confirm Purchase',
+    paymentConfirmed: 'Payment Confirmed',
+    processing: 'Processing...',
+    ticketPurchaseCreated: 'Ticket Purchase Created',
+    ticketPurchaseCreatedDesc: 'Your ticket purchase has been registered. You will receive a confirmation email shortly.',
+    missingTicketInformation: 'Missing ticket information',
+    soldOut: 'Sold Out',
+    soldOutDesc: 'This ticket type is no longer available',
+    validationError: 'Validation Error',
+    failedToProcessPurchase: 'Failed to process ticket purchase',
+    remainingTickets: 'Remaining Tickets',
+    unlimited: 'Unlimited',
+    pleaseCheckFormErrors: 'Please check the form for errors',
+    payWithPayPal: 'Pay with PayPal',
+    checklistItem1: 'Enter your details into the form',
+    checklistItem2: 'Generate your personalised Reference Code (Press the generate button)',
+    checklistItem3: 'Pay for your ticket over the PayPal Link(s) to our Money Pool using your Reference Code (Very Important!)',
+    checklistItem4: 'Click the Payment confirmed button',
+    generateReference: 'Generate Reference',
+    referenceCodeGenerated: 'Your Reference Code',
+    copyReferenceCode: 'Copy Reference Code',
+    referenceCodeCopied: 'Reference code copied!',
+    allChecklistItemsRequired: 'Please complete all checklist items',
+    paypalQRCode: 'PayPal QR Code',
+    paypalLink: 'PayPal Link',
+    scanQRCode: 'Scan the QR code with your phone to pay',
+    orClickLink: 'or click the link',
+    paypalPaymentInstructions: 'Please pay the amount of {amount}€ via PayPal before submitting the form.',
     
     // Footer
     sitemap: 'Sitemap',
@@ -566,6 +648,9 @@ const translations = {
 };
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
+  // #region agent log
+  console.log('[DEBUG] LanguageProvider mounting');
+  // #endregion
   const [language, setLanguage] = useState<Language>('de');
 
   const t = (key: string): string => {
@@ -573,6 +658,9 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     return translation || key;
   };
 
+  // #region agent log
+  console.log('[DEBUG] LanguageProvider rendering Provider', { language });
+  // #endregion
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
       {children}
@@ -581,8 +669,17 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useLanguage = () => {
+  // #region agent log
+  console.log('[DEBUG] useLanguage called', { stack: new Error().stack });
+  // #endregion
   const context = useContext(LanguageContext);
+  // #region agent log
+  console.log('[DEBUG] useLanguage context check', { contextUndefined: context === undefined, contextType: typeof context, hasLanguage: !!context?.language, hasT: !!context?.t });
+  // #endregion
   if (context === undefined) {
+    // #region agent log
+    console.error('[DEBUG] useLanguage ERROR - context undefined', { stack: new Error().stack });
+    // #endregion
     throw new Error('useLanguage must be used within a LanguageProvider');
   }
   return context;
