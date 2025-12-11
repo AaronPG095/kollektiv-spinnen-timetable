@@ -493,7 +493,7 @@ const TicketCheckout = () => {
                       />
                       <label
                         htmlFor="checklist-1"
-                        className="text-lg font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                       >
                         {t("checklistItem1")}
                       </label>
@@ -509,7 +509,7 @@ const TicketCheckout = () => {
                       />
                       <label
                         htmlFor="checklist-2"
-                        className="text-lg font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                       >
                         {t("checklistItem2")}
                       </label>
@@ -525,7 +525,7 @@ const TicketCheckout = () => {
                       />
                       <label
                         htmlFor="checklist-3"
-                        className="text-lg font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                       >
                         {t("checklistItem3")}
                       </label>
