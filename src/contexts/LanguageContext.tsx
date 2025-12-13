@@ -255,7 +255,6 @@ const translations = {
     standardTickets_plural: 'Standard Tickets',
     reducedTickets_plural: 'Reduzierte Tickets',
     limit: 'Limit',
-    unlimited: 'Unbegrenzt',
     ticketPricing: 'Ticket-Preisgestaltung',
     setPricesForRoles: 'Setze Preise für jede Ticket-Rolle (in Euro). Leer lassen für Standard-Preise.',
     earlyBirdPrice: 'Early Bird Preis (€)',
@@ -317,7 +316,6 @@ const translations = {
     failedToSaveAboutPageContent: 'Über uns Seiteninhalt konnte nicht gespeichert werden. Bitte überprüfe deine Verbindung und versuche es erneut.',
     hiddenMode: 'Versteckter Modus',
     showAll: 'Alle anzeigen',
-    soldOut: 'Ausverkauft',
     forTheEarlyBirdVariant: 'für die Early Bird Variante',
     forTheNormalVariant: 'für die Normal Variante',
     remaining: 'verbleibend',
@@ -597,7 +595,6 @@ const translations = {
     standardTickets_plural: 'Standard Tickets',
     reducedTickets_plural: 'Reduced Tickets',
     limit: 'Limit',
-    unlimited: 'Unlimited',
     ticketPricing: 'Ticket Pricing',
     setPricesForRoles: 'Set prices for each ticket role (in euros). Leave empty to use default pricing.',
     earlyBirdPrice: 'Early Bird Price (€)',
@@ -659,7 +656,6 @@ const translations = {
     failedToSaveAboutPageContent: 'Failed to save about page content. Please check your connection and try again.',
     hiddenMode: 'Hidden Mode',
     showAll: 'Show All',
-    soldOut: 'Sold Out',
     forTheEarlyBirdVariant: 'for the Early Bird variant',
     forTheNormalVariant: 'for the Normal variant',
     remaining: 'remaining',
@@ -698,9 +694,6 @@ const translations = {
 };
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  // #region agent log
-  console.log('[DEBUG] LanguageProvider mounting');
-  // #endregion
   const [language, setLanguage] = useState<Language>('de');
 
   const t = (key: string): string => {
@@ -708,9 +701,6 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     return translation || key;
   };
 
-  // #region agent log
-  console.log('[DEBUG] LanguageProvider rendering Provider', { language });
-  // #endregion
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
       {children}
@@ -719,17 +709,8 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useLanguage = () => {
-  // #region agent log
-  console.log('[DEBUG] useLanguage called', { stack: new Error().stack });
-  // #endregion
   const context = useContext(LanguageContext);
-  // #region agent log
-  console.log('[DEBUG] useLanguage context check', { contextUndefined: context === undefined, contextType: typeof context, hasLanguage: !!context?.language, hasT: !!context?.t });
-  // #endregion
   if (context === undefined) {
-    // #region agent log
-    console.error('[DEBUG] useLanguage ERROR - context undefined', { stack: new Error().stack });
-    // #endregion
     throw new Error('useLanguage must be used within a LanguageProvider');
   }
   return context;
