@@ -34,7 +34,6 @@ const ROLE_CONFIG: Record<string, {
   aufbau: { priceEarly: "aufbau_price_early", priceNormal: "aufbau_price_normal", limit: "aufbau_limit" },
   awareness: { priceEarly: "awareness_price_early", priceNormal: "awareness_price_normal", limit: "awareness_limit" },
   schichtleitung: { priceEarly: "schichtleitung_price_early", priceNormal: "schichtleitung_price_normal", limit: "schichtleitung_limit" },
-  techHelfer: { priceEarly: "tech_price_early", priceNormal: "tech_price_normal", limit: "tech_limit" },
 };
 
 interface FormErrors {

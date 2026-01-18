@@ -76,6 +76,7 @@ const translations = {
     
     // FAQ
     faq: 'FAQ',
+    faqs: 'FAQs',
     frequentlyAskedQuestions: 'Häufig gestellte Fragen',
     back: 'Zurück',
     
@@ -100,7 +101,6 @@ const translations = {
     aufbau: 'Festival-Aufbau',
     awareness: 'Awareness',
     schichtleitung: 'Schichtleitung',
-    techHelfer: 'Tech Helfer',
     selectRole: 'Rolle auswählen...',
     roleDescriptionsDesc: 'Detaillierte Rollenbeschreibungen werden hier verfügbar sein.',
     onlyWithExperience: 'Nur mit Erfahrung / Organisatoren-Zustimmung',
@@ -416,6 +416,7 @@ const translations = {
     
     // FAQ
     faq: 'FAQ',
+    faqs: 'FAQs',
     frequentlyAskedQuestions: 'Frequently Asked Questions',
     back: 'Back',
     
@@ -440,7 +441,6 @@ const translations = {
     aufbau: 'Festival-Setup',
     awareness: 'Awareness',
     schichtleitung: 'Shift Management',
-    techHelfer: 'Tech Helper',
     selectRole: 'Select a role...',
     roleDescriptionsDesc: 'Detailed role descriptions will be available here.',
     onlyWithExperience: 'Only with experience / organiser consent',
@@ -459,7 +459,7 @@ const translations = {
     standardTicketType: 'Standard Tickets',
     standardTicketTypeDesc: 'Standard Tickets include taking over one 2-hour shift during the festival. You can choose between Early Bird and Normal options depending on availability.',
     reducedTicketType: 'Reduced Tickets',
-    reducedTicketTypeDesc: 'Reduced Tickets offer a price discount due to the intensity or additional responsibility of the related positions. These tickets are available for special roles such as Setup, Breakdown, Tech Helper, Awareness, or Shift Management.',
+    reducedTicketTypeDesc: 'Reduced Tickets offer a price discount due to the intensity or additional responsibility of the related positions. These tickets are available for special roles such as Setup, Breakdown, Awareness, or Shift Management.',
     
     // FAQ Page
     searchFAQs: 'Search FAQs...',

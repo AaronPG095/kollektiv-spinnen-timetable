@@ -1619,7 +1619,6 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     { key: "aufbau", label: "Aufbau" },
     { key: "awareness", label: "Awareness" },
     { key: "schichtleitung", label: "Schichtleitung" },
-    { key: "techHelfer", label: "Tech Helper" },
   ] as const;
 
   type RoleKey = typeof standardRoles[number]["key"] | typeof reducedRoles[number]["key"];
@@ -1633,7 +1632,6 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     aufbau: "aufbau_limit",
     awareness: "awareness_limit",
     schichtleitung: "schichtleitung_limit",
-    techHelfer: "tech_limit",
   };
 
   const priceFieldByRole: Record<RoleKey, { early: keyof TicketSettings; normal: keyof TicketSettings }> = {
@@ -1645,7 +1643,6 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     aufbau: { early: "aufbau_price_early", normal: "aufbau_price_normal" },
     awareness: { early: "awareness_price_early", normal: "awareness_price_normal" },
     schichtleitung: { early: "schichtleitung_price_early", normal: "schichtleitung_price_normal" },
-    techHelfer: { early: "tech_price_early", normal: "tech_price_normal" },
   };
 
   const [earlyBirdEnabled, setEarlyBirdEnabled] = useState(initialSettings?.early_bird_enabled ?? false);
@@ -1668,7 +1665,6 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
       aufbau: "",
       awareness: "",
       schichtleitung: "",
-      techHelfer: "",
     };
 
     if (initialSettings) {
@@ -1700,8 +1696,6 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
       awareness_normal: "",
       schichtleitung_early: "",
       schichtleitung_normal: "",
-      techHelfer_early: "",
-      techHelfer_normal: "",
     };
 
     if (initialSettings) {
@@ -1742,7 +1736,6 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         aufbau: "",
         awareness: "",
         schichtleitung: "",
-        techHelfer: "",
       };
       (Object.keys(newLimitValues) as RoleKey[]).forEach((role) => {
         const field = limitFieldByRole[role];
@@ -1769,8 +1762,6 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         awareness_normal: "",
         schichtleitung_early: "",
         schichtleitung_normal: "",
-        techHelfer_early: "",
-        techHelfer_normal: "",
       };
       (Object.keys(priceFieldByRole) as RoleKey[]).forEach((role) => {
         const fields = priceFieldByRole[role];
