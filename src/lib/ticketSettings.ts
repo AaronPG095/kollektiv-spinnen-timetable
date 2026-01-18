@@ -7,6 +7,7 @@ export interface TicketSettings {
   early_bird_enabled: boolean;
   early_bird_cutoff: string | null;
   early_bird_total_limit: number | null;
+  normal_total_limit: number | null;
   // Limits
   bar_limit: number | null;
   kuechenhilfe_limit: number | null;
@@ -16,7 +17,6 @@ export interface TicketSettings {
   aufbau_limit: number | null;
   awareness_limit: number | null;
   schichtleitung_limit: number | null;
-  tech_limit: number | null;
   // Prices
   bar_price_early: number | null;
   bar_price_normal: number | null;
@@ -34,8 +34,6 @@ export interface TicketSettings {
   awareness_price_normal: number | null;
   schichtleitung_price_early: number | null;
   schichtleitung_price_normal: number | null;
-  tech_price_early: number | null;
-  tech_price_normal: number | null;
   created_at: string;
   updated_at: string;
 }
