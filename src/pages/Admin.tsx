@@ -1654,6 +1654,11 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
       ? initialSettings.early_bird_total_limit.toString()
       : ""
   );
+  const [normalTotalLimit, setNormalTotalLimit] = useState(
+    initialSettings?.normal_total_limit !== null && initialSettings?.normal_total_limit !== undefined
+      ? initialSettings.normal_total_limit.toString()
+      : ""
+  );
 
   const [limitValues, setLimitValues] = useState<Record<RoleKey, string>>(() => {
     const initial: Record<RoleKey, string> = {
@@ -1725,6 +1730,11 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
           ? initialSettings.early_bird_total_limit.toString()
           : ""
       );
+      setNormalTotalLimit(
+        initialSettings.normal_total_limit !== null && initialSettings.normal_total_limit !== undefined
+          ? initialSettings.normal_total_limit.toString()
+          : ""
+      );
 
       // Update limit values
       const newLimitValues: Record<RoleKey, string> = {
@@ -1782,6 +1792,12 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
       early_bird_total_limit: earlyBirdTotalLimit.trim() 
         ? (() => {
             const parsed = parseInt(earlyBirdTotalLimit.trim(), 10);
+            return !isNaN(parsed) && parsed >= 0 ? parsed : null;
+          })()
+        : null,
+      normal_total_limit: normalTotalLimit.trim() 
+        ? (() => {
+            const parsed = parseInt(normalTotalLimit.trim(), 10);
             return !isNaN(parsed) && parsed >= 0 ? parsed : null;
           })()
         : null,
@@ -1902,6 +1918,26 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
             </div>
           </div>
         )}
+      </div>
+
+      {/* Normal-Bird Ticket Settings */}
+      <div className="space-y-4 p-4 border rounded-lg">
+        <h3 className="text-lg font-semibold">{t("normalTicketSettings")}</h3>
+        
+        <div className="space-y-2">
+          <Label htmlFor="normal_total_limit">{t("normalTotalLimit")}</Label>
+          <Input
+            id="normal_total_limit"
+            type="number"
+            min="0"
+            value={normalTotalLimit}
+            onChange={(e) => setNormalTotalLimit(e.target.value)}
+            placeholder={t("unlimited")}
+          />
+          <p className="text-xs text-muted-foreground">
+            {t("normalTotalLimitDesc")}
+          </p>
+        </div>
       </div>
 
       {/* Ticket Limits */}

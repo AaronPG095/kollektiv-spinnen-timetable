@@ -14,7 +14,7 @@ import {
 import { Footer } from "@/components/Footer";
 import { X } from "lucide-react";
 import { getTicketSettings, type TicketSettings } from "@/lib/ticketSettings";
-import { checkRoleAvailability, getRemainingTickets, getRemainingEarlyBirdTickets } from "@/lib/ticketPurchases";
+import { checkRoleAvailability, getRemainingTickets, getRemainingEarlyBirdTickets, getRemainingNormalTickets } from "@/lib/ticketPurchases";
 
 const Tickets = () => {
   const { t } = useLanguage();
@@ -27,6 +27,7 @@ const Tickets = () => {
   const [roleAvailability, setRoleAvailability] = useState<Record<string, boolean>>({});
   const [remainingTickets, setRemainingTickets] = useState<Record<string, number | null>>({});
   const [remainingEarlyBirdTickets, setRemainingEarlyBirdTickets] = useState<number | null>(null);
+  const [remainingNormalTickets, setRemainingNormalTickets] = useState<number | null>(null);
 
   const limitFieldByRole: Record<string, keyof TicketSettings> = {
     bar: "bar_limit",
@@ -89,6 +90,14 @@ const Tickets = () => {
         } else {
           setRemainingEarlyBirdTickets(null);
         }
+        
+        // Load remaining normal-bird tickets (separate from role availability)
+        if (settings?.normal_total_limit !== null && settings?.normal_total_limit !== undefined) {
+          const normalRemaining = await getRemainingNormalTickets(settings.normal_total_limit);
+          setRemainingNormalTickets(normalRemaining);
+        } else {
+          setRemainingNormalTickets(null);
+        }
       } catch (error: any) {
         console.error('[Tickets] Error loading ticket settings:', error);
         // Don't show toast here as it's not critical - page can still function
@@ -140,6 +149,21 @@ const Tickets = () => {
       // If we have the remaining count loaded, use it; otherwise return true (will be checked async)
       if (remainingEarlyBirdTickets !== null) {
         return remainingEarlyBirdTickets > 0;
+      }
+      // If count not loaded yet, assume available (will update when loaded)
+      return true;
+    }
+    
+    return true;
+  };
+
+  // Check if normal-bird tickets are available
+  const isNormalAvailable = (): boolean => {
+    // Check total limit
+    if (ticketSettings?.normal_total_limit !== null && ticketSettings?.normal_total_limit !== undefined) {
+      // If we have the remaining count loaded, use it; otherwise return true (will be checked async)
+      if (remainingNormalTickets !== null) {
+        return remainingNormalTickets > 0;
       }
       // If count not loaded yet, assume available (will update when loaded)
       return true;
@@ -426,17 +450,25 @@ const Tickets = () => {
               )}
 
               {/* Normal */}
-              <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {t("normal")}
-                  </h3>
-                  {normalRole && (
-                    <span className="text-sm font-medium text-muted-foreground">
-                      {getPrice(normalRole, false)}
-                    </span>
-                  )}
-                </div>
+              {isNormalAvailable() && (
+                <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {t("normal")}
+                      </h3>
+                      {remainingNormalTickets !== null && (
+                        <span className="text-sm text-muted-foreground">
+                          ({remainingNormalTickets} {t("remaining")})
+                        </span>
+                      )}
+                    </div>
+                    {normalRole && (
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {getPrice(normalRole, false)}
+                      </span>
+                    )}
+                  </div>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1 relative">
                     <Select 
@@ -496,13 +528,14 @@ const Tickets = () => {
                   </div>
                   <Button
                     onClick={() => handleChooseTicket("normal", normalRole)}
-                    disabled={!normalRole || !isRoleAvailable(normalRole)}
+                    disabled={!normalRole || !isRoleAvailable(normalRole) || !isNormalAvailable()}
                     className="w-full sm:w-auto"
                   >
                     {t("chooseThisTicket")}
                   </Button>
                 </div>
               </div>
+              )}
             </CardContent>
           </Card>
 
@@ -630,17 +663,25 @@ const Tickets = () => {
               )}
 
               {/* Normal */}
-              <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {t("normal")}
-                  </h3>
-                  {normalReducedRole && (
-                    <span className="text-sm font-medium text-muted-foreground">
-                      {getPrice(normalReducedRole, false)}
-                    </span>
-                  )}
-                </div>
+              {isNormalAvailable() && (
+                <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {t("normal")}
+                      </h3>
+                      {remainingNormalTickets !== null && (
+                        <span className="text-sm text-muted-foreground">
+                          ({remainingNormalTickets} {t("remaining")})
+                        </span>
+                      )}
+                    </div>
+                    {normalReducedRole && (
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {getPrice(normalReducedRole, false)}
+                      </span>
+                    )}
+                  </div>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1 relative">
                     <Select 
@@ -700,13 +741,14 @@ const Tickets = () => {
                   </div>
                   <Button
                     onClick={() => handleChooseTicket("reducedNormal", normalReducedRole)}
-                    disabled={!normalReducedRole || !isRoleAvailable(normalReducedRole)}
+                    disabled={!normalReducedRole || !isRoleAvailable(normalReducedRole) || !isNormalAvailable()}
                     className="w-full sm:w-auto"
                   >
                     {t("chooseThisTicket")}
                   </Button>
                 </div>
               </div>
+              )}
             </CardContent>
           </Card>
         </div>

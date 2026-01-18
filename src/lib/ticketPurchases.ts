@@ -32,9 +32,9 @@ export interface CreatePurchaseData {
  * IMPORTANT: This counts ALL confirmed purchases for the role regardless of ticket type.
  * Role limits apply to the TOTAL count of confirmed purchases, combining:
  * - Early Bird tickets (earlyBird)
- * - Normal tickets (normal)
+ * - Normal-Bird tickets (normal)
  * - Reduced Early Bird tickets (reducedEarlyBird)
- * - Reduced Normal tickets (reducedNormal)
+ * - Reduced Normal-Bird tickets (reducedNormal)
  * 
  * For example, if bar_limit is 20, then the total of all confirmed bar tickets
  * (whether Early Bird or Normal) cannot exceed 20.
@@ -155,6 +155,48 @@ export const getRemainingEarlyBirdTickets = async (
 
   // Get current early-bird purchase count
   const purchaseCount = await getEarlyBirdPurchaseCount();
+
+  // Calculate remaining
+  const remaining = totalLimit - purchaseCount;
+  return Math.max(0, remaining);
+};
+
+/**
+ * Get the number of confirmed normal purchases (across all roles)
+ */
+export const getNormalPurchaseCount = async (): Promise<number> => {
+  try {
+    const { count, error } = await supabase
+      .from('ticket_purchases')
+      .select('*', { count: 'exact', head: true })
+      .in('ticket_type', ['normal', 'reducedNormal'])
+      .eq('status', 'confirmed');
+
+    if (error) {
+      logError('TicketPurchases', error, { operation: 'getNormalPurchaseCount' });
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error) {
+    logError('TicketPurchases', error, { operation: 'getNormalPurchaseCount' });
+    return 0;
+  }
+};
+
+/**
+ * Get remaining normal-bird tickets
+ */
+export const getRemainingNormalTickets = async (
+  totalLimit: number | null | undefined
+): Promise<number | null> => {
+  // If no limit set, return null (unlimited)
+  if (totalLimit === null || totalLimit === undefined) {
+    return null;
+  }
+
+  // Get current normal purchase count
+  const purchaseCount = await getNormalPurchaseCount();
 
   // Calculate remaining
   const remaining = totalLimit - purchaseCount;

@@ -14,7 +14,8 @@ import {
   checkRoleAvailability, 
   createTicketPurchase, 
   getRemainingTickets,
-  getRemainingEarlyBirdTickets 
+  getRemainingEarlyBirdTickets,
+  getRemainingNormalTickets 
 } from "@/lib/ticketPurchases";
 import { validateAndSanitizeName, validateAndSanitizeEmail, sanitizeString } from "@/lib/validation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -112,6 +113,21 @@ const TicketCheckout = () => {
           if (isEarlyBird && settings.early_bird_total_limit !== null && settings.early_bird_total_limit !== undefined) {
             const remainingEarlyBird = await getRemainingEarlyBirdTickets(settings.early_bird_total_limit);
             if (remainingEarlyBird !== null && remainingEarlyBird <= 0) {
+              toast({
+                title: t("soldOut"),
+                description: t("soldOutDesc"),
+                variant: "destructive",
+              });
+              navigate("/tickets");
+              return;
+            }
+          }
+          
+          // Check normal-bird ticket total limit if this is a normal-bird ticket
+          const isNormal = type === "normal" || type === "reducedNormal";
+          if (isNormal && settings.normal_total_limit !== null && settings.normal_total_limit !== undefined) {
+            const remainingNormal = await getRemainingNormalTickets(settings.normal_total_limit);
+            if (remainingNormal !== null && remainingNormal <= 0) {
               toast({
                 title: t("soldOut"),
                 description: t("soldOutDesc"),

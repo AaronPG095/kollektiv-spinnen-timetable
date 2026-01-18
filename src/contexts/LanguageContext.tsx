@@ -334,6 +334,9 @@ const translations = {
     cancelled: 'Storniert',
     earlyBirdTotalLimit: 'Early Bird Gesamtlimit',
     earlyBirdTotalLimitDesc: 'Setze die Gesamtanzahl verfügbarer Early-Bird-Tickets für alle Rollen. Leer lassen für unbegrenzt. Early-Bird-Tickets werden automatisch nicht mehr verfügbar, wenn dieses Limit erreicht ist.',
+    normalTicketSettings: 'Normal-Bird Ticket-Einstellungen',
+    normalTotalLimit: 'Normal-Bird Ticket Gesamtlimit',
+    normalTotalLimitDesc: 'Setze die Gesamtanzahl verfügbarer Normal-Tickets für alle Rollen. Leer lassen für unbegrenzt. Normal-Tickets werden automatisch nicht mehr verfügbar, wenn dieses Limit erreicht ist.',
     
     // Admin - Data Loading
     warning: 'Warnung',
@@ -674,6 +677,9 @@ const translations = {
     cancelled: 'Cancelled',
     earlyBirdTotalLimit: 'Early Bird Total Limit',
     earlyBirdTotalLimitDesc: 'Set the total number of early-bird tickets available across all roles. Leave empty for unlimited. Early-bird tickets will automatically become unavailable when this limit is reached.',
+    normalTicketSettings: 'Normal-Bird Ticket Settings',
+    normalTotalLimit: 'Normal-Bird Ticket Total Limit',
+    normalTotalLimitDesc: 'Set the total number of normal-bird tickets available across all roles. Leave empty for unlimited. Normal-bird tickets will automatically become unavailable when this limit is reached.',
     
     // Admin - Data Loading
     warning: 'Warning',
