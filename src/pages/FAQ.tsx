@@ -146,7 +146,7 @@ const FAQ = () => {
                         Kollektiv Spinnen Festival - das FAQ von A bis Z
                       </h2>
                       <p className="text-lg font-semibold text-primary">
-                        [Privatveranstaltung vom 08.-10.08.2025]
+                        [Privatveranstaltung vom 07.08.2026 - 09.08.2026]
                       </p>
                       <p className="text-muted-foreground leading-relaxed">
                         Wir (Aaron, Nico und Momo) wollen mit euch Kollektiv Spinnen und unsere drei Geburtstage feiern – Freitag planen wir ein buntes und sweetes Miteinander, ab Samstag Nachmittag dann über 24h Musik und Tanzen - insgesamt ein festivalhaftes Wochenende von Friends für Friends 🪩
@@ -158,7 +158,7 @@ const FAQ = () => {
                         Kollektiv Spinnen Festival - FAQ from A to Z
                       </h2>
                       <p className="text-lg font-semibold text-primary">
-                        [Private event from August 8-10, 2025]
+                        [Private event from 07.08.2026 - 09.08.2026]
                       </p>
                       <p className="text-muted-foreground leading-relaxed">
                         We (Aaron, Nico, and Momo) want to celebrate Kollektiv Spinnen and our three birthdays with you: On Friday, we're planning a colorful and sweet get-together, and then starting Saturday afternoon, there will be over 24 hours of music and dancing – all in all, a festival-like weekend by friends for friends 🪩

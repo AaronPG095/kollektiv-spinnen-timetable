@@ -70,7 +70,7 @@ export const Footer = () => {
 
           {/* Copyright */}
           <div className="text-sm text-muted-foreground text-center">
-            © KollektivSpinnenFestival 2025
+            © KollektivSpinnenFestival 2026
           </div>
         </div>
       </div>

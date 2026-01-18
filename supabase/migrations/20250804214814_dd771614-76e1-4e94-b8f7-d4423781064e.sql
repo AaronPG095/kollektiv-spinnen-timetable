@@ -40,7 +40,7 @@ INSERT INTO public.faqs (question, answer, category, subcategory, order_index, l
 
 -- Category F
 ('What''s included in catering?', 'Two meals per day (breakfast and warm dinner) are included in the solidarity contribution', 'F', 'Food', 21, 'en', true),
-('When does it start?', 'Friday, 08.08.25, at 18:00 with a Welcome Dinner 🍽️ (Breakfasts follow around 09-12 every morning, Saturday Dinner at 18:00)', 'F', 'Food', 22, 'en', true),
+('When does it start?', 'Friday, 07.08.2026, at 18:00 with a Welcome Dinner 🍽️ (Breakfasts follow around 09-12 every morning, Saturday Dinner at 18:00)', 'F', 'Food', 22, 'en', true),
 
 ('What''s happening on Friday?', 'Welcome Dinner from 18:00, opening live concert, relaxed pre-raving until 04:00, before that fire show, karaoke, cinema, Sound Journey', 'F', 'Friday Program', 23, 'en', true);
 

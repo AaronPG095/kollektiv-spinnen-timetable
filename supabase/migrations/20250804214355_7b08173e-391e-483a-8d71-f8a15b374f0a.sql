@@ -32,7 +32,7 @@ INSERT INTO public.faqs (question, answer, category, subcategory, order_index, l
 
 -- Category E
 ('Was ist bei der Verpflegung enthalten?', 'Zwei Mahlzeiten pro Tag (Frühstück und warmes Abendessen) sind im Soli-Beitrag enthalten', 'E', 'Essen', 17, 'de', true),
-('Wann geht es los?', 'Freitag, 08.08.25, um 18:00 Uhr mit einem Welcome Dinner 🍽️', 'E', 'Eröffnung', 18, 'de', true);
+('Wann geht es los?', 'Freitag, 07.08.2026, um 18:00 Uhr mit einem Welcome Dinner 🍽️', 'E', 'Eröffnung', 18, 'de', true);
 
 -- Insert more FAQ entries
 INSERT INTO public.faqs (question, answer, category, subcategory, order_index, language, is_visible) VALUES
