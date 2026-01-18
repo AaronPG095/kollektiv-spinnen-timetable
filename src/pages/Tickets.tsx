@@ -163,11 +163,14 @@ const Tickets = () => {
   };
 
   // Check if a role is available (using real inventory tracking)
+  // IMPORTANT: Role limits apply to ALL ticket types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
+  // This function returns false when the role limit has been reached (remaining tickets = 0).
   const isRoleAvailable = (role: string): boolean => {
     // If availability hasn't been loaded yet, default to true
     if (roleAvailability[role] === undefined) {
       return true;
     }
+    // Return false if role is sold out (limit reached)
     return roleAvailability[role];
   };
   
@@ -366,24 +369,28 @@ const Tickets = () => {
                           <SelectValue placeholder={t("selectRole") || "Select a role..."} />
                         </SelectTrigger>
                         <SelectContent>
-                          {standardRoles.map((role) => (
-                            <SelectItem 
-                              key={role.value} 
-                              value={role.value}
-                              disabled={!isRoleAvailable(role.value)}
-                            >
-                              {role.label} {(() => {
-                                const remaining = getRemainingForRole(role.value);
-                                if (!isRoleAvailable(role.value)) {
-                                  return `(${t("soldOut")})`;
-                                }
-                                if (remaining !== null) {
-                                  return ` (${remaining} ${t("remaining")})`;
-                                }
-                                return '';
-                              })()}
-                            </SelectItem>
-                          ))}
+                          {standardRoles.map((role) => {
+                            const isAvailable = isRoleAvailable(role.value);
+                            const remaining = getRemainingForRole(role.value);
+                            return (
+                              <SelectItem 
+                                key={role.value} 
+                                value={role.value}
+                                disabled={!isAvailable}
+                                className={!isAvailable ? "text-muted-foreground opacity-50" : ""}
+                              >
+                                {role.label} {(() => {
+                                  if (!isAvailable) {
+                                    return `(${t("soldOut")})`;
+                                  }
+                                  if (remaining !== null) {
+                                    return ` (${remaining} ${t("remaining")})`;
+                                  }
+                                  return '';
+                                })()}
+                              </SelectItem>
+                            );
+                          })}
                           {earlyBirdRole && (
                             <SelectItem value="__clear__" className="text-muted-foreground">
                               {t("clearSelection")}
@@ -442,15 +449,28 @@ const Tickets = () => {
                         <SelectValue placeholder={t("selectRole") || "Select a role..."} />
                       </SelectTrigger>
                       <SelectContent>
-                        {standardRoles.map((role) => (
-                          <SelectItem 
-                            key={role.value} 
-                            value={role.value}
-                            disabled={!isRoleAvailable(role.value)}
-                          >
-                            {role.label} {!isRoleAvailable(role.value) && "(Sold Out)"}
-                          </SelectItem>
-                        ))}
+                        {standardRoles.map((role) => {
+                          const isAvailable = isRoleAvailable(role.value);
+                          const remaining = getRemainingForRole(role.value);
+                          return (
+                            <SelectItem 
+                              key={role.value} 
+                              value={role.value}
+                              disabled={!isAvailable}
+                              className={!isAvailable ? "text-muted-foreground opacity-50" : ""}
+                            >
+                              {role.label} {(() => {
+                                if (!isAvailable) {
+                                  return `(${t("soldOut")})`;
+                                }
+                                if (remaining !== null) {
+                                  return ` (${remaining} ${t("remaining")})`;
+                                }
+                                return '';
+                              })()}
+                            </SelectItem>
+                          );
+                        })}
                         {normalRole && (
                           <SelectItem value="__clear__" className="text-muted-foreground">
                             {t("clearSelection")}
@@ -553,24 +573,28 @@ const Tickets = () => {
                           <SelectValue placeholder={t("selectRole") || "Select a role..."} />
                         </SelectTrigger>
                         <SelectContent>
-                          {reducedRoles.map((role) => (
-                            <SelectItem 
-                              key={role.value} 
-                              value={role.value}
-                              disabled={!isRoleAvailable(role.value)}
-                            >
-                              {role.label} {(() => {
-                                const remaining = getRemainingForRole(role.value);
-                                if (!isRoleAvailable(role.value)) {
-                                  return `(${t("soldOut")})`;
-                                }
-                                if (remaining !== null) {
-                                  return ` (${remaining} ${t("remaining")})`;
-                                }
-                                return '';
-                              })()}
-                            </SelectItem>
-                          ))}
+                          {reducedRoles.map((role) => {
+                            const isAvailable = isRoleAvailable(role.value);
+                            const remaining = getRemainingForRole(role.value);
+                            return (
+                              <SelectItem 
+                                key={role.value} 
+                                value={role.value}
+                                disabled={!isAvailable}
+                                className={!isAvailable ? "text-muted-foreground opacity-50" : ""}
+                              >
+                                {role.label} {(() => {
+                                  if (!isAvailable) {
+                                    return `(${t("soldOut")})`;
+                                  }
+                                  if (remaining !== null) {
+                                    return ` (${remaining} ${t("remaining")})`;
+                                  }
+                                  return '';
+                                })()}
+                              </SelectItem>
+                            );
+                          })}
                           {earlyBirdReducedRole && (
                             <SelectItem value="__clear__" className="text-muted-foreground">
                               {t("clearSelection")}
@@ -629,15 +653,28 @@ const Tickets = () => {
                         <SelectValue placeholder={t("selectRole") || "Select a role..."} />
                       </SelectTrigger>
                       <SelectContent>
-                        {reducedRoles.map((role) => (
-                          <SelectItem 
-                            key={role.value} 
-                            value={role.value}
-                            disabled={!isRoleAvailable(role.value)}
-                          >
-                            {role.label} {!isRoleAvailable(role.value) && "(Sold Out)"}
-                          </SelectItem>
-                        ))}
+                        {reducedRoles.map((role) => {
+                          const isAvailable = isRoleAvailable(role.value);
+                          const remaining = getRemainingForRole(role.value);
+                          return (
+                            <SelectItem 
+                              key={role.value} 
+                              value={role.value}
+                              disabled={!isAvailable}
+                              className={!isAvailable ? "text-muted-foreground opacity-50" : ""}
+                            >
+                              {role.label} {(() => {
+                                if (!isAvailable) {
+                                  return `(${t("soldOut")})`;
+                                }
+                                if (remaining !== null) {
+                                  return ` (${remaining} ${t("remaining")})`;
+                                }
+                                return '';
+                              })()}
+                            </SelectItem>
+                          );
+                        })}
                         {normalReducedRole && (
                           <SelectItem value="__clear__" className="text-muted-foreground">
                             {t("clearSelection")}

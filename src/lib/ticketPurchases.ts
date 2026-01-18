@@ -27,7 +27,17 @@ export interface CreatePurchaseData {
 }
 
 /**
- * Get the number of confirmed purchases for a specific role
+ * Get the number of confirmed purchases for a specific role.
+ * 
+ * IMPORTANT: This counts ALL confirmed purchases for the role regardless of ticket type.
+ * Role limits apply to the TOTAL count of confirmed purchases, combining:
+ * - Early Bird tickets (earlyBird)
+ * - Normal tickets (normal)
+ * - Reduced Early Bird tickets (reducedEarlyBird)
+ * - Reduced Normal tickets (reducedNormal)
+ * 
+ * For example, if bar_limit is 20, then the total of all confirmed bar tickets
+ * (whether Early Bird or Normal) cannot exceed 20.
  */
 export const getRolePurchaseCount = async (role: string): Promise<number> => {
   try {
@@ -50,7 +60,15 @@ export const getRolePurchaseCount = async (role: string): Promise<number> => {
 };
 
 /**
- * Check if a role has available tickets
+ * Check if a role has available tickets.
+ * 
+ * IMPORTANT: Role limits apply to ALL ticket types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
+ * This function checks if the total count of confirmed purchases for the role (across all ticket types)
+ * is below the specified limit.
+ * 
+ * @param role - The role to check availability for
+ * @param limit - The maximum number of tickets allowed for this role (null/undefined = unlimited)
+ * @returns true if tickets are available, false if sold out
  */
 export const checkRoleAvailability = async (
   role: string,
@@ -66,7 +84,7 @@ export const checkRoleAvailability = async (
     return false;
   }
 
-  // Get current purchase count
+  // Get current purchase count (counts all ticket types: earlyBird, normal, reducedEarlyBird, reducedNormal)
   const purchaseCount = await getRolePurchaseCount(role);
 
   // Check if there are remaining tickets
@@ -74,7 +92,15 @@ export const checkRoleAvailability = async (
 };
 
 /**
- * Get remaining tickets for a role
+ * Get remaining tickets for a role.
+ * 
+ * IMPORTANT: Role limits apply to ALL ticket types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
+ * This function calculates how many more tickets can be sold for the role by subtracting the total
+ * count of confirmed purchases (across all ticket types) from the limit.
+ * 
+ * @param role - The role to check remaining tickets for
+ * @param limit - The maximum number of tickets allowed for this role (null/undefined = unlimited)
+ * @returns The number of remaining tickets, or null if unlimited
  */
 export const getRemainingTickets = async (
   role: string,
@@ -85,7 +111,7 @@ export const getRemainingTickets = async (
     return null;
   }
 
-  // Get current purchase count (counts both early-bird and normal tickets)
+  // Get current purchase count (counts ALL ticket types: earlyBird, normal, reducedEarlyBird, reducedNormal)
   const purchaseCount = await getRolePurchaseCount(role);
 
   // Calculate remaining
@@ -136,12 +162,80 @@ export const getRemainingEarlyBirdTickets = async (
 };
 
 /**
- * Create a new ticket purchase
+ * Validate that a purchase can be created for a role without exceeding limits.
+ * This provides server-side validation before creating a purchase.
+ * Note: Limits apply to ALL ticket types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
+ * 
+ * @param role - The role to validate
+ * @param limit - The maximum number of tickets allowed for this role (null/undefined = unlimited)
+ * @returns Object with isValid flag and optional error message
+ */
+export const validatePurchaseLimit = async (
+  role: string,
+  limit: number | null | undefined
+): Promise<{ isValid: boolean; error?: string }> => {
+  const isAvailable = await checkRoleAvailability(role, limit);
+  
+  if (!isAvailable) {
+    const remaining = await getRemainingTickets(role, limit);
+    return {
+      isValid: false,
+      error: `Role ${role} is sold out. ${remaining === 0 ? 'No tickets remaining.' : `Only ${remaining} ticket(s) remaining.`}`,
+    };
+  }
+  
+  return { isValid: true };
+};
+
+/**
+ * Create a new ticket purchase.
+ * 
+ * IMPORTANT: Role limits apply to ALL ticket types combined. Before calling this function,
+ * you should validate availability using checkRoleAvailability() or validatePurchaseLimit().
+ * The purchase is created with status 'pending' and will be validated against limits
+ * when it is confirmed (via database trigger).
+ * 
+ * @param purchaseData - The purchase data to create
+ * @param validateLimit - Optional: if true, validates role limit before creating purchase (default: false)
+ * @returns Object with success flag and optional purchase or error
  */
 export const createTicketPurchase = async (
-  purchaseData: CreatePurchaseData
+  purchaseData: CreatePurchaseData,
+  validateLimit: boolean = false
 ): Promise<{ success: boolean; purchase?: TicketPurchase; error?: string }> => {
   try {
+    // Optional: Validate role limit before creating purchase
+    if (validateLimit) {
+      // Get ticket settings to find the limit for this role
+      const { getTicketSettings } = await import('@/lib/ticketSettings');
+      const settings = await getTicketSettings();
+      
+      // Map role to limit field
+      const limitFieldMap: Record<string, keyof typeof settings> = {
+        bar: 'bar_limit',
+        kuechenhilfe: 'kuechenhilfe_limit',
+        springerRunner: 'springer_runner_limit',
+        springerToilet: 'springer_toilet_limit',
+        abbau: 'abbau_limit',
+        aufbau: 'aufbau_limit',
+        awareness: 'awareness_limit',
+        schichtleitung: 'schichtleitung_limit',
+      };
+      
+      const limitField = limitFieldMap[purchaseData.role];
+      if (limitField) {
+        const limit = settings[limitField] as number | null | undefined;
+        const validation = await validatePurchaseLimit(purchaseData.role, limit);
+        
+        if (!validation.isValid) {
+          return {
+            success: false,
+            error: validation.error || 'Role limit exceeded',
+          };
+        }
+      }
+    }
+
     // Get current user if authenticated
     const { data: { user } } = await supabase.auth.getUser();
 

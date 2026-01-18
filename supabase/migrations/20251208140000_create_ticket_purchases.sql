@@ -66,6 +66,14 @@ FOR EACH ROW
 EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Function to get purchase count for a role (only confirmed purchases)
+-- IMPORTANT: This function counts ALL confirmed purchases for a role regardless of ticket_type.
+-- Role limits apply to the TOTAL count of confirmed purchases, combining:
+-- - Early Bird tickets (earlyBird)
+-- - Normal tickets (normal)
+-- - Reduced Early Bird tickets (reducedEarlyBird)
+-- - Reduced Normal tickets (reducedNormal)
+-- For example, if bar_limit is 20, then the total of all confirmed bar tickets
+-- (whether Early Bird or Normal) cannot exceed 20.
 CREATE OR REPLACE FUNCTION public.get_role_purchase_count(_role TEXT)
 RETURNS INTEGER
 LANGUAGE SQL
