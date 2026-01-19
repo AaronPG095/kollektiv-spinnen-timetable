@@ -540,7 +540,7 @@ const TicketCheckout = () => {
                       </label>
                     </div>
                   </div>
-                  <p className="text-sm text-red-500 mt-4 pt-4 border-2 border-destructive/50 dark:border-destructive rounded-lg p-4">
+                  <p className="text-sm text-destructive font-semibold mt-4 pt-4 border-2 border-destructive/50 dark:border-destructive rounded-lg p-4">
                     {t("pleaseFollowChecklist")}
                   </p>
                 </div>
@@ -728,7 +728,7 @@ const TicketCheckout = () => {
                 </div>
                 
                 {/* Important Warning */}
-                <Alert variant="destructive" className="border-2">
+                <Alert variant="destructive" className="border-2 border-destructive/50 dark:border-destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription className="text-sm font-semibold">
                     {t("onlyClickAfterPayment")}
