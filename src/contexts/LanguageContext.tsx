@@ -90,7 +90,7 @@ const translations = {
     earlyBird: 'Early Bird',
     normal: 'Normal Bird',
     reducedTickets: 'Reduzierte Soli-Beiträge',
-    reducedTicketsDesc: 'Diese Soli-Beiträge erhalten einen Preisnachlass aufgrund der Intensität / zusätzlichen Verantwortung der zugehörigen Positionen im Vergleich zu Standard Soli-Beiträgen. Bitte beachte: Einige dieser Positionen sind ausschließlich für Personen mit vorheriger Erfahrung / Expertise verfügbar.',
+    reducedTicketsDesc: 'Diese Soli-Beiträge erhalten einen Rabatt aufgrund der Intensität / zusätzlichen Verantwortung der zugehörigen Positionen im Vergleich zu Standard Soli-Beiträgen. Bitte beachte: Einige dieser Positionen sind ausschließlich für Personen mit vorheriger Erfahrung / Expertise verfügbar.',
     chooseThisTicket: 'Diesen Soli-Beitrag wählen',
     roleDescriptions: 'Rollenbeschreibungen',
     bar: 'Bar',
@@ -120,8 +120,8 @@ const translations = {
     standardTicketType: 'Standard Soli-Beiträge',
     standardTicketTypeDesc: 'Standard Soli-Beiträge beinhalten die Übernahme einer 2-Stunden-Schicht während des Festivals. Du kannst zwischen Early Bird und Normal Bird Soli-Beitrags-Optionen wählen, abhängig von der Verfügbarkeit.',
     reducedTicketType: 'Reduzierte Soli-Beiträge',
-    reducedTicketTypeDesc: 'Reduzierte Soli-Beiträge bieten einen Preisnachlass aufgrund der Intensität oder zusätzlichen Verantwortung der zugehörigen Positionen. Diese Soli-Beiträge sind für spezielle Rollen wie Aufbau, Abbau, Awareness oder Schichtleitung verfügbar.',
-    reducedTicketTypeReductions: 'Die Preisnachlässe im Detail:\n• Festival-Aufbau (20% Nachlass)\n• Festival-Abbau (40% Nachlass - in Form einer Rückerstattung nach dem Festival)\n• Awareness (20% Nachlass)\n• Schichtleitung (50% Nachlass)\n\nDiese Nachlässe gelten für sowohl Early Bird als auch Normal Bird Varianten.',
+    reducedTicketTypeDesc: 'Reduzierte Soli-Beiträge bieten einen Rabatt aufgrund der Intensität oder zusätzlichen Verantwortung der zugehörigen Positionen. Diese Soli-Beiträge sind für spezielle Rollen wie Aufbau, Abbau, Awareness oder Schichtleitung verfügbar.',
+    reducedTicketTypeReductions: 'Die Rabatte im Detail:\n• Festival-Aufbau (20% Rabatt)\n• Festival-Abbau (40% Rabatt - in Form einer Rückerstattung nach dem Festival)\n• Awareness (20% Rabatt)\n• Schichtleitung (50% Rabatt)\n\nDiese Rabatte gelten für sowohl Early Bird als auch Normal Bird Varianten.',
     
     // FAQ Page
     searchFAQs: 'FAQs durchsuchen...',
