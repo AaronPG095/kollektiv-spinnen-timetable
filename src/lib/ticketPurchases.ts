@@ -14,6 +14,7 @@ export interface TicketPurchase {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  checked: boolean;
 }
 
 export interface CreatePurchaseData {

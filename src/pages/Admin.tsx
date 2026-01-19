@@ -75,10 +75,18 @@ const Admin = () => {
   const [ticketSettingsLoading, setTicketSettingsLoading] = useState(false);
   const [ticketPurchases, setTicketPurchases] = useState<TicketPurchase[]>([]);
   const [purchasesLoading, setPurchasesLoading] = useState(false);
-  const [ticketSubTab, setTicketSubTab] = useState<"settings" | "purchases">("settings");
+  const [ticketSubTab, setTicketSubTab] = useState<"settings" | "purchases" | "checked">("settings");
   const [aboutPageContent, setAboutPageContent] = useState<AboutPageContentType | null>(null);
   const [aboutPagePhotos, setAboutPagePhotos] = useState<AboutPagePhoto[]>([]);
   const [aboutPageLoading, setAboutPageLoading] = useState(false);
+
+  // Derived collections for ticket views
+  const confirmedUncheckedPurchases = ticketPurchases.filter(
+    (p) => p.status === 'confirmed' && !p.checked
+  );
+  const checkedConfirmedPurchases = ticketPurchases.filter(
+    (p) => p.status === 'confirmed' && p.checked
+  );
 
   useEffect(() => {
     // Allow all users to access admin page, but only load data if admin
@@ -1107,7 +1115,17 @@ const Admin = () => {
                 }}
                 size="sm"
               >
-                {t("purchases")} ({ticketPurchases.length})
+                {t("purchases")} ({confirmedUncheckedPurchases.length})
+              </Button>
+              <Button
+                variant={ticketSubTab === "checked" ? "default" : "ghost"}
+                onClick={() => {
+                  setTicketSubTab("checked");
+                  loadTicketPurchases();
+                }}
+                size="sm"
+              >
+                Checked Soli-Contributions ({checkedConfirmedPurchases.length})
               </Button>
             </div>
 
@@ -1127,7 +1145,7 @@ const Admin = () => {
                   </CardContent>
                 </Card>
               )
-            ) : (
+            ) : ticketSubTab === "purchases" ? (
               purchasesLoading ? (
                 <div className="text-center text-muted-foreground py-12">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
@@ -1139,12 +1157,16 @@ const Admin = () => {
                     <CardTitle>{t("ticketPurchases")}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {ticketPurchases.length === 0 ? (
+                    {confirmedUncheckedPurchases.length === 0 ? (
                       <p className="text-muted-foreground text-center py-8">{t("noPurchasesYet")}</p>
                     ) : (
                       <div className="space-y-4">
-                        {ticketPurchases.map((purchase) => (
-                          <Card key={purchase.id} className={purchase.status === 'pending' ? 'border-yellow-500' : purchase.status === 'confirmed' ? 'border-green-500' : 'border-gray-500'}>
+                        {confirmedUncheckedPurchases.map((purchase) => {
+                          // Determine border color: checked = green, unchecked = red
+                          const borderClass = purchase.checked ? 'border-green-500' : 'border-red-500';
+                          
+                          return (
+                          <Card key={purchase.id} className={borderClass}>
                             <CardContent className="p-4">
                               <div className="flex justify-between items-start">
                                 <div className="space-y-1">
@@ -1174,18 +1196,160 @@ const Admin = () => {
                                     {new Date(purchase.created_at).toLocaleString()}
                                   </p>
                                 </div>
-                                {purchase.status === 'pending' && (
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleConfirmPurchase(purchase.id)}
-                                  >
-                                    {t("confirm")}
-                                  </Button>
-                                )}
+                                <div className="flex flex-col items-end gap-2">
+                                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <input
+                                      type="checkbox"
+                                      checked={purchase.checked}
+                                      onChange={async (e) => {
+                                        try {
+                                          const nextChecked = e.target.checked;
+                                          const { error } = await supabase
+                                            .from('soli_contribution_purchases')
+                                            .update({ checked: nextChecked })
+                                            .eq('id', purchase.id);
+
+                                          if (error) {
+                                            console.error('[Admin] Error updating checked flag:', error);
+                                            toast({
+                                              title: "Error",
+                                              description: error.message || "Failed to update checked state",
+                                              variant: "destructive",
+                                            });
+                                          } else {
+                                            // Update local state optimistically
+                                            setTicketPurchases(prev =>
+                                              prev.map(p =>
+                                                p.id === purchase.id ? { ...p, checked: nextChecked } : p
+                                              )
+                                            );
+                                          }
+                                        } catch (err: any) {
+                                          console.error('[Admin] Exception updating checked flag:', err);
+                                          toast({
+                                            title: "Error",
+                                            description: err?.message || "Failed to update checked state",
+                                            variant: "destructive",
+                                          });
+                                        }
+                                      }}
+                                    />
+                                    <span>Checked</span>
+                                  </label>
+
+                                  {purchase.status === 'pending' && (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleConfirmPurchase(purchase.id)}
+                                    >
+                                      {t("confirm")}
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             </CardContent>
                           </Card>
-                        ))}
+                          );
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            ) : (
+              // Checked Soli-Contributions tab
+              purchasesLoading ? (
+                <div className="text-center text-muted-foreground py-12">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                  <p>Loading Checked Soli-Contributions...</p>
+                </div>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Checked Soli-Contributions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {checkedConfirmedPurchases.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">
+                        No checked Soli-Contributions yet
+                      </p>
+                    ) : (
+                      <div className="space-y-4">
+                        {checkedConfirmedPurchases.map((purchase) => (
+                            <Card key={purchase.id} className="border-green-500">
+                              <CardContent className="p-4">
+                                <div className="flex justify-between items-start">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-semibold">{purchase.purchaser_name}</span>
+                                      <span className="px-2 py-1 rounded text-xs bg-green-500/20 text-green-700">
+                                        Checked
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">{purchase.purchaser_email}</p>
+                                    <p className="text-sm">
+                                      <span className="font-medium">{purchase.contribution_type}</span> - {purchase.role} - {purchase.price.toFixed(2)}€
+                                    </p>
+                                    {purchase.payment_reference && (
+                                      <p className="text-xs text-muted-foreground">Payment: {purchase.payment_reference}</p>
+                                    )}
+                                    {purchase.notes && (
+                                      <p className="text-xs text-muted-foreground">Notes: {purchase.notes}</p>
+                                    )}
+                                    <p className="text-xs text-muted-foreground">
+                                      {new Date(purchase.created_at).toLocaleString()}
+                                    </p>
+                                  </div>
+                                  <div className="flex flex-col items-end gap-2">
+                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                      <input
+                                        type="checkbox"
+                                        checked={purchase.checked}
+                                        onChange={async (e) => {
+                                          try {
+                                            const nextChecked = e.target.checked;
+                                            const { error } = await supabase
+                                              .from('soli_contribution_purchases')
+                                              .update({ checked: nextChecked })
+                                              .eq('id', purchase.id);
+
+                                            if (error) {
+                                              console.error('[Admin] Error updating checked flag:', error);
+                                              toast({
+                                                title: "Error",
+                                                description: error.message || "Failed to update checked state",
+                                                variant: "destructive",
+                                              });
+                                            } else {
+                                              // Update local state optimistically
+                                              setTicketPurchases(prev =>
+                                                prev.map(p =>
+                                                  p.id === purchase.id ? { ...p, checked: nextChecked } : p
+                                                )
+                                              );
+                                              
+                                              // If unchecked, switch back to purchases tab to see the card
+                                              if (!nextChecked && ticketSubTab === 'checked') {
+                                                setTicketSubTab('purchases');
+                                              }
+                                            }
+                                          } catch (err: any) {
+                                            console.error('[Admin] Exception updating checked flag:', err);
+                                            toast({
+                                              title: "Error",
+                                              description: err?.message || "Failed to update checked state",
+                                              variant: "destructive",
+                                            });
+                                          }
+                                        }}
+                                      />
+                                      <span>Checked</span>
+                                    </label>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
                       </div>
                     )}
                   </CardContent>
