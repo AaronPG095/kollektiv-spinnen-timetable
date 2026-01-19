@@ -9,8 +9,8 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import FAQ from "./pages/FAQ";
-import Tickets from "./pages/Tickets";
-import TicketCheckout from "./pages/TicketCheckout";
+import Tickets from "./pages/Soli-Beitrag";
+import TicketCheckout from "./pages/Soli-BeitragCheckout";
 import About from "./pages/About";
 
 const App = () => {
