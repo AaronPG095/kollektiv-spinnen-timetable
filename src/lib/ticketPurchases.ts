@@ -27,10 +27,10 @@ export interface CreatePurchaseData {
 }
 
 /**
- * Get the number of confirmed purchases for a specific role.
+ * Get the number of confirmed Soli-Contributions for a specific role.
  * 
- * IMPORTANT: This counts ALL confirmed purchases for the role regardless of contribution type.
- * Role limits apply to the TOTAL count of confirmed purchases, combining:
+ * IMPORTANT: This counts ALL confirmed Soli-Contributions for the role regardless of contribution type.
+ * Role limits apply to the TOTAL count of confirmed Soli-Contributions, combining:
  * - Early Bird contributions (earlyBird)
  * - Normal contributions (normal)
  * - Reduced Early Bird contributions (reducedEarlyBird)
@@ -63,7 +63,7 @@ export const getRolePurchaseCount = async (role: string): Promise<number> => {
  * Check if a role has available contributions.
  * 
  * IMPORTANT: Role limits apply to ALL contribution types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
- * This function checks if the total count of confirmed purchases for the role (across all contribution types)
+ * This function checks if the total count of confirmed Soli-Contributions for the role (across all contribution types)
  * is below the specified limit.
  * 
  * @param role - The role to check availability for
@@ -84,7 +84,7 @@ export const checkRoleAvailability = async (
     return false;
   }
 
-  // Get current purchase count (counts all contribution types: earlyBird, normal, reducedEarlyBird, reducedNormal)
+  // Get current confirmed Soli-Contributions count (counts all contribution types: earlyBird, normal, reducedEarlyBird, reducedNormal)
   const purchaseCount = await getRolePurchaseCount(role);
 
   // Check if there are remaining contributions
@@ -95,8 +95,8 @@ export const checkRoleAvailability = async (
  * Get remaining contributions for a role.
  * 
  * IMPORTANT: Role limits apply to ALL contribution types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
- * This function calculates how many more tickets can be sold for the role by subtracting the total
- * count of confirmed purchases (across all contribution types) from the limit.
+ * This function calculates how many more Soli-Contributions can be made for the role by subtracting the total
+ * count of confirmed Soli-Contributions (across all contribution types) from the limit.
  * 
  * @param role - The role to check remaining contributions for
  * @param limit - The maximum number of contributions allowed for this role (null/undefined = unlimited)
@@ -111,7 +111,7 @@ export const getRemainingTickets = async (
     return null;
   }
 
-  // Get current purchase count (counts ALL contribution types: earlyBird, normal, reducedEarlyBird, reducedNormal)
+  // Get current confirmed Soli-Contributions count (counts ALL contribution types: earlyBird, normal, reducedEarlyBird, reducedNormal)
   const purchaseCount = await getRolePurchaseCount(role);
 
   // Calculate remaining
@@ -120,7 +120,7 @@ export const getRemainingTickets = async (
 };
 
 /**
- * Get the number of confirmed early-bird purchases (across all roles)
+ * Get the number of confirmed early-bird Soli-Contributions (across all roles)
  */
 export const getEarlyBirdPurchaseCount = async (): Promise<number> => {
   try {
@@ -153,7 +153,7 @@ export const getRemainingEarlyBirdTickets = async (
     return null;
   }
 
-  // Get current early-bird purchase count
+  // Get current early-bird confirmed Soli-Contributions count
   const purchaseCount = await getEarlyBirdPurchaseCount();
 
   // Calculate remaining
@@ -162,7 +162,7 @@ export const getRemainingEarlyBirdTickets = async (
 };
 
 /**
- * Get the number of confirmed normal purchases (across all roles)
+ * Get the number of confirmed normal Soli-Contributions (across all roles)
  */
 export const getNormalPurchaseCount = async (): Promise<number> => {
   try {
@@ -195,7 +195,7 @@ export const getRemainingNormalTickets = async (
     return null;
   }
 
-  // Get current normal purchase count
+  // Get current normal confirmed Soli-Contributions count
   const purchaseCount = await getNormalPurchaseCount();
 
   // Calculate remaining
@@ -204,8 +204,8 @@ export const getRemainingNormalTickets = async (
 };
 
 /**
- * Validate that a purchase can be created for a role without exceeding limits.
- * This provides server-side validation before creating a purchase.
+ * Validate that a Soli-Contribution can be created for a role without exceeding limits.
+ * This provides server-side validation before creating a Soli-Contribution.
  * Note: Limits apply to ALL contribution types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
  * 
  * @param role - The role to validate
@@ -234,11 +234,11 @@ export const validatePurchaseLimit = async (
  * 
  * IMPORTANT: Role limits apply to ALL contribution types combined. Before calling this function,
  * you should validate availability using checkRoleAvailability() or validatePurchaseLimit().
- * The purchase is created with status 'pending' and will be validated against limits
+ * The Soli-Contribution is created with status 'pending' and will be validated against limits
  * when it is confirmed (via database trigger).
  * 
- * @param purchaseData - The purchase data to create
- * @param validateLimit - Optional: if true, validates role limit before creating purchase (default: false)
+ * @param purchaseData - The Soli-Contribution data to create
+ * @param validateLimit - Optional: if true, validates role limit before creating Soli-Contribution (default: false)
  * @returns Object with success flag and optional purchase or error
  */
 export const createTicketPurchase = async (
@@ -343,7 +343,7 @@ export const createTicketPurchase = async (
 };
 
 /**
- * Confirm a ticket purchase (after payment)
+ * Confirm a Soli-Contribution (after payment)
  */
 export const confirmTicketPurchase = async (
   purchaseId: string
@@ -373,7 +373,7 @@ export const confirmTicketPurchase = async (
 };
 
 /**
- * Get user's purchases
+ * Get user's Soli-Contributions
  */
 export const getUserPurchases = async (): Promise<TicketPurchase[]> => {
   try {
@@ -402,7 +402,7 @@ export const getUserPurchases = async (): Promise<TicketPurchase[]> => {
 };
 
 /**
- * Get all purchases (admin only)
+ * Get all Soli-Contributions (admin only)
  */
 export const getAllPurchases = async (): Promise<TicketPurchase[]> => {
   try {

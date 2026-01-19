@@ -321,15 +321,15 @@ const translations = {
     forTheNormalVariant: 'für die Normal Bird Variante',
     remaining: 'verbleibend',
     
-    // Ticket Purchases
-    purchases: 'Käufe',
-    loadingPurchases: 'Käufe werden geladen...',
-    noPurchasesYet: 'Noch keine Käufe',
-    ticketPurchases: 'Soli-Beitrags-Käufe',
+    // Confirmed Soli-Contributions
+    purchases: 'Bestätigte Soli-Beiträge',
+    loadingPurchases: 'Bestätigte Soli-Beiträge werden geladen...',
+    noPurchasesYet: 'Noch keine bestätigten Soli-Beiträge',
+    ticketPurchases: 'Bestätigte Soli-Beiträge',
     confirm: 'Bestätigen',
-    purchaseConfirmedSuccessfully: 'Kauf erfolgreich bestätigt',
-    failedToLoadTicketPurchases: 'Soli-Beitrags-Käufe konnten nicht geladen werden. Bitte überprüfe deine Verbindung und versuche es erneut.',
-    failedToConfirmPurchase: 'Kauf konnte nicht bestätigt werden. Bitte überprüfe deine Verbindung und versuche es erneut.',
+    purchaseConfirmedSuccessfully: 'Soli-Beitrag erfolgreich bestätigt',
+    failedToLoadTicketPurchases: 'Bestätigte Soli-Beiträge konnten nicht geladen werden. Bitte überprüfe deine Verbindung und versuche es erneut.',
+    failedToConfirmPurchase: 'Soli-Beitrag konnte nicht bestätigt werden. Bitte überprüfe deine Verbindung und versuche es erneut.',
     pending: 'Ausstehend',
     confirmed: 'Bestätigt',
     cancelled: 'Storniert',
@@ -348,7 +348,7 @@ const translations = {
     dataSourceFAQs: 'FAQs',
     dataSourceTicketSettings: 'Ticket-Einstellungen',
     dataSourceAboutPage: 'Über uns Seite',
-    dataSourceTicketPurchases: 'Ticket-Käufe',
+    dataSourceTicketPurchases: 'Bestätigte Soli-Beiträge',
     dataSourceUnknown: 'Datenquelle {index}',
     
     // Admin - URL Validation
@@ -667,15 +667,15 @@ const translations = {
     forTheNormalVariant: 'for the Normal Bird variant',
     remaining: 'remaining',
     
-    // Soli-Contribution Purchases
-    purchases: 'Purchases',
-    loadingPurchases: 'Loading purchases...',
-    noPurchasesYet: 'No purchases yet',
-    ticketPurchases: 'Soli-Contribution Purchases',
+    // Confirmed Soli-Contributions
+    purchases: 'Confirmed Soli-Contributions',
+    loadingPurchases: 'Loading confirmed Soli-Contributions...',
+    noPurchasesYet: 'No confirmed Soli-Contributions yet',
+    ticketPurchases: 'Confirmed Soli-Contributions',
     confirm: 'Confirm',
-    purchaseConfirmedSuccessfully: 'Purchase confirmed successfully',
-    failedToLoadTicketPurchases: 'Failed to load Soli-Contribution purchases. Please check your connection and try again.',
-    failedToConfirmPurchase: 'Failed to confirm purchase. Please check your connection and try again.',
+    purchaseConfirmedSuccessfully: 'Soli-Contribution confirmed successfully',
+    failedToLoadTicketPurchases: 'Failed to load confirmed Soli-Contributions. Please check your connection and try again.',
+    failedToConfirmPurchase: 'Failed to confirm Soli-Contribution. Please check your connection and try again.',
     pending: 'Pending',
     confirmed: 'Confirmed',
     cancelled: 'Cancelled',
@@ -694,7 +694,7 @@ const translations = {
     dataSourceFAQs: 'FAQs',
     dataSourceTicketSettings: 'Ticket Settings',
     dataSourceAboutPage: 'About Page',
-    dataSourceTicketPurchases: 'Ticket Purchases',
+    dataSourceTicketPurchases: 'Confirmed Soli-Contributions',
     dataSourceUnknown: 'Data source {index}',
     
     // Admin - URL Validation

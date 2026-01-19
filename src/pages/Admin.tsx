@@ -236,7 +236,7 @@ const Admin = () => {
       const purchases = await getAllPurchases();
       setTicketPurchases(purchases);
     } catch (error: any) {
-      console.error('[Admin] Error loading ticket purchases:', error);
+      console.error('[Admin] Error loading confirmed Soli-Contributions:', error);
       toast({
         title: "Error",
         description: error?.message || t("failedToLoadTicketPurchases"),
@@ -254,10 +254,10 @@ const Admin = () => {
         toast({ title: t("purchaseConfirmedSuccessfully") });
         loadTicketPurchases();
       } else {
-        throw new Error(result.error || "Failed to confirm purchase");
+        throw new Error(result.error || "Failed to confirm Soli-Contribution");
       }
     } catch (error: any) {
-      console.error('[Admin] Error confirming purchase:', error);
+      console.error('[Admin] Error confirming Soli-Contribution:', error);
       toast({
         title: "Error",
         description: error?.message || t("failedToConfirmPurchase"),
