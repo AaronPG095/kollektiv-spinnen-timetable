@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -25,7 +25,7 @@ import {
   type AboutPageContent as AboutPageContentType,
   type AboutPagePhoto 
 } from '@/lib/aboutPage';
-import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, ArrowUpDown, Calendar, Ticket, Info } from 'lucide-react';
+import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, ArrowUpDown, Calendar, Ticket, Info, Check, X, XCircle } from 'lucide-react';
 import { Footer } from '@/components/Footer';
 import { FestivalHeader } from '@/components/FestivalHeader';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -82,6 +82,8 @@ const Admin = () => {
   const [pendingSearchQuery, setPendingSearchQuery] = useState("");
   const [checkedSearchQuery, setCheckedSearchQuery] = useState("");
   const [cancelledSearchQuery, setCancelledSearchQuery] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [purchaseToDelete, setPurchaseToDelete] = useState<string | null>(null);
 
   // Derived collections for ticket views
   // "Pending Soli-Contributions" tab shows: confirmed but unchecked purchases
@@ -311,6 +313,83 @@ const Admin = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleReactivatePurchase = async (purchaseId: string) => {
+    try {
+      const { error } = await supabase
+        .from('soli_contribution_purchases')
+        .update({ status: 'confirmed' })
+        .eq('id', purchaseId);
+
+      if (error) {
+        console.error('[Admin] Error reactivating purchase:', error);
+        toast({
+          title: t("error"),
+          description: error.message || t("failedToReactivatePurchase"),
+          variant: "destructive",
+        });
+      } else {
+        // Update local state optimistically
+        setTicketPurchases(prev =>
+          prev.map(p =>
+            p.id === purchaseId ? { ...p, status: 'confirmed' as const } : p
+          )
+        );
+        toast({
+          title: t("success"),
+          description: t("purchaseReactivatedSuccessfully"),
+        });
+      }
+    } catch (err: any) {
+      console.error('[Admin] Exception reactivating purchase:', err);
+      toast({
+        title: t("error"),
+        description: err?.message || t("failedToReactivatePurchase"),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeletePurchase = async (purchaseId: string) => {
+    try {
+      const { error } = await supabase
+        .from('soli_contribution_purchases')
+        .delete()
+        .eq('id', purchaseId);
+
+      if (error) {
+        console.error('[Admin] Error deleting purchase:', error);
+        toast({
+          title: t("error"),
+          description: error.message || t("failedToDeletePurchase"),
+          variant: "destructive",
+        });
+      } else {
+        // Remove from local state
+        setTicketPurchases(prev => prev.filter(p => p.id !== purchaseId));
+        toast({
+          title: t("success"),
+          description: t("purchaseDeletedSuccessfully"),
+        });
+      }
+      setDeleteDialogOpen(false);
+      setPurchaseToDelete(null);
+    } catch (err: any) {
+      console.error('[Admin] Exception deleting purchase:', err);
+      toast({
+        title: t("error"),
+        description: err?.message || t("failedToDeletePurchase"),
+        variant: "destructive",
+      });
+      setDeleteDialogOpen(false);
+      setPurchaseToDelete(null);
+    }
+  };
+
+  const openDeleteDialog = (purchaseId: string) => {
+    setPurchaseToDelete(purchaseId);
+    setDeleteDialogOpen(true);
   };
 
   const handleSaveTicketSettings = async (settings: Partial<TicketSettings>) => {
@@ -1262,45 +1341,49 @@ const Admin = () => {
                                   </p>
                                 </div>
                                 <div className="flex flex-col items-end gap-2">
-                                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <input
-                                      type="checkbox"
-                                      checked={purchase.checked}
-                                      onChange={async (e) => {
-                                        try {
-                                          const nextChecked = e.target.checked;
-                                          const { error } = await supabase
-                                            .from('soli_contribution_purchases')
-                                            .update({ checked: nextChecked })
-                                            .eq('id', purchase.id);
+                                  <Button
+                                    variant={purchase.checked ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={async () => {
+                                      try {
+                                        const nextChecked = !purchase.checked;
+                                        const { error } = await supabase
+                                          .from('soli_contribution_purchases')
+                                          .update({ checked: nextChecked })
+                                          .eq('id', purchase.id);
 
-                                          if (error) {
-                                            console.error('[Admin] Error updating checked flag:', error);
-                                            toast({
-                                              title: t("error"),
-                                              description: error.message || t("failedToUpdateCheckedState"),
-                                              variant: "destructive",
-                                            });
-                                          } else {
-                                            // Update local state optimistically
-                                            setTicketPurchases(prev =>
-                                              prev.map(p =>
-                                                p.id === purchase.id ? { ...p, checked: nextChecked } : p
-                                              )
-                                            );
-                                          }
-                                        } catch (err: any) {
-                                          console.error('[Admin] Exception updating checked flag:', err);
+                                        if (error) {
+                                          console.error('[Admin] Error updating checked flag:', error);
                                           toast({
                                             title: t("error"),
-                                            description: err?.message || t("failedToUpdateCheckedState"),
+                                            description: error.message || t("failedToUpdateCheckedState"),
                                             variant: "destructive",
                                           });
+                                        } else {
+                                          // Update local state optimistically
+                                          setTicketPurchases(prev =>
+                                            prev.map(p =>
+                                              p.id === purchase.id ? { ...p, checked: nextChecked } : p
+                                            )
+                                          );
                                         }
-                                      }}
-                                    />
-                                    <span>{t("checked")}</span>
-                                  </label>
+                                      } catch (err: any) {
+                                        console.error('[Admin] Exception updating checked flag:', err);
+                                        toast({
+                                          title: t("error"),
+                                          description: err?.message || t("failedToUpdateCheckedState"),
+                                          variant: "destructive",
+                                        });
+                                      }
+                                    }}
+                                    title={purchase.checked ? t("checked") : t("unchecked")}
+                                  >
+                                    {purchase.checked ? (
+                                      <Check className="h-4 w-4" />
+                                    ) : (
+                                      <X className="h-4 w-4" />
+                                    )}
+                                  </Button>
                                   {purchase.status === 'confirmed' && (
                                     <Button
                                       variant="destructive"
@@ -1308,9 +1391,19 @@ const Admin = () => {
                                       onClick={() => handleCancelPurchase(purchase.id)}
                                       className="mt-2"
                                     >
+                                      <XCircle className="h-4 w-4 mr-1" />
                                       {t("cancel")}
                                     </Button>
                                   )}
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => openDeleteDialog(purchase.id)}
+                                    className="mt-2"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    {t("delete")}
+                                  </Button>
                                 </div>
                               </div>
                             </CardContent>
@@ -1383,50 +1476,54 @@ const Admin = () => {
                                     </p>
                                   </div>
                                   <div className="flex flex-col items-end gap-2">
-                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                                      <input
-                                        type="checkbox"
-                                        checked={purchase.checked}
-                                        onChange={async (e) => {
-                                          try {
-                                            const nextChecked = e.target.checked;
-                                            const { error } = await supabase
-                                              .from('soli_contribution_purchases')
-                                              .update({ checked: nextChecked })
-                                              .eq('id', purchase.id);
+                                    <Button
+                                      variant={purchase.checked ? "default" : "outline"}
+                                      size="sm"
+                                      onClick={async () => {
+                                        try {
+                                          const nextChecked = !purchase.checked;
+                                          const { error } = await supabase
+                                            .from('soli_contribution_purchases')
+                                            .update({ checked: nextChecked })
+                                            .eq('id', purchase.id);
 
-                                            if (error) {
-                                              console.error('[Admin] Error updating checked flag:', error);
-                                              toast({
-                                                title: t("error"),
-                                                description: error.message || t("failedToUpdateCheckedState"),
-                                                variant: "destructive",
-                                              });
-                                            } else {
-                                              // Update local state optimistically
-                                              setTicketPurchases(prev =>
-                                                prev.map(p =>
-                                                  p.id === purchase.id ? { ...p, checked: nextChecked } : p
-                                                )
-                                              );
-                                              
-                                              // If unchecked, switch back to purchases tab to see the card
-                                              if (!nextChecked && ticketSubTab === 'checked') {
-                                                setTicketSubTab('purchases');
-                                              }
-                                            }
-                                          } catch (err: any) {
-                                            console.error('[Admin] Exception updating checked flag:', err);
+                                          if (error) {
+                                            console.error('[Admin] Error updating checked flag:', error);
                                             toast({
                                               title: t("error"),
-                                              description: err?.message || t("failedToUpdateCheckedState"),
+                                              description: error.message || t("failedToUpdateCheckedState"),
                                               variant: "destructive",
                                             });
+                                          } else {
+                                            // Update local state optimistically
+                                            setTicketPurchases(prev =>
+                                              prev.map(p =>
+                                                p.id === purchase.id ? { ...p, checked: nextChecked } : p
+                                              )
+                                            );
+                                            
+                                            // If unchecked, switch back to purchases tab to see the card
+                                            if (!nextChecked && ticketSubTab === 'checked') {
+                                              setTicketSubTab('purchases');
+                                            }
                                           }
-                                        }}
-                                      />
-                                      <span>{t("checked")}</span>
-                                    </label>
+                                        } catch (err: any) {
+                                          console.error('[Admin] Exception updating checked flag:', err);
+                                          toast({
+                                            title: t("error"),
+                                            description: err?.message || t("failedToUpdateCheckedState"),
+                                            variant: "destructive",
+                                          });
+                                        }
+                                      }}
+                                      title={purchase.checked ? t("checked") : t("unchecked")}
+                                    >
+                                      {purchase.checked ? (
+                                        <Check className="h-4 w-4" />
+                                      ) : (
+                                        <X className="h-4 w-4" />
+                                      )}
+                                    </Button>
                                     {purchase.status === 'confirmed' && (
                                       <Button
                                         variant="destructive"
@@ -1434,9 +1531,19 @@ const Admin = () => {
                                         onClick={() => handleCancelPurchase(purchase.id)}
                                         className="mt-2"
                                       >
+                                        <XCircle className="h-4 w-4 mr-1" />
                                         {t("cancel")}
                                       </Button>
                                     )}
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => openDeleteDialog(purchase.id)}
+                                      className="mt-2"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-1" />
+                                      {t("delete")}
+                                    </Button>
                                   </div>
                                 </div>
                               </CardContent>
@@ -1507,6 +1614,24 @@ const Admin = () => {
                                       {new Date(purchase.created_at).toLocaleString()}
                                     </p>
                                   </div>
+                                  <div className="flex flex-col items-end gap-2">
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      onClick={() => handleReactivatePurchase(purchase.id)}
+                                    >
+                                      {t("reactivate")}
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => openDeleteDialog(purchase.id)}
+                                      className="mt-2"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-1" />
+                                      {t("delete")}
+                                    </Button>
+                                  </div>
                                 </div>
                               </CardContent>
                             </Card>
@@ -1538,6 +1663,40 @@ const Admin = () => {
         ) : null}
         </div>
       </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("confirmDelete")}</DialogTitle>
+            <DialogDescription>
+              {t("areYouSureDeletePurchase")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setPurchaseToDelete(null);
+              }}
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (purchaseToDelete) {
+                  handleDeletePurchase(purchaseToDelete);
+                }
+              }}
+            >
+              {t("delete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       <Footer />
     </div>
   );
