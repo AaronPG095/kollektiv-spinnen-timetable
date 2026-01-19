@@ -394,7 +394,7 @@ const TicketCheckout = () => {
         purchaser_name: `${firstNameValidation.sanitized} ${lastNameValidation.sanitized}`.trim(),
         purchaser_email: emailValidation.sanitized,
         payment_reference: referenceCode || undefined,
-      });
+      }, true); // Enable validation for both universal and role limits
       
       if (result.success && result.purchase) {
         toast({

@@ -1869,6 +1869,57 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Universal Ticket Limits - Prominent Section */}
+      <div className="space-y-4 p-6 border-2 rounded-lg bg-primary/5 border-primary/20">
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="text-xl font-bold">{t("universalTicketLimits")}</h3>
+          <Info className="h-5 w-5 text-muted-foreground" />
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          {t("universalTicketLimitsDesc")}
+        </p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Early-Bird Universal Limit */}
+          <div className="space-y-2 p-4 bg-background rounded-lg border">
+            <Label htmlFor="early_bird_total_limit" className="text-base font-semibold">
+              {t("earlyBirdTotalLimit")}
+            </Label>
+            <Input
+              id="early_bird_total_limit"
+              type="number"
+              min="0"
+              value={earlyBirdTotalLimit}
+              onChange={(e) => setEarlyBirdTotalLimit(e.target.value)}
+              placeholder={t("unlimited")}
+              className="text-lg"
+            />
+            <p className="text-xs text-muted-foreground">
+              {t("earlyBirdTotalLimitDesc")}
+            </p>
+          </div>
+
+          {/* Normal-Bird Universal Limit */}
+          <div className="space-y-2 p-4 bg-background rounded-lg border">
+            <Label htmlFor="normal_total_limit" className="text-base font-semibold">
+              {t("normalTotalLimit")}
+            </Label>
+            <Input
+              id="normal_total_limit"
+              type="number"
+              min="0"
+              value={normalTotalLimit}
+              onChange={(e) => setNormalTotalLimit(e.target.value)}
+              placeholder={t("unlimited")}
+              className="text-lg"
+            />
+            <p className="text-xs text-muted-foreground">
+              {t("normalTotalLimitDesc")}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Early Bird Settings */}
       <div className="space-y-4 p-4 border rounded-lg">
         <h3 className="text-lg font-semibold">{t("earlyBirdTicketSettings")}</h3>
@@ -1901,43 +1952,8 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                 {t("earlyBirdCutoffDesc")}
               </p>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="early_bird_total_limit">{t("earlyBirdTotalLimit")}</Label>
-              <Input
-                id="early_bird_total_limit"
-                type="number"
-                min="0"
-                value={earlyBirdTotalLimit}
-                onChange={(e) => setEarlyBirdTotalLimit(e.target.value)}
-                placeholder={t("unlimited")}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t("earlyBirdTotalLimitDesc")}
-              </p>
-            </div>
           </div>
         )}
-      </div>
-
-      {/* Normal-Bird Ticket Settings */}
-      <div className="space-y-4 p-4 border rounded-lg">
-        <h3 className="text-lg font-semibold">{t("normalTicketSettings")}</h3>
-        
-        <div className="space-y-2">
-          <Label htmlFor="normal_total_limit">{t("normalTotalLimit")}</Label>
-          <Input
-            id="normal_total_limit"
-            type="number"
-            min="0"
-            value={normalTotalLimit}
-            onChange={(e) => setNormalTotalLimit(e.target.value)}
-            placeholder={t("unlimited")}
-          />
-          <p className="text-xs text-muted-foreground">
-            {t("normalTotalLimitDesc")}
-          </p>
-        </div>
       </div>
 
       {/* Ticket Limits */}

@@ -246,12 +246,36 @@ export const createTicketPurchase = async (
   validateLimit: boolean = false
 ): Promise<{ success: boolean; purchase?: TicketPurchase; error?: string }> => {
   try {
+    // Always validate universal limits (early_bird_total_limit and normal_total_limit)
+    const { getTicketSettings } = await import('@/lib/ticketSettings');
+    const settings = await getTicketSettings();
+    
+    // Check universal limits based on ticket type
+    const isEarlyBird = purchaseData.ticket_type === 'earlyBird' || purchaseData.ticket_type === 'reducedEarlyBird';
+    const isNormal = purchaseData.ticket_type === 'normal' || purchaseData.ticket_type === 'reducedNormal';
+    
+    if (isEarlyBird && settings.early_bird_total_limit !== null && settings.early_bird_total_limit !== undefined) {
+      const remaining = await getRemainingEarlyBirdTickets(settings.early_bird_total_limit);
+      if (remaining !== null && remaining <= 0) {
+        return {
+          success: false,
+          error: 'Early-Bird tickets are sold out. The universal limit has been reached.',
+        };
+      }
+    }
+    
+    if (isNormal && settings.normal_total_limit !== null && settings.normal_total_limit !== undefined) {
+      const remaining = await getRemainingNormalTickets(settings.normal_total_limit);
+      if (remaining !== null && remaining <= 0) {
+        return {
+          success: false,
+          error: 'Normal-Bird tickets are sold out. The universal limit has been reached.',
+        };
+      }
+    }
+    
     // Optional: Validate role limit before creating purchase
     if (validateLimit) {
-      // Get ticket settings to find the limit for this role
-      const { getTicketSettings } = await import('@/lib/ticketSettings');
-      const settings = await getTicketSettings();
-      
       // Map role to limit field
       const limitFieldMap: Record<string, keyof typeof settings> = {
         bar: 'bar_limit',

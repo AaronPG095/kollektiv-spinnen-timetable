@@ -144,10 +144,24 @@ export const updateTicketSettings = async (settings: Partial<TicketSettings>): P
     // Remove updated_at and id from settings since trigger handles updated_at and we'll set id explicitly
     const { updated_at, id, ...settingsWithoutTimestamp } = settings;
     
+    // Filter out undefined values to avoid schema cache issues
+    // Only include properties that are explicitly set (not undefined)
+    const settingsToUpdate = Object.entries(settingsWithoutTimestamp).reduce((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as Record<string, any>);
+    
+    // If no settings to update, return success
+    if (Object.keys(settingsToUpdate).length === 0) {
+      return { success: true };
+    }
+    
     // First, try to UPDATE the existing row
     const updateResponse = await supabase
       .from('ticket_settings')
-      .update(settingsWithoutTimestamp)
+      .update(settingsToUpdate)
       .eq('id', DEFAULT_SETTINGS_ID)
       .select()
       .single();
@@ -175,7 +189,7 @@ export const updateTicketSettings = async (settings: Partial<TicketSettings>): P
         .from('ticket_settings')
         .insert({
           id: DEFAULT_SETTINGS_ID,
-          ...settingsWithoutTimestamp,
+          ...settingsToUpdate,
         })
         .select()
         .single();

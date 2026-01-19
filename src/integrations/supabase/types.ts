@@ -146,6 +146,162 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_settings: {
+        Row: {
+          id: string
+          early_bird_enabled: boolean
+          early_bird_cutoff: string | null
+          early_bird_total_limit: number | null
+          normal_total_limit: number | null
+          bar_limit: number | null
+          kuechenhilfe_limit: number | null
+          springer_runner_limit: number | null
+          springer_toilet_limit: number | null
+          abbau_limit: number | null
+          aufbau_limit: number | null
+          awareness_limit: number | null
+          schichtleitung_limit: number | null
+          tech_limit: number | null
+          bar_price_early: number | null
+          bar_price_normal: number | null
+          kuechenhilfe_price_early: number | null
+          kuechenhilfe_price_normal: number | null
+          springer_runner_price_early: number | null
+          springer_runner_price_normal: number | null
+          springer_toilet_price_early: number | null
+          springer_toilet_price_normal: number | null
+          abbau_price_early: number | null
+          abbau_price_normal: number | null
+          aufbau_price_early: number | null
+          aufbau_price_normal: number | null
+          awareness_price_early: number | null
+          awareness_price_normal: number | null
+          schichtleitung_price_early: number | null
+          schichtleitung_price_normal: number | null
+          tech_price_early: number | null
+          tech_price_normal: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          early_bird_enabled?: boolean
+          early_bird_cutoff?: string | null
+          early_bird_total_limit?: number | null
+          normal_total_limit?: number | null
+          bar_limit?: number | null
+          kuechenhilfe_limit?: number | null
+          springer_runner_limit?: number | null
+          springer_toilet_limit?: number | null
+          abbau_limit?: number | null
+          aufbau_limit?: number | null
+          awareness_limit?: number | null
+          schichtleitung_limit?: number | null
+          tech_limit?: number | null
+          bar_price_early?: number | null
+          bar_price_normal?: number | null
+          kuechenhilfe_price_early?: number | null
+          kuechenhilfe_price_normal?: number | null
+          springer_runner_price_early?: number | null
+          springer_runner_price_normal?: number | null
+          springer_toilet_price_early?: number | null
+          springer_toilet_price_normal?: number | null
+          abbau_price_early?: number | null
+          abbau_price_normal?: number | null
+          aufbau_price_early?: number | null
+          aufbau_price_normal?: number | null
+          awareness_price_early?: number | null
+          awareness_price_normal?: number | null
+          schichtleitung_price_early?: number | null
+          schichtleitung_price_normal?: number | null
+          tech_price_early?: number | null
+          tech_price_normal?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          early_bird_enabled?: boolean
+          early_bird_cutoff?: string | null
+          early_bird_total_limit?: number | null
+          normal_total_limit?: number | null
+          bar_limit?: number | null
+          kuechenhilfe_limit?: number | null
+          springer_runner_limit?: number | null
+          springer_toilet_limit?: number | null
+          abbau_limit?: number | null
+          aufbau_limit?: number | null
+          awareness_limit?: number | null
+          schichtleitung_limit?: number | null
+          tech_limit?: number | null
+          bar_price_early?: number | null
+          bar_price_normal?: number | null
+          kuechenhilfe_price_early?: number | null
+          kuechenhilfe_price_normal?: number | null
+          springer_runner_price_early?: number | null
+          springer_runner_price_normal?: number | null
+          springer_toilet_price_early?: number | null
+          springer_toilet_price_normal?: number | null
+          abbau_price_early?: number | null
+          abbau_price_normal?: number | null
+          aufbau_price_early?: number | null
+          aufbau_price_normal?: number | null
+          awareness_price_early?: number | null
+          awareness_price_normal?: number | null
+          schichtleitung_price_early?: number | null
+          schichtleitung_price_normal?: number | null
+          tech_price_early?: number | null
+          tech_price_normal?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ticket_purchases: {
+        Row: {
+          id: string
+          user_id: string | null
+          ticket_type: string
+          role: string
+          price: number
+          purchaser_name: string
+          purchaser_email: string
+          status: string
+          payment_reference: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          ticket_type: string
+          role: string
+          price: number
+          purchaser_name: string
+          purchaser_email: string
+          status?: string
+          payment_reference?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          ticket_type?: string
+          role?: string
+          price?: number
+          purchaser_name?: string
+          purchaser_email?: string
+          status?: string
+          payment_reference?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -337,6 +337,8 @@ const translations = {
     normalTicketSettings: 'Normal-Bird Ticket-Einstellungen',
     normalTotalLimit: 'Normal-Bird Ticket Gesamtlimit',
     normalTotalLimitDesc: 'Setze die Gesamtanzahl verfügbarer Normal-Tickets für alle Rollen. Leer lassen für unbegrenzt. Normal-Tickets werden automatisch nicht mehr verfügbar, wenn dieses Limit erreicht ist.',
+    universalTicketLimits: 'Universelle Ticket-Limits',
+    universalTicketLimitsDesc: 'Setze die maximale Anzahl von Tickets, die für jeden Ticket-Typ über alle Rollen hinweg verkauft werden können. Diese Limits gelten universell für sowohl Early-Bird- als auch Normal-Bird-Tickets.',
     
     // Admin - Data Loading
     warning: 'Warnung',
@@ -680,6 +682,8 @@ const translations = {
     normalTicketSettings: 'Normal-Bird Ticket Settings',
     normalTotalLimit: 'Normal-Bird Ticket Total Limit',
     normalTotalLimitDesc: 'Set the total number of normal-bird tickets available across all roles. Leave empty for unlimited. Normal-bird tickets will automatically become unavailable when this limit is reached.',
+    universalTicketLimits: 'Universal Ticket Limits',
+    universalTicketLimitsDesc: 'Set the maximum number of tickets that can be sold across all roles for each ticket type. These limits apply universally to both Early-Bird and Normal-Bird tickets.',
     
     // Admin - Data Loading
     warning: 'Warning',
