@@ -480,12 +480,6 @@ const TicketCheckout = () => {
                       <span className="text-muted-foreground">{t("selectedRole")}:</span>
                       <span className="font-medium">{role ? t(role) || role : t("nA")}</span>
                     </div>
-                    {remainingTickets !== null && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">{t("remainingTickets")}:</span>
-                        <span className="font-medium">{remainingTickets}</span>
-                      </div>
-                    )}
                     <div className="flex justify-between pt-2 border-t border-border/30">
                       <span className="text-muted-foreground">{t("price")}:</span>
                       <span className="font-bold text-lg">{getPrice().toFixed(2)}€</span>
