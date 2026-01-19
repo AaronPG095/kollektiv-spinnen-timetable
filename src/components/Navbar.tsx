@@ -10,7 +10,7 @@ export const Navbar = () => {
     { path: "/about", label: "About Us" },
     { path: "/faq", label: t("faq") },
     { path: "/", label: t("timetable") },
-    { path: "/tickets", label: t("tickets") },
+    { path: "/soli-beitrag", label: t("tickets") },
   ];
 
   return (

@@ -96,7 +96,7 @@ const TicketCheckout = () => {
           description: t("missingTicketInformation"),
           variant: "destructive",
         });
-        navigate("/tickets");
+        navigate("/soli-beitrag");
         return;
       }
       
@@ -118,7 +118,7 @@ const TicketCheckout = () => {
                 description: t("soldOutDesc"),
                 variant: "destructive",
               });
-              navigate("/tickets");
+              navigate("/soli-beitrag");
               return;
             }
           }
@@ -133,7 +133,7 @@ const TicketCheckout = () => {
                 description: t("soldOutDesc"),
                 variant: "destructive",
               });
-              navigate("/tickets");
+              navigate("/soli-beitrag");
               return;
             }
           }
@@ -148,7 +148,7 @@ const TicketCheckout = () => {
               description: t("soldOutDesc"),
               variant: "destructive",
             });
-            navigate("/tickets");
+            navigate("/soli-beitrag");
             return;
           }
           
@@ -163,7 +163,7 @@ const TicketCheckout = () => {
           description: error?.message || t("failedToLoadTicketSettings"),
           variant: "destructive",
         });
-        navigate("/tickets");
+        navigate("/soli-beitrag");
       } finally {
         setLoading(false);
       }
@@ -405,7 +405,7 @@ const TicketCheckout = () => {
         // In a real app, you would redirect to payment processing here
         // For now, we'll just show a success message
         setTimeout(() => {
-          navigate("/tickets");
+          navigate("/soli-beitrag");
         }, 2000);
       } else {
         toast({

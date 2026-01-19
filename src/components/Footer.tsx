@@ -19,7 +19,7 @@ export const Footer = () => {
   const sitemapItems = [
     { path: "/", label: t("timetable") },
     { path: "/faq", label: t("faq") },
-    { path: "/tickets", label: t("tickets") },
+    { path: "/soli-beitrag", label: t("tickets") },
   ];
 
   return (

@@ -208,7 +208,7 @@ const Tickets = () => {
       // Could show a toast here
       return;
     }
-    navigate(`/tickets/checkout?type=${type}&role=${role}`);
+    navigate(`/soli-beitrag/checkout?type=${type}&role=${role}`);
   };
 
   // Check if any dropdown has a selection
