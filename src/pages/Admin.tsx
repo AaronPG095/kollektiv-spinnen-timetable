@@ -75,12 +75,13 @@ const Admin = () => {
   const [ticketSettingsLoading, setTicketSettingsLoading] = useState(false);
   const [ticketPurchases, setTicketPurchases] = useState<TicketPurchase[]>([]);
   const [purchasesLoading, setPurchasesLoading] = useState(false);
-  const [ticketSubTab, setTicketSubTab] = useState<"settings" | "purchases" | "checked">("settings");
+  const [ticketSubTab, setTicketSubTab] = useState<"settings" | "purchases" | "checked" | "cancelled">("settings");
   const [aboutPageContent, setAboutPageContent] = useState<AboutPageContentType | null>(null);
   const [aboutPagePhotos, setAboutPagePhotos] = useState<AboutPagePhoto[]>([]);
   const [aboutPageLoading, setAboutPageLoading] = useState(false);
   const [pendingSearchQuery, setPendingSearchQuery] = useState("");
   const [checkedSearchQuery, setCheckedSearchQuery] = useState("");
+  const [cancelledSearchQuery, setCancelledSearchQuery] = useState("");
 
   // Derived collections for ticket views
   // "Pending Soli-Contributions" tab shows: confirmed but unchecked purchases
@@ -89,6 +90,9 @@ const Admin = () => {
   );
   const checkedConfirmedPurchases = ticketPurchases.filter(
     (p) => p.status === 'confirmed' && p.checked
+  );
+  const cancelledPurchases = ticketPurchases.filter(
+    (p) => p.status === 'cancelled'
   );
 
   // Filter purchases by search query (name and reference)
@@ -104,6 +108,7 @@ const Admin = () => {
 
   const filteredPendingPurchases = filterPurchasesBySearch(uncheckedPurchases, pendingSearchQuery);
   const filteredCheckedPurchases = filterPurchasesBySearch(checkedConfirmedPurchases, checkedSearchQuery);
+  const filteredCancelledPurchases = filterPurchasesBySearch(cancelledPurchases, cancelledSearchQuery);
 
   useEffect(() => {
     // Allow all users to access admin page, but only load data if admin
@@ -272,6 +277,41 @@ const Admin = () => {
     }
   };
 
+  const handleCancelPurchase = async (purchaseId: string) => {
+    try {
+      const { error } = await supabase
+        .from('soli_contribution_purchases')
+        .update({ status: 'cancelled' })
+        .eq('id', purchaseId);
+
+      if (error) {
+        console.error('[Admin] Error cancelling purchase:', error);
+        toast({
+          title: t("error"),
+          description: error.message || t("failedToCancelPurchase"),
+          variant: "destructive",
+        });
+      } else {
+        // Update local state optimistically
+        setTicketPurchases(prev =>
+          prev.map(p =>
+            p.id === purchaseId ? { ...p, status: 'cancelled' as const } : p
+          )
+        );
+        toast({
+          title: t("success"),
+          description: t("purchaseCancelledSuccessfully"),
+        });
+      }
+    } catch (err: any) {
+      console.error('[Admin] Exception cancelling purchase:', err);
+      toast({
+        title: t("error"),
+        description: err?.message || t("failedToCancelPurchase"),
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSaveTicketSettings = async (settings: Partial<TicketSettings>) => {
     try {
@@ -1129,6 +1169,17 @@ const Admin = () => {
               >
                 {t("checkedSoliContributions")} ({checkedConfirmedPurchases.length})
               </Button>
+              <Button
+                type="button"
+                variant={ticketSubTab === "cancelled" ? "default" : "ghost"}
+                onClick={() => {
+                  setTicketSubTab("cancelled");
+                  loadTicketPurchases();
+                }}
+                size="sm"
+              >
+                {t("cancelledSoliContributions")} ({cancelledPurchases.length})
+              </Button>
             </div>
 
             {ticketSubTab === "settings" ? (
@@ -1179,8 +1230,8 @@ const Admin = () => {
                           </p>
                         ) : (
                           filteredPendingPurchases.map((purchase) => {
-                          // Determine border color: checked = green, unchecked = red
-                          const borderClass = purchase.checked ? 'border-green-500' : 'border-red-500';
+                          // Yellow border for pending tab
+                          const borderClass = 'border-yellow-500';
                           
                           return (
                           <Card key={purchase.id} className={borderClass}>
@@ -1250,7 +1301,16 @@ const Admin = () => {
                                     />
                                     <span>{t("checked")}</span>
                                   </label>
-
+                                  {purchase.status === 'confirmed' && (
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => handleCancelPurchase(purchase.id)}
+                                      className="mt-2"
+                                    >
+                                      {t("cancel")}
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                             </CardContent>
@@ -1263,7 +1323,7 @@ const Admin = () => {
                   </CardContent>
                 </Card>
               )
-            ) : (
+            ) : ticketSubTab === "checked" ? (
               // Checked Soli-Contributions tab
               purchasesLoading ? (
                 <div className="text-center text-muted-foreground py-12">
@@ -1367,6 +1427,85 @@ const Admin = () => {
                                       />
                                       <span>{t("checked")}</span>
                                     </label>
+                                    {purchase.status === 'confirmed' && (
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => handleCancelPurchase(purchase.id)}
+                                        className="mt-2"
+                                      >
+                                        {t("cancel")}
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            ) : (
+              // Cancelled Soli-Contributions tab
+              purchasesLoading ? (
+                <div className="text-center text-muted-foreground py-12">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                  <p>{t("loadingCancelledPurchases")}</p>
+                </div>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("cancelledSoliContributions")}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {cancelledPurchases.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">
+                        {t("noCancelledPurchasesYet")}
+                      </p>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Search className="h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="text"
+                            placeholder="Search by name or reference..."
+                            value={cancelledSearchQuery}
+                            onChange={(e) => setCancelledSearchQuery(e.target.value)}
+                            className="max-w-sm"
+                          />
+                        </div>
+                        {filteredCancelledPurchases.length === 0 ? (
+                          <p className="text-muted-foreground text-center py-8">
+                            {cancelledSearchQuery ? t("noResultsFound") || "No results found" : t("noCancelledPurchasesYet")}
+                          </p>
+                        ) : (
+                          filteredCancelledPurchases.map((purchase) => (
+                            <Card key={purchase.id} className="border-red-500">
+                              <CardContent className="p-4">
+                                <div className="flex justify-between items-start">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-semibold">{purchase.purchaser_name}</span>
+                                      <span className="px-2 py-1 rounded text-xs bg-red-500/20 text-red-700">
+                                        {t("cancelled")}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">{purchase.purchaser_email}</p>
+                                    <p className="text-sm">
+                                      <span className="font-medium">{purchase.contribution_type}</span> - {purchase.role} - {purchase.price.toFixed(2)}€
+                                    </p>
+                                    {purchase.payment_reference && (
+                                      <p className="text-xs text-muted-foreground">{t("payment")}: {purchase.payment_reference}</p>
+                                    )}
+                                    {purchase.notes && (
+                                      <p className="text-xs text-muted-foreground">{t("notes")}: {purchase.notes}</p>
+                                    )}
+                                    <p className="text-xs text-muted-foreground">
+                                      {new Date(purchase.created_at).toLocaleString()}
+                                    </p>
                                   </div>
                                 </div>
                               </CardContent>
