@@ -79,6 +79,8 @@ const Admin = () => {
   const [aboutPageContent, setAboutPageContent] = useState<AboutPageContentType | null>(null);
   const [aboutPagePhotos, setAboutPagePhotos] = useState<AboutPagePhoto[]>([]);
   const [aboutPageLoading, setAboutPageLoading] = useState(false);
+  const [pendingSearchQuery, setPendingSearchQuery] = useState("");
+  const [checkedSearchQuery, setCheckedSearchQuery] = useState("");
 
   // Derived collections for ticket views
   const confirmedUncheckedPurchases = ticketPurchases.filter(
@@ -87,6 +89,20 @@ const Admin = () => {
   const checkedConfirmedPurchases = ticketPurchases.filter(
     (p) => p.status === 'confirmed' && p.checked
   );
+
+  // Filter purchases by search query (name and reference)
+  const filterPurchasesBySearch = (purchases: TicketPurchase[], query: string) => {
+    if (!query.trim()) return purchases;
+    const lowerQuery = query.toLowerCase();
+    return purchases.filter((p) => {
+      const nameMatch = p.purchaser_name?.toLowerCase().includes(lowerQuery) ?? false;
+      const referenceMatch = p.payment_reference?.toLowerCase().includes(lowerQuery) ?? false;
+      return nameMatch || referenceMatch;
+    });
+  };
+
+  const filteredPendingPurchases = filterPurchasesBySearch(confirmedUncheckedPurchases, pendingSearchQuery);
+  const filteredCheckedPurchases = filterPurchasesBySearch(checkedConfirmedPurchases, checkedSearchQuery);
 
   useEffect(() => {
     // Allow all users to access admin page, but only load data if admin
@@ -1164,7 +1180,22 @@ const Admin = () => {
                       <p className="text-muted-foreground text-center py-8">{t("noPurchasesYet")}</p>
                     ) : (
                       <div className="space-y-4">
-                        {confirmedUncheckedPurchases.map((purchase) => {
+                        <div className="flex items-center gap-2">
+                          <Search className="h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="text"
+                            placeholder="Search by name or reference..."
+                            value={pendingSearchQuery}
+                            onChange={(e) => setPendingSearchQuery(e.target.value)}
+                            className="max-w-sm"
+                          />
+                        </div>
+                        {filteredPendingPurchases.length === 0 ? (
+                          <p className="text-muted-foreground text-center py-8">
+                            {pendingSearchQuery ? t("noResultsFound") || "No results found" : t("noPurchasesYet")}
+                          </p>
+                        ) : (
+                          filteredPendingPurchases.map((purchase) => {
                           // Determine border color: checked = green, unchecked = red
                           const borderClass = purchase.checked ? 'border-green-500' : 'border-red-500';
                           
@@ -1253,7 +1284,8 @@ const Admin = () => {
                             </CardContent>
                           </Card>
                           );
-                        })}
+                        })
+                        )}
                       </div>
                     )}
                   </CardContent>
@@ -1278,7 +1310,22 @@ const Admin = () => {
                       </p>
                     ) : (
                       <div className="space-y-4">
-                        {checkedConfirmedPurchases.map((purchase) => (
+                        <div className="flex items-center gap-2">
+                          <Search className="h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="text"
+                            placeholder="Search by name or reference..."
+                            value={checkedSearchQuery}
+                            onChange={(e) => setCheckedSearchQuery(e.target.value)}
+                            className="max-w-sm"
+                          />
+                        </div>
+                        {filteredCheckedPurchases.length === 0 ? (
+                          <p className="text-muted-foreground text-center py-8">
+                            {checkedSearchQuery ? t("noResultsFound") || "No results found" : t("noCheckedPurchasesYet")}
+                          </p>
+                        ) : (
+                          filteredCheckedPurchases.map((purchase) => (
                             <Card key={purchase.id} className="border-green-500">
                               <CardContent className="p-4">
                                 <div className="flex justify-between items-start">
@@ -1352,7 +1399,8 @@ const Admin = () => {
                                 </div>
                               </CardContent>
                             </Card>
-                          ))}
+                          ))
+                        )}
                       </div>
                     )}
                   </CardContent>
