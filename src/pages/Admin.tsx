@@ -1899,7 +1899,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
             </p>
           </div>
 
-          {/* Normal-Bird Universal Limit */}
+          {/* Normal Bird Universal Limit */}
           <div className="space-y-2 p-4 bg-background rounded-lg border">
             <Label htmlFor="normal_total_limit" className="text-base font-semibold">
               {t("normalTotalLimit")}

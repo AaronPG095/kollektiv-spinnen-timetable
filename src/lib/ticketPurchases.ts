@@ -32,9 +32,9 @@ export interface CreatePurchaseData {
  * IMPORTANT: This counts ALL confirmed purchases for the role regardless of ticket type.
  * Role limits apply to the TOTAL count of confirmed purchases, combining:
  * - Early Bird tickets (earlyBird)
- * - Normal-Bird tickets (normal)
+ * - Normal Bird tickets (normal)
  * - Reduced Early Bird tickets (reducedEarlyBird)
- * - Reduced Normal-Bird tickets (reducedNormal)
+ * - Reduced Normal Bird tickets (reducedNormal)
  * 
  * For example, if bar_limit is 20, then the total of all confirmed bar tickets
  * (whether Early Bird or Normal) cannot exceed 20.
@@ -269,7 +269,7 @@ export const createTicketPurchase = async (
       if (remaining !== null && remaining <= 0) {
         return {
           success: false,
-          error: 'Normal-Bird tickets are sold out. The universal limit has been reached.',
+          error: 'Normal Bird tickets are sold out. The universal limit has been reached.',
         };
       }
     }

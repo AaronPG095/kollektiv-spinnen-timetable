@@ -56,7 +56,7 @@ BEGIN
     
     -- Validate normal-bird universal limit
     IF _is_normal AND _normal_limit IS NOT NULL THEN
-      -- Get current count of confirmed normal-bird purchases
+      -- Get current count of confirmed normal bird purchases
       _normal_count := public.get_normal_purchase_count();
       
       -- If this purchase is already confirmed, don't count it twice
@@ -64,13 +64,13 @@ BEGIN
         -- Purchase was already confirmed, so current_count already includes it
         -- Check if we're still within limit
         IF _normal_count > _normal_limit THEN
-          RAISE EXCEPTION 'Normal-Bird universal limit exceeded. Current count: %, Limit: %', _normal_count, _normal_limit;
+          RAISE EXCEPTION 'Normal Bird universal limit exceeded. Current count: %, Limit: %', _normal_count, _normal_limit;
         END IF;
       ELSE
         -- Purchase is being confirmed for the first time
         -- Check if confirming it would exceed the limit
         IF _normal_count >= _normal_limit THEN
-          RAISE EXCEPTION 'Normal-Bird universal limit exceeded. Current count: %, Limit: %. Cannot confirm additional purchase.', _normal_count, _normal_limit;
+          RAISE EXCEPTION 'Normal Bird universal limit exceeded. Current count: %, Limit: %. Cannot confirm additional purchase.', _normal_count, _normal_limit;
         END IF;
       END IF;
     END IF;

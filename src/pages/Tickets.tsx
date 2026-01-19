@@ -187,7 +187,7 @@ const Tickets = () => {
   };
 
   // Check if a role is available (using real inventory tracking)
-  // IMPORTANT: Role limits apply to ALL ticket types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
+  // IMPORTANT: Role limits apply to ALL ticket types combined (Early Bird, Normal Bird, Reduced Early Bird, Reduced Normal Bird).
   // This function returns false when the role limit has been reached (remaining tickets = 0).
   const isRoleAvailable = (role: string): boolean => {
     // If availability hasn't been loaded yet, default to true
