@@ -19,7 +19,7 @@ INSERT INTO public.faqs (question, answer, category, subcategory, order_index, l
 ('Was kostet das Festival?', 'Wir sind non-profit, es gibt daher keinen Ticketpreis. Um unseren Geburtstag zu finanzieren, müssen wir aber eine Spende als Unkostenbeitrag verlangen, dieser beträgt: 1 Tag/Nacht 25€-50€, ganzes Wochenende 50€-100€', 'B', 'Beitrag & Bezahlung', 10, 'de', true),
 ('Wie zahle ich?', 'Per PayPal-Spende mit gewünschtem Tag im Betreff', 'B', 'Beitrag & Bezahlung', 11, 'de', true),
 
-('Welche Bereiche gibt es?', 'Drei Floors: Salon (erster Stock neben dem Kantinen- und Barbereich), Flora (der Rave-Jungle im Untergeschoss) und Neue Ufer (Draußen-Floor), dazu viele Chill-Areas innen und außen, Extra-Räume ua. für Karaoke (im Erdgeschoss), die Sound Journey (großer Saal im 3. OG) und Kino (neben dem Salon), dazu noch die Schlafräume im 2. OG sowie draußen der private Flusszugang sowie der Camping-Platz', 'B', 'Bereiche', 12, 'de', true),
+('Welche Bereiche gibt es?', 'Drei Floors: Salon (erster Stock neben dem Kantinen- und Barbereich), 2000er (der Rave-Jungle im Untergeschoss) und Neue Ufer (Draußen-Floor), dazu viele Chill-Areas innen und außen, Extra-Räume ua. für Karaoke (im Erdgeschoss), die Sound Journey (großer Saal im 3. OG) und Kino (neben dem Salon), dazu noch die Schlafräume im 2. OG sowie draußen der private Flusszugang sowie der Camping-Platz', 'B', 'Bereiche', 12, 'de', true),
 
 -- Category C
 ('Wo kann ich schlafen?', 'Schlafräume im 2. OG des Gebäudes für bis zu 80 Personen (eher für Wochenendgäste) oder ruhige Zeltwiese für lärmempfindliche Gäste', 'C', 'Camping & Übernachtung', 13, 'de', true),

@@ -43,7 +43,7 @@ export const ChronologicalTimetable = ({
       color: "venue-unten",
       bgColor: "bg-venue-unten/10",
       borderColor: "border-venue-unten/20", 
-      emoji: "🌿"
+      emoji: "💎"
     }
   };
 

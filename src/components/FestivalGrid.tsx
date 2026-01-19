@@ -23,7 +23,7 @@ const venues = ['draussen', 'oben', 'unten'] as const;
 const venueLabels = {
   draussen: 'NEUE UFER',
   oben: 'SALON', 
-  unten: 'FLORA'
+  unten: '2000er'
 };
 
 const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => {
@@ -453,7 +453,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                    style={{ 
                      backgroundColor: index === 0 ? '#1B5E7C' : // Teal/dark cyan for Neue Ufer 
                                       index === 1 ? '#2E1A47' : // Dark purple for Salon
-                                      index === 2 ? '#6B1F49' : // Dark pink/magenta for Flora
+                                      index === 2 ? '#6B1F49' : // Dark pink/magenta for 2000er
                                       '#2E1A47'
                    }}>
                 {venueLabels[venue as keyof typeof venueLabels]}

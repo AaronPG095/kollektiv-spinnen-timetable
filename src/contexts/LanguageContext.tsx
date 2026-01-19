@@ -35,7 +35,7 @@ const translations = {
     // Venues
     draussen: 'Neue Ufer',
     oben: 'Salon',
-    unten: 'Flora',
+    unten: '2000er',
     
     // Event Types
     performance: 'Performance',
@@ -380,7 +380,7 @@ const translations = {
     // Venues
     draussen: 'Neue Ufer',
     oben: 'Salon',
-    unten: 'Flora',
+    unten: '2000er',
     
     // Event Types
     performance: 'Performance',
