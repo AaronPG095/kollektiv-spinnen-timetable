@@ -742,7 +742,7 @@ const Admin = () => {
             ) : (
               <div className="flex gap-6 overflow-x-auto pb-4">
                 {sortedDays.map((day) => (
-                  <div key={day} className="flex-shrink-0 w-[calc(50%-12px)] min-w-[400px] space-y-4">
+                  <div key={day} className="flex-shrink-0 w-[calc(33.333%-16px)] min-w-[280px] space-y-4">
                     {/* Day Header */}
                     <div className="flex items-center gap-3 pb-2 border-b border-border">
                       <h3 className="text-xl md:text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
