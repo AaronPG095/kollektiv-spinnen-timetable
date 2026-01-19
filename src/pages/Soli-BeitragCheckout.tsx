@@ -75,6 +75,8 @@ const TicketCheckout = () => {
     last_name: false,
     purchaser_email: false,
   });
+  const [dataStorageConsent, setDataStorageConsent] = useState(false);
+  const [consentTouched, setConsentTouched] = useState(false);
   const [referenceCode, setReferenceCode] = useState<string | null>(null);
   const [referenceCopied, setReferenceCopied] = useState(false);
   const [checklist, setChecklist] = useState({
@@ -321,6 +323,17 @@ const TicketCheckout = () => {
       return;
     }
     
+    // Check if data storage consent is given
+    if (!dataStorageConsent) {
+      setConsentTouched(true);
+      toast({
+        title: t("validationError"),
+        description: t("dataStorageConsentRequired"),
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Check if all checklist items are completed
     const allChecklistItemsCompleted = 
       checklist.enteredDetails && 
@@ -630,6 +643,32 @@ const TicketCheckout = () => {
                     )}
                   </div>
 
+                  <div className="space-y-2">
+                    <div className="flex items-start space-x-3">
+                      <Checkbox
+                        id="data_storage_consent"
+                        checked={dataStorageConsent}
+                        onCheckedChange={(checked) => {
+                          setDataStorageConsent(checked === true);
+                          setConsentTouched(true);
+                        }}
+                        className="h-5 w-5 mt-0.5"
+                        required
+                      />
+                      <label
+                        htmlFor="data_storage_consent"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {t("dataStorageConsent")} *
+                      </label>
+                    </div>
+                    {!dataStorageConsent && consentTouched && (
+                      <p className="text-xs text-destructive">
+                        {t("dataStorageConsentRequired")}
+                      </p>
+                    )}
+                  </div>
+
                   <Button
                     type="button"
                     onClick={handleGenerateReference}
@@ -748,7 +787,7 @@ const TicketCheckout = () => {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={submitting || !checklist.enteredDetails || !checklist.generatedReference || !checklist.paidViaPayPal || !referenceCode}
+                    disabled={submitting || !checklist.enteredDetails || !checklist.generatedReference || !checklist.paidViaPayPal || !referenceCode || !dataStorageConsent}
                     className="flex-1"
                   >
                     {submitting ? (

@@ -191,6 +191,8 @@ const translations = {
     qrCodeImage: 'QR-Code Bild',
     placeQRCodeInPublicFolder: 'Platziere paypal-qr-code.png im public Ordner',
     onlyClickAfterPayment: 'Klicke nur auf den Button "Zahlung bestätigt", nachdem du über PayPal bezahlt hast und die Checkliste oben auf der Seite abgeschlossen hast',
+    dataStorageConsent: 'Ich stimme zu, dass meine Daten gespeichert werden dürfen, um mich bezüglich meiner Schichtbuchung zu kontaktieren.',
+    dataStorageConsentRequired: 'Bitte stimme der Datenspeicherung zu, um fortzufahren.',
     
     // Footer
     sitemap: 'Sitemap',
@@ -589,6 +591,8 @@ const translations = {
     qrCodeImage: 'QR Code Image',
     placeQRCodeInPublicFolder: 'Place paypal-qr-code.png in public folder',
     onlyClickAfterPayment: 'Only click the payment confirmed button after paying your Soli-Contribution over PayPal, and completing the checklist at the top of the page.',
+    dataStorageConsent: 'I consent to the storage of my data for the purpose of contacting me regarding my shift booking.',
+    dataStorageConsentRequired: 'Please consent to data storage to continue.',
     
     // Footer
     sitemap: 'Sitemap',
