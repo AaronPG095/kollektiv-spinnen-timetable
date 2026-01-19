@@ -1341,49 +1341,46 @@ const Admin = () => {
                                   </p>
                                 </div>
                                 <div className="flex flex-col items-end gap-2">
-                                  <Button
-                                    variant={purchase.checked ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={async () => {
-                                      try {
-                                        const nextChecked = !purchase.checked;
-                                        const { error } = await supabase
-                                          .from('soli_contribution_purchases')
-                                          .update({ checked: nextChecked })
-                                          .eq('id', purchase.id);
+                                  <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={purchase.checked}
+                                      onChange={async (e) => {
+                                        try {
+                                          const nextChecked = e.target.checked;
+                                          const { error } = await supabase
+                                            .from('soli_contribution_purchases')
+                                            .update({ checked: nextChecked })
+                                            .eq('id', purchase.id);
 
-                                        if (error) {
-                                          console.error('[Admin] Error updating checked flag:', error);
+                                          if (error) {
+                                            console.error('[Admin] Error updating checked flag:', error);
+                                            toast({
+                                              title: t("error"),
+                                              description: error.message || t("failedToUpdateCheckedState"),
+                                              variant: "destructive",
+                                            });
+                                          } else {
+                                            // Update local state optimistically
+                                            setTicketPurchases(prev =>
+                                              prev.map(p =>
+                                                p.id === purchase.id ? { ...p, checked: nextChecked } : p
+                                              )
+                                            );
+                                          }
+                                        } catch (err: any) {
+                                          console.error('[Admin] Exception updating checked flag:', err);
                                           toast({
                                             title: t("error"),
-                                            description: error.message || t("failedToUpdateCheckedState"),
+                                            description: err?.message || t("failedToUpdateCheckedState"),
                                             variant: "destructive",
                                           });
-                                        } else {
-                                          // Update local state optimistically
-                                          setTicketPurchases(prev =>
-                                            prev.map(p =>
-                                              p.id === purchase.id ? { ...p, checked: nextChecked } : p
-                                            )
-                                          );
                                         }
-                                      } catch (err: any) {
-                                        console.error('[Admin] Exception updating checked flag:', err);
-                                        toast({
-                                          title: t("error"),
-                                          description: err?.message || t("failedToUpdateCheckedState"),
-                                          variant: "destructive",
-                                        });
-                                      }
-                                    }}
-                                    title={purchase.checked ? t("checked") : t("unchecked")}
-                                  >
-                                    {purchase.checked ? (
-                                      <Check className="h-4 w-4" />
-                                    ) : (
-                                      <X className="h-4 w-4" />
-                                    )}
-                                  </Button>
+                                      }}
+                                      className="h-5 w-5 cursor-pointer rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                                    />
+                                    <span className="text-sm font-medium">{t("checked")}</span>
+                                  </label>
                                   {purchase.status === 'confirmed' && (
                                     <Button
                                       variant="destructive"
@@ -1476,54 +1473,51 @@ const Admin = () => {
                                     </p>
                                   </div>
                                   <div className="flex flex-col items-end gap-2">
-                                    <Button
-                                      variant={purchase.checked ? "default" : "outline"}
-                                      size="sm"
-                                      onClick={async () => {
-                                        try {
-                                          const nextChecked = !purchase.checked;
-                                          const { error } = await supabase
-                                            .from('soli_contribution_purchases')
-                                            .update({ checked: nextChecked })
-                                            .eq('id', purchase.id);
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={purchase.checked}
+                                        onChange={async (e) => {
+                                          try {
+                                            const nextChecked = e.target.checked;
+                                            const { error } = await supabase
+                                              .from('soli_contribution_purchases')
+                                              .update({ checked: nextChecked })
+                                              .eq('id', purchase.id);
 
-                                          if (error) {
-                                            console.error('[Admin] Error updating checked flag:', error);
+                                            if (error) {
+                                              console.error('[Admin] Error updating checked flag:', error);
+                                              toast({
+                                                title: t("error"),
+                                                description: error.message || t("failedToUpdateCheckedState"),
+                                                variant: "destructive",
+                                              });
+                                            } else {
+                                              // Update local state optimistically
+                                              setTicketPurchases(prev =>
+                                                prev.map(p =>
+                                                  p.id === purchase.id ? { ...p, checked: nextChecked } : p
+                                                )
+                                              );
+                                              
+                                              // If unchecked, switch back to purchases tab to see the card
+                                              if (!nextChecked && ticketSubTab === 'checked') {
+                                                setTicketSubTab('purchases');
+                                              }
+                                            }
+                                          } catch (err: any) {
+                                            console.error('[Admin] Exception updating checked flag:', err);
                                             toast({
                                               title: t("error"),
-                                              description: error.message || t("failedToUpdateCheckedState"),
+                                              description: err?.message || t("failedToUpdateCheckedState"),
                                               variant: "destructive",
                                             });
-                                          } else {
-                                            // Update local state optimistically
-                                            setTicketPurchases(prev =>
-                                              prev.map(p =>
-                                                p.id === purchase.id ? { ...p, checked: nextChecked } : p
-                                              )
-                                            );
-                                            
-                                            // If unchecked, switch back to purchases tab to see the card
-                                            if (!nextChecked && ticketSubTab === 'checked') {
-                                              setTicketSubTab('purchases');
-                                            }
                                           }
-                                        } catch (err: any) {
-                                          console.error('[Admin] Exception updating checked flag:', err);
-                                          toast({
-                                            title: t("error"),
-                                            description: err?.message || t("failedToUpdateCheckedState"),
-                                            variant: "destructive",
-                                          });
-                                        }
-                                      }}
-                                      title={purchase.checked ? t("checked") : t("unchecked")}
-                                    >
-                                      {purchase.checked ? (
-                                        <Check className="h-4 w-4" />
-                                      ) : (
-                                        <X className="h-4 w-4" />
-                                      )}
-                                    </Button>
+                                        }}
+                                        className="h-5 w-5 cursor-pointer rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                                      />
+                                      <span className="text-sm font-medium">{t("checked")}</span>
+                                    </label>
                                     {purchase.status === 'confirmed' && (
                                       <Button
                                         variant="destructive"
