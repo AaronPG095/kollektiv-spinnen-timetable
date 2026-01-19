@@ -292,6 +292,9 @@ const Tickets = () => {
               <p className="text-sm text-muted-foreground leading-relaxed mt-2">
                 {t("ticketTypesNote")}
               </p>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+                {t("ticketTypesNoteAdditional")}
+              </p>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Standard Ticket Type */}
