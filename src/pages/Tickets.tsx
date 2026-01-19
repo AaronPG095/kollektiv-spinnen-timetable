@@ -318,6 +318,9 @@ const Tickets = () => {
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {t("reducedTicketTypeDesc")}
                 </p>
+                <div className="mt-3 text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {t("reducedTicketTypeReductions")}
+                </div>
               </div>
 
               {/* What is included */}
