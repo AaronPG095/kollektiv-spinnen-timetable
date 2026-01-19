@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Upload, X as XIcon } from 'lucide-react';
 import { getTicketSettings, updateTicketSettings, type TicketSettings } from '@/lib/ticketSettings';
-import { getAllPurchases, confirmTicketPurchase, type TicketPurchase } from '@/lib/ticketPurchases';
+import { getAllPurchases, type TicketPurchase } from '@/lib/ticketPurchases';
 import { 
   getAboutPageContent, 
   updateAboutPageContent, 
@@ -83,7 +83,8 @@ const Admin = () => {
   const [checkedSearchQuery, setCheckedSearchQuery] = useState("");
 
   // Derived collections for ticket views
-  const confirmedUncheckedPurchases = ticketPurchases.filter(
+  // "Pending Soli-Contributions" tab shows: confirmed but unchecked purchases
+  const uncheckedPurchases = ticketPurchases.filter(
     (p) => p.status === 'confirmed' && !p.checked
   );
   const checkedConfirmedPurchases = ticketPurchases.filter(
@@ -101,7 +102,7 @@ const Admin = () => {
     });
   };
 
-  const filteredPendingPurchases = filterPurchasesBySearch(confirmedUncheckedPurchases, pendingSearchQuery);
+  const filteredPendingPurchases = filterPurchasesBySearch(uncheckedPurchases, pendingSearchQuery);
   const filteredCheckedPurchases = filterPurchasesBySearch(checkedConfirmedPurchases, checkedSearchQuery);
 
   useEffect(() => {
@@ -271,24 +272,6 @@ const Admin = () => {
     }
   };
 
-  const handleConfirmPurchase = async (purchaseId: string) => {
-    try {
-      const result = await confirmTicketPurchase(purchaseId);
-      if (result.success) {
-        toast({ title: t("purchaseConfirmedSuccessfully") });
-        loadTicketPurchases();
-      } else {
-        throw new Error(result.error || "Failed to confirm Soli-Contribution");
-      }
-    } catch (error: any) {
-      console.error('[Admin] Error confirming Soli-Contribution:', error);
-      toast({
-        title: t("error"),
-        description: error?.message || t("failedToConfirmPurchase"),
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleSaveTicketSettings = async (settings: Partial<TicketSettings>) => {
     try {
@@ -1133,7 +1116,7 @@ const Admin = () => {
                 }}
                 size="sm"
               >
-                {t("pendingSoliContributions")} ({confirmedUncheckedPurchases.length})
+                {t("pendingSoliContributions")} ({uncheckedPurchases.length})
               </Button>
               <Button
                 type="button"
@@ -1176,7 +1159,7 @@ const Admin = () => {
                     <CardTitle>{t("pendingSoliContributions")}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {confirmedUncheckedPurchases.length === 0 ? (
+                    {uncheckedPurchases.length === 0 ? (
                       <p className="text-muted-foreground text-center py-8">{t("noPurchasesYet")}</p>
                     ) : (
                       <div className="space-y-4">
@@ -1208,12 +1191,9 @@ const Admin = () => {
                                     <span className="font-semibold">{purchase.purchaser_name}</span>
                                     <span className={`px-2 py-1 rounded text-xs ${
                                       purchase.status === 'confirmed' ? 'bg-green-500/20 text-green-700' :
-                                      purchase.status === 'pending' ? 'bg-yellow-500/20 text-yellow-700' :
                                       'bg-gray-500/20 text-gray-700'
                                     }`}>
-                                      {purchase.status === 'pending' ? t("pending") : 
-                                       purchase.status === 'confirmed' ? t("confirmed") : 
-                                       t("cancelled")}
+                                      {purchase.status === 'confirmed' ? t("confirmed") : t("cancelled")}
                                     </span>
                                   </div>
                                   <p className="text-sm text-muted-foreground">{purchase.purchaser_email}</p>
@@ -1271,14 +1251,6 @@ const Admin = () => {
                                     <span>{t("checked")}</span>
                                   </label>
 
-                                  {purchase.status === 'pending' && (
-                                    <Button
-                                      size="sm"
-                                      onClick={() => handleConfirmPurchase(purchase.id)}
-                                    >
-                                      {t("confirm")}
-                                    </Button>
-                                  )}
                                 </div>
                               </div>
                             </CardContent>

@@ -9,7 +9,7 @@ export interface TicketPurchase {
   price: number;
   purchaser_name: string;
   purchaser_email: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  status: 'confirmed' | 'cancelled';
   payment_reference: string | null;
   notes: string | null;
   created_at: string;
@@ -25,6 +25,7 @@ export interface CreatePurchaseData {
   purchaser_email: string;
   payment_reference?: string;
   notes?: string;
+  status?: 'confirmed' | 'cancelled';
 }
 
 /**
@@ -235,8 +236,8 @@ export const validatePurchaseLimit = async (
  * 
  * IMPORTANT: Role limits apply to ALL contribution types combined. Before calling this function,
  * you should validate availability using checkRoleAvailability() or validatePurchaseLimit().
- * The Soli-Contribution is created with status 'pending' and will be validated against limits
- * when it is confirmed (via database trigger).
+ * The Soli-Contribution is created with status 'confirmed' and will be validated against limits
+ * immediately (via database trigger).
  * 
  * @param purchaseData - The Soli-Contribution data to create
  * @param validateLimit - Optional: if true, validates role limit before creating Soli-Contribution (default: false)
@@ -317,7 +318,8 @@ export const createTicketPurchase = async (
         purchaser_email: purchaseData.purchaser_email,
         payment_reference: purchaseData.payment_reference || null,
         notes: purchaseData.notes || null,
-        status: 'pending', // Will be confirmed after payment
+        status: purchaseData.status || 'confirmed', // Always 'confirmed' for new purchases
+        checked: false, // New purchases appear in "Pending Soli-Contributions" tab
       })
       .select()
       .single();
@@ -336,36 +338,6 @@ export const createTicketPurchase = async (
     };
   } catch (error: any) {
     logError('TicketPurchases', error, { operation: 'createTicketPurchase', purchaseData });
-    return {
-      success: false,
-      error: formatSupabaseError(error),
-    };
-  }
-};
-
-/**
- * Confirm a Soli-Contribution (after payment)
- */
-export const confirmTicketPurchase = async (
-  purchaseId: string
-): Promise<{ success: boolean; error?: string }> => {
-  try {
-    const { error } = await supabase
-      .from('soli_contribution_purchases')
-      .update({ status: 'confirmed' })
-      .eq('id', purchaseId);
-
-    if (error) {
-      logError('TicketPurchases', error, { operation: 'confirmTicketPurchase', purchaseId });
-      return {
-        success: false,
-        error: formatSupabaseError(error),
-      };
-    }
-
-    return { success: true };
-  } catch (error: any) {
-    logError('TicketPurchases', error, { operation: 'confirmTicketPurchase', purchaseId });
     return {
       success: false,
       error: formatSupabaseError(error),
