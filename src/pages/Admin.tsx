@@ -171,7 +171,7 @@ const Admin = () => {
         code: error?.code
       });
       toast({
-        title: "Error",
+        title: t("error"),
         description: error?.message || t("failedToLoadEvents"),
         variant: "destructive",
       });
@@ -213,7 +213,7 @@ const Admin = () => {
         code: error?.code
       });
       toast({
-        title: "Error",
+        title: t("error"),
         description: error?.message || t("failedToLoadFAQs"),
         variant: "destructive",
       });
@@ -228,11 +228,11 @@ const Admin = () => {
       setTicketSettings(settings);
     } catch (error: any) {
       console.error('[Admin] Error loading ticket settings:', error);
-      toast({
-        title: "Error",
-        description: error?.message || t("failedToLoadTicketSettings"),
-        variant: "destructive",
-      });
+        toast({
+          title: t("error"),
+          description: error?.message || t("failedToLoadTicketSettings"),
+          variant: "destructive",
+        });
     } finally {
       setTicketSettingsLoading(false);
     }
@@ -245,11 +245,11 @@ const Admin = () => {
       setTicketPurchases(purchases);
     } catch (error: any) {
       console.error('[Admin] Error loading confirmed Soli-Contributions:', error);
-      toast({
-        title: "Error",
-        description: error?.message || t("failedToLoadTicketPurchases"),
-        variant: "destructive",
-      });
+        toast({
+          title: t("error"),
+          description: error?.message || t("failedToLoadTicketPurchases"),
+          variant: "destructive",
+        });
     } finally {
       setPurchasesLoading(false);
     }
@@ -267,7 +267,7 @@ const Admin = () => {
     } catch (error: any) {
       console.error('[Admin] Error confirming Soli-Contribution:', error);
       toast({
-        title: "Error",
+        title: t("error"),
         description: error?.message || t("failedToConfirmPurchase"),
         variant: "destructive",
       });
@@ -296,7 +296,7 @@ const Admin = () => {
         console.error('[Admin] Failed to save ticket settings:', result.error);
         // Show the specific error message from the database
         toast({
-          title: "Error",
+          title: t("error"),
           description: result.error || t("failedToSaveTicketSettings"),
           variant: "destructive",
         });
@@ -304,7 +304,7 @@ const Admin = () => {
     } catch (error: any) {
       console.error('[Admin] Exception saving ticket settings:', error);
       toast({
-        title: "Error",
+        title: t("error"),
         description: error?.message || t("failedToSaveTicketSettings"),
         variant: "destructive",
       });
@@ -323,7 +323,7 @@ const Admin = () => {
     } catch (error: any) {
       console.error('[Admin] Error loading about page data:', error);
       toast({
-        title: "Error",
+        title: t("error"),
         description: error?.message || t("failedToLoadAboutPageData"),
         variant: "destructive",
       });
@@ -341,7 +341,7 @@ const Admin = () => {
     } catch (error: any) {
       console.error('[Admin] Error saving about page content:', error);
       toast({
-        title: "Error",
+        title: t("error"),
         description: error?.message || error?.details || t("failedToSaveAboutPageContent"),
         variant: "destructive",
       });
@@ -381,7 +381,7 @@ const Admin = () => {
     } catch (error: any) {
       console.error('[Admin] Error saving event:', error);
       toast({
-        title: "Error",
+        title: t("error"),
         description: error?.message || t("failedToSaveEvent"),
         variant: "destructive",
       });
@@ -407,7 +407,7 @@ const Admin = () => {
     } catch (error: any) {
       console.error('[Admin] Error deleting event:', error);
       toast({
-        title: "Error",
+        title: t("error"),
         description: error?.message || t("failedToDeleteEvent"),
         variant: "destructive",
       });
@@ -433,7 +433,7 @@ const Admin = () => {
     } catch (error: any) {
       console.error('[Admin] Error toggling event visibility:', error);
       toast({
-        title: "Error",
+        title: t("error"),
         description: error?.message || t("failedToUpdateEventVisibility"),
         variant: "destructive",
       });
@@ -473,7 +473,7 @@ const Admin = () => {
     } catch (error: any) {
       console.error('[Admin] Error saving FAQ:', error);
       toast({
-        title: "Error",
+        title: t("error"),
         description: error?.message || t("failedToSaveFAQ"),
         variant: "destructive",
       });
@@ -499,7 +499,7 @@ const Admin = () => {
     } catch (error: any) {
       console.error('[Admin] Error deleting FAQ:', error);
       toast({
-        title: "Error",
+        title: t("error"),
         description: error?.message || t("failedToDeleteFAQ"),
         variant: "destructive",
       });
@@ -525,7 +525,7 @@ const Admin = () => {
     } catch (error: any) {
       console.error('[Admin] Error toggling FAQ visibility:', error);
       toast({
-        title: "Error",
+        title: t("error"),
         description: error?.message || t("failedToUpdateFAQVisibility"),
         variant: "destructive",
       });
@@ -1001,7 +1001,7 @@ const Admin = () => {
                                       </DialogTrigger>
                                       <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
                                         <DialogHeader>
-                                          <DialogTitle>Edit FAQ</DialogTitle>
+                                          <DialogTitle>{t("editFAQ")}</DialogTitle>
                                         </DialogHeader>
                                         <div className="max-h-[75vh] overflow-y-auto pr-2">
                                           <FAQForm 
@@ -1063,7 +1063,7 @@ const Admin = () => {
                                       </DialogTrigger>
                                       <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
                                         <DialogHeader>
-                                          <DialogTitle>Edit FAQ</DialogTitle>
+                                          <DialogTitle>{t("editFAQ")}</DialogTitle>
                                         </DialogHeader>
                                         <div className="max-h-[75vh] overflow-y-auto pr-2">
                                           <FAQForm 
@@ -1101,6 +1101,7 @@ const Admin = () => {
             {/* Sub-tabs for Tickets */}
             <div className="flex gap-2 border-b border-border pb-2">
               <Button
+                type="button"
                 variant={ticketSubTab === "settings" ? "default" : "ghost"}
                 onClick={() => setTicketSubTab("settings")}
                 size="sm"
@@ -1108,6 +1109,7 @@ const Admin = () => {
                 {t("ticketSettings")}
               </Button>
               <Button
+                type="button"
                 variant={ticketSubTab === "purchases" ? "default" : "ghost"}
                 onClick={() => {
                   setTicketSubTab("purchases");
@@ -1115,9 +1117,10 @@ const Admin = () => {
                 }}
                 size="sm"
               >
-                {t("purchases")} ({confirmedUncheckedPurchases.length})
+                {t("pendingSoliContributions")} ({confirmedUncheckedPurchases.length})
               </Button>
               <Button
+                type="button"
                 variant={ticketSubTab === "checked" ? "default" : "ghost"}
                 onClick={() => {
                   setTicketSubTab("checked");
@@ -1125,7 +1128,7 @@ const Admin = () => {
                 }}
                 size="sm"
               >
-                Checked Soli-Contributions ({checkedConfirmedPurchases.length})
+                {t("checkedSoliContributions")} ({checkedConfirmedPurchases.length})
               </Button>
             </div>
 
@@ -1154,7 +1157,7 @@ const Admin = () => {
               ) : (
                 <Card>
                   <CardHeader>
-                    <CardTitle>{t("ticketPurchases")}</CardTitle>
+                    <CardTitle>{t("pendingSoliContributions")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {confirmedUncheckedPurchases.length === 0 ? (
@@ -1184,13 +1187,13 @@ const Admin = () => {
                                   </div>
                                   <p className="text-sm text-muted-foreground">{purchase.purchaser_email}</p>
                                   <p className="text-sm">
-                                    <span className="font-medium">{purchase.ticket_type}</span> - {purchase.role} - {purchase.price.toFixed(2)}€
+                                    <span className="font-medium">{purchase.contribution_type}</span> - {purchase.role} - {purchase.price.toFixed(2)}€
                                   </p>
                                   {purchase.payment_reference && (
-                                    <p className="text-xs text-muted-foreground">Payment: {purchase.payment_reference}</p>
+                                    <p className="text-xs text-muted-foreground">{t("payment")}: {purchase.payment_reference}</p>
                                   )}
                                   {purchase.notes && (
-                                    <p className="text-xs text-muted-foreground">Notes: {purchase.notes}</p>
+                                    <p className="text-xs text-muted-foreground">{t("notes")}: {purchase.notes}</p>
                                   )}
                                   <p className="text-xs text-muted-foreground">
                                     {new Date(purchase.created_at).toLocaleString()}
@@ -1212,8 +1215,8 @@ const Admin = () => {
                                           if (error) {
                                             console.error('[Admin] Error updating checked flag:', error);
                                             toast({
-                                              title: "Error",
-                                              description: error.message || "Failed to update checked state",
+                                              title: t("error"),
+                                              description: error.message || t("failedToUpdateCheckedState"),
                                               variant: "destructive",
                                             });
                                           } else {
@@ -1227,14 +1230,14 @@ const Admin = () => {
                                         } catch (err: any) {
                                           console.error('[Admin] Exception updating checked flag:', err);
                                           toast({
-                                            title: "Error",
-                                            description: err?.message || "Failed to update checked state",
+                                            title: t("error"),
+                                            description: err?.message || t("failedToUpdateCheckedState"),
                                             variant: "destructive",
                                           });
                                         }
                                       }}
                                     />
-                                    <span>Checked</span>
+                                    <span>{t("checked")}</span>
                                   </label>
 
                                   {purchase.status === 'pending' && (
@@ -1261,17 +1264,17 @@ const Admin = () => {
               purchasesLoading ? (
                 <div className="text-center text-muted-foreground py-12">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                  <p>Loading Checked Soli-Contributions...</p>
+                  <p>{t("loadingCheckedPurchases")}</p>
                 </div>
               ) : (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Checked Soli-Contributions</CardTitle>
+                    <CardTitle>{t("checkedSoliContributions")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {checkedConfirmedPurchases.length === 0 ? (
                       <p className="text-muted-foreground text-center py-8">
-                        No checked Soli-Contributions yet
+                        {t("noCheckedPurchasesYet")}
                       </p>
                     ) : (
                       <div className="space-y-4">
@@ -1283,7 +1286,7 @@ const Admin = () => {
                                     <div className="flex items-center gap-2">
                                       <span className="font-semibold">{purchase.purchaser_name}</span>
                                       <span className="px-2 py-1 rounded text-xs bg-green-500/20 text-green-700">
-                                        Checked
+                                        {t("checked")}
                                       </span>
                                     </div>
                                     <p className="text-sm text-muted-foreground">{purchase.purchaser_email}</p>
@@ -1291,10 +1294,10 @@ const Admin = () => {
                                       <span className="font-medium">{purchase.contribution_type}</span> - {purchase.role} - {purchase.price.toFixed(2)}€
                                     </p>
                                     {purchase.payment_reference && (
-                                      <p className="text-xs text-muted-foreground">Payment: {purchase.payment_reference}</p>
+                                      <p className="text-xs text-muted-foreground">{t("payment")}: {purchase.payment_reference}</p>
                                     )}
                                     {purchase.notes && (
-                                      <p className="text-xs text-muted-foreground">Notes: {purchase.notes}</p>
+                                      <p className="text-xs text-muted-foreground">{t("notes")}: {purchase.notes}</p>
                                     )}
                                     <p className="text-xs text-muted-foreground">
                                       {new Date(purchase.created_at).toLocaleString()}
@@ -1316,8 +1319,8 @@ const Admin = () => {
                                             if (error) {
                                               console.error('[Admin] Error updating checked flag:', error);
                                               toast({
-                                                title: "Error",
-                                                description: error.message || "Failed to update checked state",
+                                                title: t("error"),
+                                                description: error.message || t("failedToUpdateCheckedState"),
                                                 variant: "destructive",
                                               });
                                             } else {
@@ -1336,14 +1339,14 @@ const Admin = () => {
                                           } catch (err: any) {
                                             console.error('[Admin] Exception updating checked flag:', err);
                                             toast({
-                                              title: "Error",
-                                              description: err?.message || "Failed to update checked state",
+                                              title: t("error"),
+                                              description: err?.message || t("failedToUpdateCheckedState"),
                                               variant: "destructive",
                                             });
                                           }
                                         }}
                                       />
-                                      <span>Checked</span>
+                                      <span>{t("checked")}</span>
                                     </label>
                                   </div>
                                 </div>
@@ -1502,7 +1505,7 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="title">Title *</Label>
+          <Label htmlFor="title">{t("eventTitle")} *</Label>
           <Input
             id="title"
             value={formData.title}
@@ -1511,7 +1514,7 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="time">Time *</Label>
+          <Label htmlFor="time">{t("eventTime")} *</Label>
           <Input
             id="time"
             value={formData.time}
@@ -1524,7 +1527,7 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="start_time">Start Time</Label>
+          <Label htmlFor="start_time">{t("startTime")}</Label>
           <Input
             id="start_time"
             value={formData.start_time}
@@ -1533,7 +1536,7 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="end_time">End Time</Label>
+          <Label htmlFor="end_time">{t("endTime")}</Label>
           <Input
             id="end_time"
             value={formData.end_time}
@@ -1545,52 +1548,52 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="day">Day *</Label>
+          <Label htmlFor="day">{t("eventDay")} *</Label>
           <Select 
             value={formData.day} 
             onValueChange={(value) => setFormData({ ...formData, day: value })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select day" />
+              <SelectValue placeholder={t("selectDay")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Freitag">Freitag</SelectItem>
-              <SelectItem value="Samstag">Samstag</SelectItem>
-              <SelectItem value="Sonntag">Sonntag</SelectItem>
+              <SelectItem value="Freitag">{t("freitag")}</SelectItem>
+              <SelectItem value="Samstag">{t("samstag")}</SelectItem>
+              <SelectItem value="Sonntag">{t("sonntag")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="venue">Venue *</Label>
+          <Label htmlFor="venue">{t("eventVenue")} *</Label>
           <Select 
             value={formData.venue} 
             onValueChange={(value) => setFormData({ ...formData, venue: value })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select venue" />
+              <SelectValue placeholder={t("selectVenue")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="draussen">draussen</SelectItem>
-              <SelectItem value="oben">oben</SelectItem>
-              <SelectItem value="unten">unten</SelectItem>
+              <SelectItem value="draussen">{t("draussen")}</SelectItem>
+              <SelectItem value="oben">{t("oben")}</SelectItem>
+              <SelectItem value="unten">{t("unten")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="type">Type *</Label>
+          <Label htmlFor="type">{t("eventType")} *</Label>
           <Select 
             value={formData.type} 
             onValueChange={(value) => setFormData({ ...formData, type: value })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select type" />
+              <SelectValue placeholder={t("selectType")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="live">live</SelectItem>
-              <SelectItem value="dj">dj</SelectItem>
-              <SelectItem value="performance">performance</SelectItem>
-              <SelectItem value="workshop">workshop</SelectItem>
-              <SelectItem value="interaktiv">interaktiv</SelectItem>
+              <SelectItem value="live">{t("live")}</SelectItem>
+              <SelectItem value="dj">{t("dj")}</SelectItem>
+              <SelectItem value="performance">{t("performance")}</SelectItem>
+              <SelectItem value="workshop">{t("workshop")}</SelectItem>
+              <SelectItem value="interaktiv">{t("interaktiv")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -1598,30 +1601,30 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="description_de">Description (German)</Label>
+          <Label htmlFor="description_de">{t("descriptionGerman")}</Label>
           <Textarea
             id="description_de"
             value={formData.description_de}
             onChange={(e) => setFormData({ ...formData, description_de: e.target.value })}
             rows={3}
-            placeholder="German description..."
+            placeholder={t("germanDescriptionPlaceholder")}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="description_en">Description (English)</Label>
+          <Label htmlFor="description_en">{t("descriptionEnglish")}</Label>
           <Textarea
             id="description_en"
             value={formData.description_en}
             onChange={(e) => setFormData({ ...formData, description_en: e.target.value })}
             rows={3}
-            placeholder="English description..."
+            placeholder={t("englishDescriptionPlaceholder")}
           />
         </div>
       </div>
 
       {/* Links Management */}
       <div className="space-y-4">
-        <Label className="text-lg font-semibold">Links</Label>
+        <Label className="text-lg font-semibold">{t("links")}</Label>
         
         {/* Existing Links */}
         {linksArray.length > 0 && (
@@ -1630,12 +1633,12 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
               <div key={link.id} className="flex gap-2 items-center p-3 border rounded-md bg-muted/50">
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
                   <Input
-                    placeholder="Platform (e.g., Instagram, Spotify)"
+                    placeholder={t("platformPlaceholder")}
                     value={link.platform}
                     onChange={(e) => updateLink(link.id, 'platform', e.target.value)}
                   />
                   <Input
-                    placeholder="URL"
+                    placeholder={t("urlPlaceholder")}
                     value={link.url}
                     onChange={(e) => updateLink(link.id, 'url', e.target.value)}
                   />
@@ -1657,12 +1660,12 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
         <div className="p-3 border-2 border-dashed rounded-md">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
             <Input
-              placeholder="Platform (e.g., Instagram, Spotify)"
+              placeholder={t("platformPlaceholder")}
               value={newLink.platform}
               onChange={(e) => setNewLink({ ...newLink, platform: e.target.value })}
             />
             <Input
-              placeholder="URL"
+              placeholder={t("urlPlaceholder")}
               value={newLink.url}
               onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
             />
@@ -1675,13 +1678,13 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
             className="w-full"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add Link
+            {t("addLink")}
           </Button>
         </div>
       </div>
 
       <Button type="submit" className="w-full">
-        {initialEvent ? 'Update Event' : 'Create Event'}
+        {initialEvent ? t("updateEvent") : t("createEvent")}
       </Button>
     </form>
   );
@@ -1709,30 +1712,30 @@ const FAQForm = ({ onSave, initialFAQ }: FAQFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="question">Question *</Label>
+        <Label htmlFor="question">{t("question")} *</Label>
         <Input
           id="question"
           value={formData.question}
           onChange={(e) => setFormData({ ...formData, question: e.target.value })}
           required
-          placeholder="Enter the frequently asked question..."
+          placeholder={t("enterQuestionPlaceholder")}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="answer">Answer *</Label>
+        <Label htmlFor="answer">{t("answer")} *</Label>
         <Textarea
           id="answer"
           value={formData.answer}
           onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
           required
           rows={4}
-          placeholder="Enter the answer to the question..."
+          placeholder={t("enterAnswerPlaceholder")}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="order_index">Display Order</Label>
+        <Label htmlFor="order_index">{t("displayOrder")}</Label>
         <Input
           id="order_index"
           type="number"
@@ -1742,7 +1745,7 @@ const FAQForm = ({ onSave, initialFAQ }: FAQFormProps) => {
           min="0"
         />
         <p className="text-xs text-muted-foreground">
-          {t("lowerNumbersAppearFirst") || "Lower numbers appear first. Use this to control the order of FAQs."}
+          {t("lowerNumbersAppearFirst")}
         </p>
       </div>
 
@@ -1754,11 +1757,11 @@ const FAQForm = ({ onSave, initialFAQ }: FAQFormProps) => {
           onChange={(e) => setFormData({ ...formData, is_visible: e.target.checked })}
           className="rounded border-border"
         />
-        <Label htmlFor="is_visible">Visible to public</Label>
+        <Label htmlFor="is_visible">{t("visibleToPublic")}</Label>
       </div>
 
       <Button type="submit" className="w-full">
-        {initialFAQ ? 'Update FAQ' : 'Create FAQ'}
+        {initialFAQ ? t("updateFAQ") : t("createFAQ")}
       </Button>
     </form>
   );
@@ -2132,7 +2135,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {standardRoles.map((role) => (
                 <div key={role.key} className="space-y-2">
-                  <Label htmlFor={`${role.key}_limit`}>{role.label} Limit</Label>
+                  <Label htmlFor={`${role.key}_limit`}>{role.label} {t("limit")}</Label>
                   <Input
                     id={`${role.key}_limit`}
                     type="number"
@@ -2141,7 +2144,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                     onChange={(e) =>
                       setLimitValues((prev) => ({ ...prev, [role.key]: e.target.value }))
                     }
-                    placeholder="Unlimited"
+                    placeholder={t("unlimited")}
                   />
                 </div>
               ))}
@@ -2149,11 +2152,11 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
           </div>
 
           <div className="space-y-3">
-            <h4 className="font-semibold">Reduced Tickets</h4>
+            <h4 className="font-semibold">{t("reducedTickets_plural")}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {reducedRoles.map((role) => (
                 <div key={role.key} className="space-y-2">
-                  <Label htmlFor={`${role.key}_limit`}>{role.label} Limit</Label>
+                  <Label htmlFor={`${role.key}_limit`}>{role.label} {t("limit")}</Label>
                   <Input
                     id={`${role.key}_limit`}
                     type="number"
@@ -2162,7 +2165,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                     onChange={(e) =>
                       setLimitValues((prev) => ({ ...prev, [role.key]: e.target.value }))
                     }
-                    placeholder="Unlimited"
+                    placeholder={t("unlimited")}
                   />
                 </div>
               ))}
@@ -2180,7 +2183,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
 
         <div className="space-y-6">
           <div className="space-y-3">
-            <h4 className="font-semibold">Standard Tickets</h4>
+            <h4 className="font-semibold">{t("standardTickets_plural")}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {standardRoles.map((role) => (
                 <div key={role.key} className="space-y-3 p-3 rounded-lg border">
@@ -2221,7 +2224,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
           </div>
 
           <div className="space-y-3">
-            <h4 className="font-semibold">Reduced Tickets</h4>
+            <h4 className="font-semibold">{t("reducedTickets_plural")}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {reducedRoles.map((role) => (
                 <div key={role.key} className="space-y-3 p-3 rounded-lg border">

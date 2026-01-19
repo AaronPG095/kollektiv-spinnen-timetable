@@ -355,7 +355,58 @@ const translations = {
     invalidURL: 'Ungültige URL',
     urlMustStartWithHttp: 'URL muss mit http:// oder https:// beginnen',
     pleaseEnterValidURL: 'Bitte gib eine gültige URL ein',
-    lowerNumbersAppearFirst: 'Niedrigere Zahlen erscheinen zuerst. Verwende dies, um die Reihenfolge der FAQs zu steuern.'
+    lowerNumbersAppearFirst: 'Niedrigere Zahlen erscheinen zuerst. Verwende dies, um die Reihenfolge der FAQs zu steuern.',
+    
+    // Admin - Ticket Purchases
+    pendingSoliContributions: 'Ausstehende Soli-Beiträge',
+    checkedSoliContributions: 'Geprüfte Soli-Beiträge',
+    loadingCheckedPurchases: 'Geprüfte Soli-Beiträge werden geladen...',
+    noCheckedPurchasesYet: 'Noch keine geprüften Soli-Beiträge',
+    checked: 'Geprüft',
+    payment: 'Zahlung',
+    notes: 'Notizen',
+    failedToUpdateCheckedState: 'Geprüft-Status konnte nicht aktualisiert werden',
+    
+    // Admin - Event Form
+    eventTitle: 'Titel',
+    eventTime: 'Zeit',
+    startTime: 'Startzeit',
+    endTime: 'Endzeit',
+    eventDay: 'Tag',
+    eventVenue: 'Veranstaltungsort',
+    eventType: 'Typ',
+    descriptionGerman: 'Beschreibung (Deutsch)',
+    descriptionEnglish: 'Beschreibung (Englisch)',
+    germanDescriptionPlaceholder: 'Deutsche Beschreibung...',
+    englishDescriptionPlaceholder: 'Englische Beschreibung...',
+    selectDay: 'Tag auswählen',
+    selectVenue: 'Veranstaltungsort auswählen',
+    selectType: 'Typ auswählen',
+    links: 'Links',
+    platformPlaceholder: 'Plattform (z.B. Instagram, Spotify)',
+    urlPlaceholder: 'URL',
+    addLink: 'Link hinzufügen',
+    updateEvent: 'Event aktualisieren',
+    createEvent: 'Event erstellen',
+    
+    // Admin - FAQ Form
+    question: 'Frage',
+    answer: 'Antwort',
+    enterQuestionPlaceholder: 'Gib die häufig gestellte Frage ein...',
+    enterAnswerPlaceholder: 'Gib die Antwort auf die Frage ein...',
+    displayOrder: 'Anzeigereihenfolge',
+    visibleToPublic: 'Öffentlich sichtbar',
+    updateFAQ: 'FAQ aktualisieren',
+    createFAQ: 'FAQ erstellen',
+    
+    // Admin - Ticket Settings Form
+    standardTickets: 'Standard Soli-Beiträge',
+    reducedTickets: 'Reduzierte Soli-Beiträge',
+    unlimited: 'Unbegrenzt',
+    limit: 'Limit',
+    
+    // Admin - About Page Form
+    editFAQ: 'FAQ bearbeiten'
   },
   en: {
     // Header
@@ -701,7 +752,58 @@ const translations = {
     invalidURL: 'Invalid URL',
     urlMustStartWithHttp: 'URL must start with http:// or https://',
     pleaseEnterValidURL: 'Please enter a valid URL',
-    lowerNumbersAppearFirst: 'Lower numbers appear first. Use this to control the order of FAQs.'
+    lowerNumbersAppearFirst: 'Lower numbers appear first. Use this to control the order of FAQs.',
+    
+    // Admin - Ticket Purchases
+    pendingSoliContributions: 'Pending Soli-Contributions',
+    checkedSoliContributions: 'Checked Soli-Contributions',
+    loadingCheckedPurchases: 'Loading Checked Soli-Contributions...',
+    noCheckedPurchasesYet: 'No checked Soli-Contributions yet',
+    checked: 'Checked',
+    payment: 'Payment',
+    notes: 'Notes',
+    failedToUpdateCheckedState: 'Failed to update checked state',
+    
+    // Admin - Event Form
+    eventTitle: 'Title',
+    eventTime: 'Time',
+    startTime: 'Start Time',
+    endTime: 'End Time',
+    eventDay: 'Day',
+    eventVenue: 'Venue',
+    eventType: 'Type',
+    descriptionGerman: 'Description (German)',
+    descriptionEnglish: 'Description (English)',
+    germanDescriptionPlaceholder: 'German description...',
+    englishDescriptionPlaceholder: 'English description...',
+    selectDay: 'Select day',
+    selectVenue: 'Select venue',
+    selectType: 'Select type',
+    links: 'Links',
+    platformPlaceholder: 'Platform (e.g., Instagram, Spotify)',
+    urlPlaceholder: 'URL',
+    addLink: 'Add Link',
+    updateEvent: 'Update Event',
+    createEvent: 'Create Event',
+    
+    // Admin - FAQ Form
+    question: 'Question',
+    answer: 'Answer',
+    enterQuestionPlaceholder: 'Enter the frequently asked question...',
+    enterAnswerPlaceholder: 'Enter the answer to the question...',
+    displayOrder: 'Display Order',
+    visibleToPublic: 'Visible to public',
+    updateFAQ: 'Update FAQ',
+    createFAQ: 'Create FAQ',
+    
+    // Admin - Ticket Settings Form
+    standardTickets: 'Standard Tickets',
+    reducedTickets: 'Reduced Tickets',
+    unlimited: 'Unlimited',
+    limit: 'Limit',
+    
+    // Admin - About Page Form
+    editFAQ: 'Edit FAQ'
   }
 };
 
