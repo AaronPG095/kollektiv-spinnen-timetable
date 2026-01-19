@@ -4,7 +4,7 @@ import { formatSupabaseError, logError } from '@/lib/errorHandler';
 export interface TicketPurchase {
   id: string;
   user_id: string | null;
-  ticket_type: 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal';
+  contribution_type: 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal';
   role: string;
   price: number;
   purchaser_name: string;
@@ -17,7 +17,7 @@ export interface TicketPurchase {
 }
 
 export interface CreatePurchaseData {
-  ticket_type: 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal';
+  contribution_type: 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal';
   role: string;
   price: number;
   purchaser_name: string;
@@ -29,20 +29,20 @@ export interface CreatePurchaseData {
 /**
  * Get the number of confirmed purchases for a specific role.
  * 
- * IMPORTANT: This counts ALL confirmed purchases for the role regardless of ticket type.
+ * IMPORTANT: This counts ALL confirmed purchases for the role regardless of contribution type.
  * Role limits apply to the TOTAL count of confirmed purchases, combining:
- * - Early Bird tickets (earlyBird)
- * - Normal Bird tickets (normal)
- * - Reduced Early Bird tickets (reducedEarlyBird)
- * - Reduced Normal Bird tickets (reducedNormal)
+ * - Early Bird contributions (earlyBird)
+ * - Normal contributions (normal)
+ * - Reduced Early Bird contributions (reducedEarlyBird)
+ * - Reduced Normal contributions (reducedNormal)
  * 
- * For example, if bar_limit is 20, then the total of all confirmed bar tickets
+ * For example, if bar_limit is 20, then the total of all confirmed bar contributions
  * (whether Early Bird or Normal) cannot exceed 20.
  */
 export const getRolePurchaseCount = async (role: string): Promise<number> => {
   try {
     const { count, error } = await supabase
-      .from('ticket_purchases')
+      .from('soli_contribution_purchases')
       .select('*', { count: 'exact', head: true })
       .eq('role', role)
       .eq('status', 'confirmed');
@@ -60,15 +60,15 @@ export const getRolePurchaseCount = async (role: string): Promise<number> => {
 };
 
 /**
- * Check if a role has available tickets.
+ * Check if a role has available contributions.
  * 
- * IMPORTANT: Role limits apply to ALL ticket types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
- * This function checks if the total count of confirmed purchases for the role (across all ticket types)
+ * IMPORTANT: Role limits apply to ALL contribution types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
+ * This function checks if the total count of confirmed purchases for the role (across all contribution types)
  * is below the specified limit.
  * 
  * @param role - The role to check availability for
- * @param limit - The maximum number of tickets allowed for this role (null/undefined = unlimited)
- * @returns true if tickets are available, false if sold out
+ * @param limit - The maximum number of contributions allowed for this role (null/undefined = unlimited)
+ * @returns true if contributions are available, false if sold out
  */
 export const checkRoleAvailability = async (
   role: string,
@@ -84,23 +84,23 @@ export const checkRoleAvailability = async (
     return false;
   }
 
-  // Get current purchase count (counts all ticket types: earlyBird, normal, reducedEarlyBird, reducedNormal)
+  // Get current purchase count (counts all contribution types: earlyBird, normal, reducedEarlyBird, reducedNormal)
   const purchaseCount = await getRolePurchaseCount(role);
 
-  // Check if there are remaining tickets
+  // Check if there are remaining contributions
   return purchaseCount < limit;
 };
 
 /**
- * Get remaining tickets for a role.
+ * Get remaining contributions for a role.
  * 
- * IMPORTANT: Role limits apply to ALL ticket types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
+ * IMPORTANT: Role limits apply to ALL contribution types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
  * This function calculates how many more tickets can be sold for the role by subtracting the total
- * count of confirmed purchases (across all ticket types) from the limit.
+ * count of confirmed purchases (across all contribution types) from the limit.
  * 
- * @param role - The role to check remaining tickets for
- * @param limit - The maximum number of tickets allowed for this role (null/undefined = unlimited)
- * @returns The number of remaining tickets, or null if unlimited
+ * @param role - The role to check remaining contributions for
+ * @param limit - The maximum number of contributions allowed for this role (null/undefined = unlimited)
+ * @returns The number of remaining contributions, or null if unlimited
  */
 export const getRemainingTickets = async (
   role: string,
@@ -111,7 +111,7 @@ export const getRemainingTickets = async (
     return null;
   }
 
-  // Get current purchase count (counts ALL ticket types: earlyBird, normal, reducedEarlyBird, reducedNormal)
+  // Get current purchase count (counts ALL contribution types: earlyBird, normal, reducedEarlyBird, reducedNormal)
   const purchaseCount = await getRolePurchaseCount(role);
 
   // Calculate remaining
@@ -125,9 +125,9 @@ export const getRemainingTickets = async (
 export const getEarlyBirdPurchaseCount = async (): Promise<number> => {
   try {
     const { count, error } = await supabase
-      .from('ticket_purchases')
+      .from('soli_contribution_purchases')
       .select('*', { count: 'exact', head: true })
-      .in('ticket_type', ['earlyBird', 'reducedEarlyBird'])
+      .in('contribution_type', ['earlyBird', 'reducedEarlyBird'])
       .eq('status', 'confirmed');
 
     if (error) {
@@ -143,7 +143,7 @@ export const getEarlyBirdPurchaseCount = async (): Promise<number> => {
 };
 
 /**
- * Get remaining early-bird tickets
+ * Get remaining early-bird Soli-Contributions
  */
 export const getRemainingEarlyBirdTickets = async (
   totalLimit: number | null | undefined
@@ -167,9 +167,9 @@ export const getRemainingEarlyBirdTickets = async (
 export const getNormalPurchaseCount = async (): Promise<number> => {
   try {
     const { count, error } = await supabase
-      .from('ticket_purchases')
+      .from('soli_contribution_purchases')
       .select('*', { count: 'exact', head: true })
-      .in('ticket_type', ['normal', 'reducedNormal'])
+      .in('contribution_type', ['normal', 'reducedNormal'])
       .eq('status', 'confirmed');
 
     if (error) {
@@ -185,7 +185,7 @@ export const getNormalPurchaseCount = async (): Promise<number> => {
 };
 
 /**
- * Get remaining normal-bird tickets
+ * Get remaining normal-bird Soli-Contributions
  */
 export const getRemainingNormalTickets = async (
   totalLimit: number | null | undefined
@@ -206,10 +206,10 @@ export const getRemainingNormalTickets = async (
 /**
  * Validate that a purchase can be created for a role without exceeding limits.
  * This provides server-side validation before creating a purchase.
- * Note: Limits apply to ALL ticket types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
+ * Note: Limits apply to ALL contribution types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
  * 
  * @param role - The role to validate
- * @param limit - The maximum number of tickets allowed for this role (null/undefined = unlimited)
+ * @param limit - The maximum number of contributions allowed for this role (null/undefined = unlimited)
  * @returns Object with isValid flag and optional error message
  */
 export const validatePurchaseLimit = async (
@@ -222,7 +222,7 @@ export const validatePurchaseLimit = async (
     const remaining = await getRemainingTickets(role, limit);
     return {
       isValid: false,
-      error: `Role ${role} is sold out. ${remaining === 0 ? 'No tickets remaining.' : `Only ${remaining} ticket(s) remaining.`}`,
+      error: `Role ${role} is sold out. ${remaining === 0 ? 'No Soli-Contributions remaining.' : `Only ${remaining} Soli-Contribution(s) remaining.`}`,
     };
   }
   
@@ -230,9 +230,9 @@ export const validatePurchaseLimit = async (
 };
 
 /**
- * Create a new ticket purchase.
+ * Create a new Soli-Contribution purchase.
  * 
- * IMPORTANT: Role limits apply to ALL ticket types combined. Before calling this function,
+ * IMPORTANT: Role limits apply to ALL contribution types combined. Before calling this function,
  * you should validate availability using checkRoleAvailability() or validatePurchaseLimit().
  * The purchase is created with status 'pending' and will be validated against limits
  * when it is confirmed (via database trigger).
@@ -251,8 +251,8 @@ export const createTicketPurchase = async (
     const settings = await getTicketSettings();
     
     // Check universal limits based on ticket type
-    const isEarlyBird = purchaseData.ticket_type === 'earlyBird' || purchaseData.ticket_type === 'reducedEarlyBird';
-    const isNormal = purchaseData.ticket_type === 'normal' || purchaseData.ticket_type === 'reducedNormal';
+    const isEarlyBird = purchaseData.contribution_type === 'earlyBird' || purchaseData.contribution_type === 'reducedEarlyBird';
+    const isNormal = purchaseData.contribution_type === 'normal' || purchaseData.contribution_type === 'reducedNormal';
     
     if (isEarlyBird && settings.early_bird_total_limit !== null && settings.early_bird_total_limit !== undefined) {
       const remaining = await getRemainingEarlyBirdTickets(settings.early_bird_total_limit);
@@ -306,10 +306,10 @@ export const createTicketPurchase = async (
     const { data: { user } } = await supabase.auth.getUser();
 
     const { data, error } = await supabase
-      .from('ticket_purchases')
+      .from('soli_contribution_purchases')
       .insert({
         user_id: user?.id || null,
-        ticket_type: purchaseData.ticket_type,
+        contribution_type: purchaseData.contribution_type,
         role: purchaseData.role,
         price: purchaseData.price,
         purchaser_name: purchaseData.purchaser_name,
@@ -350,7 +350,7 @@ export const confirmTicketPurchase = async (
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     const { error } = await supabase
-      .from('ticket_purchases')
+      .from('soli_contribution_purchases')
       .update({ status: 'confirmed' })
       .eq('id', purchaseId);
 
@@ -384,7 +384,7 @@ export const getUserPurchases = async (): Promise<TicketPurchase[]> => {
     }
 
     const { data, error } = await supabase
-      .from('ticket_purchases')
+      .from('soli_contribution_purchases')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
@@ -407,7 +407,7 @@ export const getUserPurchases = async (): Promise<TicketPurchase[]> => {
 export const getAllPurchases = async (): Promise<TicketPurchase[]> => {
   try {
     const { data, error } = await supabase
-      .from('ticket_purchases')
+      .from('soli_contribution_purchases')
       .select('*')
       .order('created_at', { ascending: false });
 

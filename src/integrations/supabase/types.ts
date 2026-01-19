@@ -146,7 +146,7 @@ export type Database = {
         }
         Relationships: []
       }
-      ticket_settings: {
+      soli_contribution_settings: {
         Row: {
           id: string
           early_bird_enabled: boolean
@@ -257,11 +257,11 @@ export type Database = {
         }
         Relationships: []
       }
-      ticket_purchases: {
+      soli_contribution_purchases: {
         Row: {
           id: string
           user_id: string | null
-          ticket_type: string
+          contribution_type: string
           role: string
           price: number
           purchaser_name: string
@@ -275,7 +275,7 @@ export type Database = {
         Insert: {
           id?: string
           user_id?: string | null
-          ticket_type: string
+          contribution_type: string
           role: string
           price: number
           purchaser_name: string
@@ -289,7 +289,7 @@ export type Database = {
         Update: {
           id?: string
           user_id?: string | null
-          ticket_type?: string
+          contribution_type?: string
           role?: string
           price?: number
           purchaser_name?: string

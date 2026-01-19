@@ -40,7 +40,7 @@ export interface TicketSettings {
 
 const DEFAULT_SETTINGS_ID = '00000000-0000-0000-0000-000000000001';
 
-const CACHE_KEY = 'ticket_settings';
+const CACHE_KEY = 'soli_contribution_settings';
 const CACHE_TTL = 30000; // 30 seconds
 
 export const getTicketSettings = async (): Promise<TicketSettings> => {
@@ -52,7 +52,7 @@ export const getTicketSettings = async (): Promise<TicketSettings> => {
     }
 
     const { data, error } = await supabase
-      .from('ticket_settings')
+      .from('soli_contribution_settings')
       .select('*')
       .eq('id', DEFAULT_SETTINGS_ID)
       .single();
@@ -63,7 +63,7 @@ export const getTicketSettings = async (): Promise<TicketSettings> => {
       if (error.code === 'PGRST116') {
         console.log('[TicketSettings] Default row not found, attempting to create...');
         const { data: inserted, error: insertError } = await supabase
-          .from('ticket_settings')
+          .from('soli_contribution_settings')
           .insert({ id: DEFAULT_SETTINGS_ID })
           .select()
           .single();
@@ -73,7 +73,7 @@ export const getTicketSettings = async (): Promise<TicketSettings> => {
           // If insert fails due to conflict (row was created between check and insert), try to fetch again
           if (insertError.code === '23505') {
             const { data: retryData, error: retryError } = await supabase
-              .from('ticket_settings')
+              .from('soli_contribution_settings')
               .select('*')
               .eq('id', DEFAULT_SETTINGS_ID)
               .single();
@@ -99,7 +99,7 @@ export const getTicketSettings = async (): Promise<TicketSettings> => {
     if (!data) {
       console.log('[TicketSettings] Default row not found, attempting to create...');
       const { data: inserted, error: insertError } = await supabase
-        .from('ticket_settings')
+        .from('soli_contribution_settings')
         .insert({ id: DEFAULT_SETTINGS_ID })
         .select()
         .single();
@@ -109,7 +109,7 @@ export const getTicketSettings = async (): Promise<TicketSettings> => {
         // If insert fails due to conflict (row was created between check and insert), try to fetch again
         if (insertError.code === '23505') {
           const { data: retryData, error: retryError } = await supabase
-            .from('ticket_settings')
+            .from('soli_contribution_settings')
             .select('*')
             .eq('id', DEFAULT_SETTINGS_ID)
             .single();
@@ -160,7 +160,7 @@ export const updateTicketSettings = async (settings: Partial<TicketSettings>): P
     
     // First, try to UPDATE the existing row
     const updateResponse = await supabase
-      .from('ticket_settings')
+      .from('soli_contribution_settings')
       .update(settingsToUpdate)
       .eq('id', DEFAULT_SETTINGS_ID)
       .select()
@@ -186,7 +186,7 @@ export const updateTicketSettings = async (settings: Partial<TicketSettings>): P
 
     if (shouldTryInsert) {
       const { data: insertData, error: insertError, status: insertStatus } = await supabase
-        .from('ticket_settings')
+        .from('soli_contribution_settings')
         .insert({
           id: DEFAULT_SETTINGS_ID,
           ...settingsToUpdate,
