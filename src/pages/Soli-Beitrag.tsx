@@ -283,7 +283,7 @@ const Tickets = () => {
                 {t("ticketTypesExplanation")}
               </CardTitle>
               <p className="text-sm text-muted-foreground leading-relaxed mt-2">
-                Schön, dass du bei unserem Geburtstag dabei bist! Zur Deckung aller Unkosten zahlt jede:r Gast einen Soli-Beitrag.
+                {t("ticketBirthdayIntro")}
               </p>
               <CardDescription className="text-muted-foreground leading-relaxed mt-2">
                 {t("ticketTypesExplanationDesc")}
