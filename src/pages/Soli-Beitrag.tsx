@@ -129,6 +129,13 @@ const Tickets = () => {
     { value: "awareness", label: t("awareness") },
   ];
 
+  // Parsed reductions text (heading, bullet lines, footer) for better formatting
+  const reductionsLines = t("reducedTicketTypeReductions")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+
   // Check if early bird tickets are available
   const isEarlyBirdAvailable = (): boolean => {
     if (!ticketSettings?.early_bird_enabled) return false;
@@ -278,20 +285,20 @@ const Tickets = () => {
 
           {/* Ticket Types Explanation */}
           <Card className="bg-card/30 backdrop-blur-sm border-border/50">
-            <CardHeader>
+            <CardHeader className="space-y-3">
               <CardTitle className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                 {t("ticketTypesExplanation")}
               </CardTitle>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+              <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
                 {t("ticketBirthdayIntro")}
               </p>
-              <CardDescription className="text-muted-foreground leading-relaxed mt-2">
+              <CardDescription className="text-sm text-muted-foreground leading-relaxed">
                 {t("ticketTypesExplanationDesc")}
               </CardDescription>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {t("ticketTypesNote")}
               </p>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {t("ticketTypesNoteAdditional")}
               </p>
             </CardHeader>
@@ -320,8 +327,35 @@ const Tickets = () => {
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {t("reducedTicketTypeDesc")}
                 </p>
-                <div className="mt-3 text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                  {t("reducedTicketTypeReductions")}
+                <div className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                  {reductionsLines.length > 0 && (
+                    <>
+                      {/* Heading line */}
+                      <p className="mb-2 whitespace-pre-line">
+                        {reductionsLines[0]}
+                      </p>
+
+                      {/* Bullet lines (strip leading bullet char for proper <li> bullets) */}
+                      {reductionsLines.length > 2 && (
+                        <ul className="list-disc list-inside space-y-1">
+                          {reductionsLines.slice(1, -1).map((line, index) => (
+                            <li key={index}>
+                              <span className="font-semibold">
+                                {line.replace(/^•\s*/, "")}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {/* Footer line */}
+                      {reductionsLines.length > 1 && (
+                        <p className="mt-2 whitespace-pre-line">
+                          {reductionsLines[reductionsLines.length - 1]}
+                        </p>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -358,7 +392,7 @@ const Tickets = () => {
                 </h3>
                 <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
                   {standardRoles.map((role) => (
-                    <li key={role.value}>
+                    <li key={role.value} className="font-semibold">
                       {role.value === "springerToilet" ? t("springerToiletDesc") : role.label}
                     </li>
                   ))}
@@ -558,7 +592,9 @@ const Tickets = () => {
                 </h3>
                 <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1 mb-4">
                   {reducedRolesMainList.map((role) => (
-                    <li key={role.value}>{role.label}</li>
+                    <li key={role.value} className="font-semibold">
+                      {role.label}
+                    </li>
                   ))}
                 </ul>
                 
@@ -569,7 +605,9 @@ const Tickets = () => {
                   </h4>
                   <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
                     {reducedRolesRequiringExperience.map((role) => (
-                      <li key={role.value}>{role.label}</li>
+                      <li key={role.value} className="font-semibold">
+                        {role.label}
+                      </li>
                     ))}
                   </ul>
                 </div>
