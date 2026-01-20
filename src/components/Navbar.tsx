@@ -7,7 +7,7 @@ export const Navbar = () => {
   const location = useLocation();
 
   const navItems = [
-    { path: "/about", label: "About Us" },
+    // { path: "/about", label: "About Us" }, // temporarily hidden
     { path: "/faq", label: t("faq") },
     { path: "/", label: t("timetable") },
     { path: "/soli-beitrag", label: t("tickets") },
