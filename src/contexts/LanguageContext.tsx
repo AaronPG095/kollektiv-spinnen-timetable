@@ -86,7 +86,7 @@ const translations = {
     
     // Tickets / Soli-Beiträge
     standardTickets: 'Standard Soli-Beiträge',
-    standardTicketsDesc: 'Standard Soli-Beiträge beinhalten eine generell sehr entspannte 2-Stunden-Schicht in den unten aufgeführten Rollen. Du kannst deine bevorzugte Option im nächsten Schritt auswählen.',
+    standardTicketsDesc: 'Standard Soli-Beiträge beinhalten generell zwei sehr entspannte Schichten (in der Regel jeweils 2 Stunden) in den unten aufgeführten Rollen. Du kannst deine bevorzugte Option im nächsten Schritt auswählen.',
     earlyBird: 'Early Bird',
     normal: 'Normal Bird',
     reducedTickets: 'Reduzierte Soli-Beiträge',
@@ -118,7 +118,7 @@ const translations = {
     ticketIncludesDrinks: 'Alkoholfreie & alkoholische Getränke an der Bar',
     ticketIncludesMeals: '2 Mahlzeiten pro Tag in der Kantine',
     standardTicketType: 'Standard Soli-Beiträge',
-    standardTicketTypeDesc: 'Standard Soli-Beiträge beinhalten die Übernahme einer 2-Stunden-Schicht während des Festivals. Du kannst zwischen Early Bird und Normal Bird Soli-Beitrags-Optionen wählen, abhängig von der Verfügbarkeit.',
+    standardTicketTypeDesc: 'Standard Soli-Beiträge beinhalten die Übernahme von zwei Schichten (in der Regel jeweils 2 Stunden) während des Festivals. Du kannst zwischen Early Bird und Normal Bird Soli-Beitrags-Optionen wählen, abhängig von der Verfügbarkeit.',
     reducedTicketType: 'Reduzierte Soli-Beiträge',
     reducedTicketTypeDesc: 'Reduzierte Soli-Beiträge bieten einen Rabatt aufgrund der Intensität oder zusätzlichen Verantwortung der zugehörigen Positionen. Diese Soli-Beiträge sind für spezielle Rollen wie Aufbau, Abbau oder Awareness verfügbar.',
     reducedTicketTypeReductions: 'Die Rabatte im Detail:\n• Aufbau-Ass (20% Rabatt)\n• Care-Crew (Awareness) (20% Rabatt)\n• Rückbau-Retter (Abbau) (40% Rabatt - in Form einer Rückerstattung nach dem Festival)\n\nDiese Rabatte gelten für sowohl Early Bird als auch Normal Bird Varianten.',
@@ -500,7 +500,7 @@ const translations = {
     
     // Tickets / Soli-Contributions
     standardTickets: 'Standard Soli-Contributions',
-    standardTicketsDesc: 'Standard Soli-Contributions include one generally very relaxed 2hr shift in the roles listed below, you can select your preferred option in the next step.',
+    standardTicketsDesc: 'Standard Soli-Contributions generally include two very relaxed shifts (usually 2 hours each) in the roles listed below; you can select your preferred option in the next step.',
     earlyBird: 'Early Bird',
     normal: 'Normal Bird',
     reducedTickets: 'Reduced Soli-Contributions',
@@ -531,7 +531,7 @@ const translations = {
     ticketIncludesDrinks: 'Non-Alcoholic & Alcoholic Drinks available at the Bar',
     ticketIncludesMeals: '2 Meals per Day available in the Kantine',
     standardTicketType: 'Standard Soli-Contributions',
-    standardTicketTypeDesc: 'Standard Soli-Contributions include taking over one 2-hour shift during the festival. You can choose between Early Bird and Normal Bird options depending on availability.',
+    standardTicketTypeDesc: 'Standard Soli-Contributions include taking over two shifts (usually 2 hours each) during the festival. You can choose between Early Bird and Normal Bird options depending on availability.',
     reducedTicketType: 'Reduced Soli-Contributions',
     reducedTicketTypeDesc: 'Reduced Soli-Contributions offer a price discount due to the intensity or additional responsibility of the related positions. These Soli-Contributions are for special roles such as Festival-Setup, Festival-Breakdown, or Awareness.',
     reducedTicketTypeReductions: 'The reductions in detail:\n• Festival-Setup (20% Reduction)\n• Festival-Breakdown (40% Reduction - in the form of a refund received after the festival)\n• Awareness (20% Reduction)\n\nThese reductions will be applied to both the Early Bird & Normal Bird Variants',
