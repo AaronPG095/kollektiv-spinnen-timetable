@@ -533,7 +533,7 @@ const translations = {
     standardTicketTypeDesc: 'Standard Soli-Contributions include taking over two shifts (usually 2 hours each) during the festival. You can choose between Early Bird and Normal Bird options depending on availability.',
     reducedTicketType: 'Reduced Soli-Contributions',
     reducedTicketTypeDesc: 'Reduced Soli-Contributions offer a price discount due to the intensity or additional responsibility of the related positions. These Soli-Contributions are for special roles such as Festival-Setup, Festival-Breakdown, or Awareness.',
-    reducedTicketTypeReductions: 'The reductions in detail:\n\n• Setup-Ace (Build-Up) (20% Reduction)\n• Care-Crew (Awareness) (20% Reduction)\n• Rebuild-Rescuer (Breakdown) (40% Reduction - in the form of a refund received after the festival)\n• Tech Support (30% Reduction)\n\nThese reductions will be applied to both the Early Bird & Normal Bird variants.',
+    reducedTicketTypeReductions: 'The reductions in detail:\n\n• Setup-Ace (Build-Up) (20% Reduction)\n• Care-Crew (Awareness) (20% Reduction)\n• Rebuild-Rescuer (Breakdown) (40% Reduction - in the form of a refund received after the festival)\n• Tech-Support (30% Reduction)\n\nThese reductions will be applied to both the Early Bird & Normal Bird variants.',
     
     // FAQ Page
     searchFAQs: 'Search FAQs...',

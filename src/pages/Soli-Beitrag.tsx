@@ -115,16 +115,16 @@ const Tickets = () => {
   ];
 
   const reducedRoles = [
-    { value: "aufbau", label: t("aufbau") },        // Aufbau-Ass
     { value: "awareness", label: t("awareness") },  // Care-Crew (Awareness)
-    { value: "abbau", label: t("abbau") },          // Rückbau-Retter (Abbau)
-    { value: "tech", label: t("techSupport") },     // Techniker-Support / Tech-Support
+    { value: "abbau", label: t("abbau") },          // Rebuild-Rescuer (Breakdown)
+    { value: "aufbau", label: t("aufbau") },        // Setup-Ace (Build-Up)
+    { value: "tech", label: t("techSupport") },     // Tech-Support
   ];
 
   // Roles to display in the main list (excluding those requiring experience)
   const reducedRolesMainList = [
-    { value: "aufbau", label: t("aufbau") },
     { value: "abbau", label: t("abbau") },
+    { value: "aufbau", label: t("aufbau") },
   ];
 
   // Roles requiring experience / organiser consent
