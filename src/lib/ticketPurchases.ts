@@ -287,7 +287,6 @@ export const createTicketPurchase = async (
         abbau: 'abbau_limit',
         aufbau: 'aufbau_limit',
         awareness: 'awareness_limit',
-        schichtleitung: 'schichtleitung_limit',
       };
       
       const limitField = limitFieldMap[purchaseData.role];

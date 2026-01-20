@@ -37,7 +37,6 @@ const Tickets = () => {
     abbau: "abbau_limit",
     aufbau: "aufbau_limit",
     awareness: "awareness_limit",
-    schichtleitung: "schichtleitung_limit",
   };
 
   const priceFieldByRole: Record<string, { early: keyof TicketSettings; normal: keyof TicketSettings }> = {
@@ -48,7 +47,6 @@ const Tickets = () => {
     abbau: { early: "abbau_price_early", normal: "abbau_price_normal" },
     aufbau: { early: "aufbau_price_early", normal: "aufbau_price_normal" },
     awareness: { early: "awareness_price_early", normal: "awareness_price_normal" },
-    schichtleitung: { early: "schichtleitung_price_early", normal: "schichtleitung_price_normal" },
   };
 
   useEffect(() => {
@@ -65,7 +63,7 @@ const Tickets = () => {
           // Define all roles here to avoid dependency issues
           const allRoles = [
             'bar', 'kuechenhilfe', 'springerRunner', 'springerToilet',
-            'abbau', 'aufbau', 'awareness', 'schichtleitung'
+            'abbau', 'aufbau', 'awareness'
           ];
           
           await Promise.all(
@@ -108,29 +106,27 @@ const Tickets = () => {
   }, []);
 
   const standardRoles = [
-    { value: "bar", label: t("bar") },
-    { value: "kuechenhilfe", label: t("kuechenhilfe") },
-    { value: "springerRunner", label: t("springerRunner") },
-    { value: "springerToilet", label: t("springerToilet") },
+    { value: "bar", label: t("bar") },              // Bar-Fee
+    { value: "springerToilet", label: t("springerToilet") }, // Hygiene-Held:in
+    { value: "kuechenhilfe", label: t("kuechenhilfe") },     // Küchen-Magier:in
+    { value: "springerRunner", label: t("springerRunner") }, // Spring-Maus
   ];
 
   const reducedRoles = [
-    { value: "abbau", label: t("abbau") },
-    { value: "aufbau", label: t("aufbau") },
-    { value: "awareness", label: t("awareness") },
-    { value: "schichtleitung", label: t("schichtleitung") },
+    { value: "aufbau", label: t("aufbau") },        // Aufbau-Ass
+    { value: "awareness", label: t("awareness") },  // Care-Crew (Awareness)
+    { value: "abbau", label: t("abbau") },          // Rückbau-Retter (Abbau)
   ];
 
   // Roles to display in the main list (excluding those requiring experience)
   const reducedRolesMainList = [
-    { value: "abbau", label: t("abbau") },
     { value: "aufbau", label: t("aufbau") },
+    { value: "abbau", label: t("abbau") },
   ];
 
   // Roles requiring experience / organiser consent
   const reducedRolesRequiringExperience = [
     { value: "awareness", label: t("awareness") },
-    { value: "schichtleitung", label: t("schichtleitung") },
   ];
 
   // Check if early bird tickets are available
@@ -286,7 +282,10 @@ const Tickets = () => {
               <CardTitle className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                 {t("ticketTypesExplanation")}
               </CardTitle>
-              <CardDescription className="text-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+                Schön, dass du bei unserem Geburtstag dabei bist! Zur Deckung aller Unkosten zahlt jede:r Gast einen Soli-Beitrag.
+              </p>
+              <CardDescription className="text-muted-foreground leading-relaxed mt-2">
                 {t("ticketTypesExplanationDesc")}
               </CardDescription>
               <p className="text-sm text-muted-foreground leading-relaxed mt-2">
@@ -357,12 +356,11 @@ const Tickets = () => {
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   {t("roleDescriptions")}
                 </h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  {t("roleDescriptionsDesc") || "Detailed role descriptions will be available here."}
-                </p>
                 <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
                   {standardRoles.map((role) => (
-                    <li key={role.value}>{role.label}</li>
+                    <li key={role.value}>
+                      {role.value === "springerToilet" ? t("springerToiletDesc") : role.label}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -558,9 +556,6 @@ const Tickets = () => {
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   {t("roleDescriptions")}
                 </h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  {t("roleDescriptionsDesc") || "Detailed role descriptions will be available here."}
-                </p>
                 <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1 mb-4">
                   {reducedRolesMainList.map((role) => (
                     <li key={role.value}>{role.label}</li>
