@@ -2097,7 +2097,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     { key: "abbau", label: "Abbau" },
     { key: "aufbau", label: "Aufbau" },
     { key: "awareness", label: "Awareness" },
-    { key: "tech", label: "Techniker-Support / Tech-Support" },
+    { key: "tech", label: t("techSupport") },
   ] as const;
 
   type RoleKey = (typeof standardRoles)[number]["key"] | (typeof reducedRoles)[number]["key"];
