@@ -2100,7 +2100,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     { key: "tech", label: "Techniker-Support / Tech-Support" },
   ] as const;
 
-  type RoleKey = typeof standardRoles[number]["key"] | typeof reducedRoles[number]["key"];
+  type RoleKey = (typeof standardRoles)[number]["key"] | (typeof reducedRoles)[number]["key"];
 
   const limitFieldByRole: Record<RoleKey, keyof TicketSettings> = {
     bar: "bar_limit",
@@ -2123,6 +2123,10 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     awareness: { early: "awareness_price_early", normal: "awareness_price_normal" },
     tech: { early: "tech_price_early", normal: "tech_price_normal" },
   };
+
+  const [remainingByRole, setRemainingByRole] = useState<
+    Partial<Record<RoleKey, number | null>>
+  >({});
 
   const [earlyBirdEnabled, setEarlyBirdEnabled] = useState(initialSettings?.early_bird_enabled ?? false);
   const [earlyBirdCutoff, setEarlyBirdCutoff] = useState(
@@ -2194,6 +2198,84 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
 
     return initial;
   });
+
+  // Load remaining tickets per role based on current saved limits in the database
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadRemainingTickets() {
+      if (!initialSettings) return;
+
+      const { getRemainingTickets } = await import('@/lib/ticketPurchases');
+
+      const roles = Object.keys(limitFieldByRole) as RoleKey[];
+      const entries = await Promise.all(
+        roles.map(async (role) => {
+          const limit = initialSettings[limitFieldByRole[role]] as number | null | undefined;
+          try {
+            const remaining = await getRemainingTickets(role, limit);
+            return [role, remaining] as const;
+          } catch {
+            // On error, treat as unknown (null) so UI still renders
+            return [role, null] as const;
+          }
+        })
+      );
+
+      if (!isMounted) return;
+
+      const next: Partial<Record<RoleKey, number | null>> = {};
+      entries.forEach(([role, remaining]) => {
+        next[role] = remaining;
+      });
+      setRemainingByRole(next);
+    }
+
+    loadRemainingTickets();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialSettings]);
+
+  // Load remaining tickets per role based on current saved limits in the database
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadRemainingTickets() {
+      if (!initialSettings) return;
+
+      const { getRemainingTickets } = await import('@/lib/ticketPurchases');
+
+      const roles = Object.keys(limitFieldByRole) as RoleKey[];
+      const entries = await Promise.all(
+        roles.map(async (role) => {
+          const limit = initialSettings[limitFieldByRole[role]] as number | null | undefined;
+          try {
+            const remaining = await getRemainingTickets(role, limit);
+            return [role, remaining] as const;
+          } catch {
+            // On error, treat as unknown (null) so UI still renders
+            return [role, null] as const;
+          }
+        })
+      );
+
+      if (!isMounted) return;
+
+      const next: Partial<Record<RoleKey, number | null>> = {};
+      entries.forEach(([role, remaining]) => {
+        next[role] = remaining;
+      });
+      setRemainingByRole(next);
+    }
+
+    loadRemainingTickets();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialSettings]);
 
   // Sync form state when initialSettings changes (e.g., after loading)
   useEffect(() => {
@@ -2442,42 +2524,66 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
           <div className="space-y-3">
             <h4 className="font-semibold">{t("standardTickets_plural")}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {standardRoles.map((role) => (
-                <div key={role.key} className="space-y-2">
-                  <Label htmlFor={`${role.key}_limit`}>{role.label} {t("limit")}</Label>
-                  <Input
-                    id={`${role.key}_limit`}
-                    type="number"
-                    min="0"
-                    value={limitValues[role.key]}
-                    onChange={(e) =>
-                      setLimitValues((prev) => ({ ...prev, [role.key]: e.target.value }))
-                    }
-                    placeholder={t("unlimited")}
-                  />
-                </div>
-              ))}
+              {standardRoles.map((role) => {
+                const remaining = remainingByRole[role.key];
+                return (
+                  <div key={role.key} className="space-y-2">
+                    <Label htmlFor={`${role.key}_limit`}>
+                      {role.label} {t("limit")}
+                    </Label>
+                    <Input
+                      id={`${role.key}_limit`}
+                      type="number"
+                      min="0"
+                      value={limitValues[role.key]}
+                      onChange={(e) =>
+                        setLimitValues((prev) => ({ ...prev, [role.key]: e.target.value }))
+                      }
+                      placeholder={t("unlimited")}
+                    />
+                    {remaining !== undefined && (
+                      <p className="text-xs text-muted-foreground">
+                        {remaining === null
+                          ? t("unlimited")
+                          : `${remaining} ${t("standardTickets_plural").toLowerCase()} ${t("remaining") ?? "remaining"}`}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           <div className="space-y-3">
             <h4 className="font-semibold">{t("reducedTickets_plural")}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {reducedRoles.map((role) => (
-                <div key={role.key} className="space-y-2">
-                  <Label htmlFor={`${role.key}_limit`}>{role.label} {t("limit")}</Label>
-                  <Input
-                    id={`${role.key}_limit`}
-                    type="number"
-                    min="0"
-                    value={limitValues[role.key]}
-                    onChange={(e) =>
-                      setLimitValues((prev) => ({ ...prev, [role.key]: e.target.value }))
-                    }
-                    placeholder={t("unlimited")}
-                  />
-                </div>
-              ))}
+              {reducedRoles.map((role) => {
+                const remaining = remainingByRole[role.key];
+                return (
+                  <div key={role.key} className="space-y-2">
+                    <Label htmlFor={`${role.key}_limit`}>
+                      {role.label} {t("limit")}
+                    </Label>
+                    <Input
+                      id={`${role.key}_limit`}
+                      type="number"
+                      min="0"
+                      value={limitValues[role.key]}
+                      onChange={(e) =>
+                        setLimitValues((prev) => ({ ...prev, [role.key]: e.target.value }))
+                      }
+                      placeholder={t("unlimited")}
+                    />
+                    {remaining !== undefined && (
+                      <p className="text-xs text-muted-foreground">
+                        {remaining === null
+                          ? t("unlimited")
+                          : `${remaining} ${t("reducedTickets_plural").toLowerCase()} ${t("remaining") ?? "remaining"}`}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
