@@ -17,6 +17,7 @@ export interface TicketSettings {
   aufbau_limit: number | null;
   awareness_limit: number | null;
   schichtleitung_limit: number | null;
+  tech_limit: number | null;
   // Prices
   bar_price_early: number | null;
   bar_price_normal: number | null;
@@ -34,6 +35,8 @@ export interface TicketSettings {
   awareness_price_normal: number | null;
   schichtleitung_price_early: number | null;
   schichtleitung_price_normal: number | null;
+  tech_price_early: number | null;
+  tech_price_normal: number | null;
   created_at: string;
   updated_at: string;
 }

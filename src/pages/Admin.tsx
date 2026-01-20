@@ -2097,6 +2097,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     { key: "abbau", label: "Abbau" },
     { key: "aufbau", label: "Aufbau" },
     { key: "awareness", label: "Awareness" },
+    { key: "tech", label: "Techniker-Support / Tech-Support" },
   ] as const;
 
   type RoleKey = typeof standardRoles[number]["key"] | typeof reducedRoles[number]["key"];
@@ -2109,6 +2110,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     abbau: "abbau_limit",
     aufbau: "aufbau_limit",
     awareness: "awareness_limit",
+    tech: "tech_limit",
   };
 
   const priceFieldByRole: Record<RoleKey, { early: keyof TicketSettings; normal: keyof TicketSettings }> = {
@@ -2119,6 +2121,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     abbau: { early: "abbau_price_early", normal: "abbau_price_normal" },
     aufbau: { early: "aufbau_price_early", normal: "aufbau_price_normal" },
     awareness: { early: "awareness_price_early", normal: "awareness_price_normal" },
+    tech: { early: "tech_price_early", normal: "tech_price_normal" },
   };
 
   const [earlyBirdEnabled, setEarlyBirdEnabled] = useState(initialSettings?.early_bird_enabled ?? false);
@@ -2145,6 +2148,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
       abbau: "",
       aufbau: "",
       awareness: "",
+      tech: "",
     };
 
     if (initialSettings) {
@@ -2174,6 +2178,8 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
       aufbau_normal: "",
       awareness_early: "",
       awareness_normal: "",
+      tech_early: "",
+      tech_normal: "",
     };
 
     if (initialSettings) {

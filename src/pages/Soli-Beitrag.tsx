@@ -37,6 +37,7 @@ const Tickets = () => {
     abbau: "abbau_limit",
     aufbau: "aufbau_limit",
     awareness: "awareness_limit",
+    tech: "tech_limit",
   };
 
   const priceFieldByRole: Record<string, { early: keyof TicketSettings; normal: keyof TicketSettings }> = {
@@ -47,6 +48,7 @@ const Tickets = () => {
     abbau: { early: "abbau_price_early", normal: "abbau_price_normal" },
     aufbau: { early: "aufbau_price_early", normal: "aufbau_price_normal" },
     awareness: { early: "awareness_price_early", normal: "awareness_price_normal" },
+    tech: { early: "tech_price_early", normal: "tech_price_normal" },
   };
 
   useEffect(() => {
@@ -63,7 +65,7 @@ const Tickets = () => {
           // Define all roles here to avoid dependency issues
           const allRoles = [
             'bar', 'kuechenhilfe', 'springerRunner', 'springerToilet',
-            'abbau', 'aufbau', 'awareness'
+            'abbau', 'aufbau', 'awareness', 'tech'
           ];
           
           await Promise.all(
@@ -116,6 +118,7 @@ const Tickets = () => {
     { value: "aufbau", label: t("aufbau") },        // Aufbau-Ass
     { value: "awareness", label: t("awareness") },  // Care-Crew (Awareness)
     { value: "abbau", label: t("abbau") },          // Rückbau-Retter (Abbau)
+    { value: "tech", label: t("techSupport") },     // Techniker-Support / Tech-Support
   ];
 
   // Roles to display in the main list (excluding those requiring experience)
@@ -127,6 +130,7 @@ const Tickets = () => {
   // Roles requiring experience / organiser consent
   const reducedRolesRequiringExperience = [
     { value: "awareness", label: t("awareness") },
+    { value: "tech", label: t("techSupport") },
   ];
 
   // Parsed reductions text (heading, bullet lines, footer) for better formatting
