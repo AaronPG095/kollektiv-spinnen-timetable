@@ -123,7 +123,7 @@ const translations = {
     standardTicketTypeDesc: 'Standard Soli-Beiträge beinhalten die Übernahme von zwei Schichten (in der Regel jeweils 2 Stunden) während des Festivals. Du kannst zwischen Early Bird und Normal Bird Soli-Beitrags-Optionen wählen, abhängig von der Verfügbarkeit.',
     reducedTicketType: 'Reduzierte Soli-Beiträge',
     reducedTicketTypeDesc: 'Reduzierte Soli-Beiträge bieten einen Rabatt aufgrund der Intensität oder zusätzlichen Verantwortung der zugehörigen Positionen. Diese Soli-Beiträge sind für spezielle Rollen wie Aufbau, Abbau oder Awareness verfügbar.',
-    reducedTicketTypeReductions: 'Die Rabatte im Detail:\n• Aufbau-Ass (20% Rabatt)\n• Care-Crew (Awareness) (20% Rabatt)\n• Rückbau-Retter (Abbau) (40% Rabatt - in Form einer Rückerstattung nach dem Festival)\n• Technik-Support (30% Rabatt)\n\nDiese Rabatte gelten für sowohl Early Bird als auch Normal Bird Varianten.',
+    reducedTicketTypeReductions: 'Die Rabatte im Detail:\n• Aufbau-Ass (20% Rabatt)\n• Care-Crew (Awareness) (20% Rabatt)\n• Rückbau-Retter (Abbau) (40% Rabatt - in Form einer Rückerstattung nach dem Festival)\n• Technik-Support (20% Rabatt)\n\nDiese Rabatte gelten für sowohl Early Bird als auch Normal Bird Varianten.',
     
     // FAQ Page
     searchFAQs: 'FAQs durchsuchen...',
@@ -533,7 +533,7 @@ const translations = {
     standardTicketTypeDesc: 'Standard Soli-Contributions include taking over two shifts (usually 2 hours each) during the festival. You can choose between Early Bird and Normal Bird options depending on availability.',
     reducedTicketType: 'Reduced Soli-Contributions',
     reducedTicketTypeDesc: 'Reduced Soli-Contributions offer a price discount due to the intensity or additional responsibility of the related positions. These Soli-Contributions are for special roles such as Festival-Setup, Festival-Breakdown, or Awareness.',
-    reducedTicketTypeReductions: 'The reductions in detail:\n\n• Setup-Ace (Build-Up) (20% Reduction)\n• Care-Crew (Awareness) (20% Reduction)\n• Rebuild-Rescuer (Breakdown) (40% Reduction - in the form of a refund received after the festival)\n• Tech-Support (30% Reduction)\n\nThese reductions will be applied to both the Early Bird & Normal Bird variants.',
+    reducedTicketTypeReductions: 'The reductions in detail:\n\n• Setup-Ace (Build-Up) (20% Reduction)\n• Care-Crew (Awareness) (20% Reduction)\n• Rebuild-Rescuer (Breakdown) (40% Reduction - in the form of a refund received after the festival)\n• Tech-Support (20% Reduction)\n\nThese reductions will be applied to both the Early Bird & Normal Bird variants.',
     
     // FAQ Page
     searchFAQs: 'Search FAQs...',
