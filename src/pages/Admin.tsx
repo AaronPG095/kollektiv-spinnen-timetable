@@ -2527,10 +2527,19 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
               {standardRoles.map((role) => {
                 const remaining = remainingByRole[role.key];
                 return (
-                  <div key={role.key} className="space-y-2">
-                    <Label htmlFor={`${role.key}_limit`}>
-                      {role.label} {t("limit")}
-                    </Label>
+                  <div key={role.key} className="space-y-1.5">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <Label htmlFor={`${role.key}_limit`}>
+                        {role.label} {t("limit")}
+                      </Label>
+                      {remaining !== undefined && (
+                        <span className="text-xs font-medium text-primary whitespace-nowrap">
+                          {remaining === null
+                            ? t("unlimited")
+                            : `${remaining} ${t("standardTickets_plural").toLowerCase()} ${t("remaining") ?? "remaining"}`}
+                        </span>
+                      )}
+                    </div>
                     <Input
                       id={`${role.key}_limit`}
                       type="number"
@@ -2541,13 +2550,6 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                       }
                       placeholder={t("unlimited")}
                     />
-                    {remaining !== undefined && (
-                      <p className="text-xs text-muted-foreground">
-                        {remaining === null
-                          ? t("unlimited")
-                          : `${remaining} ${t("standardTickets_plural").toLowerCase()} ${t("remaining") ?? "remaining"}`}
-                      </p>
-                    )}
                   </div>
                 );
               })}
@@ -2560,10 +2562,19 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
               {reducedRoles.map((role) => {
                 const remaining = remainingByRole[role.key];
                 return (
-                  <div key={role.key} className="space-y-2">
-                    <Label htmlFor={`${role.key}_limit`}>
-                      {role.label} {t("limit")}
-                    </Label>
+                  <div key={role.key} className="space-y-1.5">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <Label htmlFor={`${role.key}_limit`}>
+                        {role.label} {t("limit")}
+                      </Label>
+                      {remaining !== undefined && (
+                        <span className="text-xs font-medium text-primary whitespace-nowrap">
+                          {remaining === null
+                            ? t("unlimited")
+                            : `${remaining} ${t("reducedTickets_plural").toLowerCase()} ${t("remaining") ?? "remaining"}`}
+                        </span>
+                      )}
+                    </div>
                     <Input
                       id={`${role.key}_limit`}
                       type="number"
@@ -2574,13 +2585,6 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                       }
                       placeholder={t("unlimited")}
                     />
-                    {remaining !== undefined && (
-                      <p className="text-xs text-muted-foreground">
-                        {remaining === null
-                          ? t("unlimited")
-                          : `${remaining} ${t("reducedTickets_plural").toLowerCase()} ${t("remaining") ?? "remaining"}`}
-                      </p>
-                    )}
                   </div>
                 );
               })}
