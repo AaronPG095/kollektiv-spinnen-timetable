@@ -133,6 +133,21 @@ const Tickets = () => {
     { value: "tech", label: t("techSupport") },
   ];
 
+  // Helper function to get role description
+  const getRoleDescription = (roleValue: string): string => {
+    const descriptionMap: Record<string, string> = {
+      bar: t("barDesc"),
+      kuechenhilfe: t("kuechenhilfeDesc"),
+      springerRunner: t("springerRunnerDesc"),
+      springerToilet: t("springerToiletDesc"),
+      abbau: t("abbauDesc"),
+      aufbau: t("aufbauDesc"),
+      awareness: t("awarenessDesc"),
+      tech: t("techSupportDesc"),
+    };
+    return descriptionMap[roleValue] || "";
+  };
+
   // Parsed reductions text (heading, bullet lines, footer) for better formatting
   const reductionsLines = t("reducedTicketTypeReductions")
     .split("\n")
@@ -391,13 +406,14 @@ const Tickets = () => {
             <CardContent className="space-y-6">
               {/* Role Descriptions */}
               <div className="p-4 bg-background/50 rounded-lg border border-border/30">
-                <h3 className="text-lg font-semibold text-foreground mb-2">
+                <h3 className="text-lg font-semibold text-foreground mb-3">
                   {t("roleDescriptions")}
                 </h3>
-                <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                <ul className="text-sm text-muted-foreground space-y-3">
                   {standardRoles.map((role) => (
-                    <li key={role.value} className="font-semibold">
-                      {role.value === "springerToilet" ? t("springerToiletDesc") : role.label}
+                    <li key={role.value} className="space-y-1">
+                      <div className="font-semibold text-foreground">{role.label}</div>
+                      <div className="text-muted-foreground pl-0">{getRoleDescription(role.value)}</div>
                     </li>
                   ))}
                 </ul>
@@ -591,26 +607,28 @@ const Tickets = () => {
             <CardContent className="space-y-6">
               {/* Role Descriptions */}
               <div className="p-4 bg-background/50 rounded-lg border border-border/30">
-                <h3 className="text-lg font-semibold text-foreground mb-2">
+                <h3 className="text-lg font-semibold text-foreground mb-3">
                   {t("roleDescriptions")}
                 </h3>
-                <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1 mb-4">
+                <ul className="text-sm text-muted-foreground space-y-3 mb-4">
                   {reducedRolesMainList.map((role) => (
-                    <li key={role.value} className="font-semibold">
-                      {role.label}
+                    <li key={role.value} className="space-y-1">
+                      <div className="font-semibold text-foreground">{role.label}</div>
+                      <div className="text-muted-foreground pl-0">{getRoleDescription(role.value)}</div>
                     </li>
                   ))}
                 </ul>
                 
                 {/* Only with experience / organiser consent */}
                 <div className="mt-4 pt-4 border-t border-border/30">
-                  <h4 className="text-sm font-semibold text-foreground mb-2">
+                  <h4 className="text-sm font-semibold text-foreground mb-3">
                     {t("onlyWithExperience")}
                   </h4>
-                  <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                  <ul className="text-sm text-muted-foreground space-y-3">
                     {reducedRolesRequiringExperience.map((role) => (
-                      <li key={role.value} className="font-semibold">
-                        {role.label}
+                      <li key={role.value} className="space-y-1">
+                        <div className="font-semibold text-foreground">{role.label}</div>
+                        <div className="text-muted-foreground pl-0">{getRoleDescription(role.value)}</div>
                       </li>
                     ))}
                   </ul>
