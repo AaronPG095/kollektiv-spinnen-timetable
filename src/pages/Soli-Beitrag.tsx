@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { FestivalHeader } from "@/components/FestivalHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import { checkRoleAvailability, getRemainingTickets, getRemainingEarlyBirdTicket
 
 const Tickets = () => {
   const { t } = useLanguage();
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [earlyBirdRole, setEarlyBirdRole] = useState<string>("");
   const [normalRole, setNormalRole] = useState<string>("");
@@ -427,7 +429,7 @@ const Tickets = () => {
                       <h3 className="text-lg font-semibold text-foreground">
                         {t("earlyBird")}
                       </h3>
-                      {remainingEarlyBirdTickets !== null && (
+                      {isAdmin && remainingEarlyBirdTickets !== null && (
                         <span className="text-sm font-medium text-muted-foreground">
                           ({remainingEarlyBirdTickets} {t("remaining")})
                         </span>
@@ -465,7 +467,7 @@ const Tickets = () => {
                                   if (!isAvailable) {
                                     return `(${t("soldOut")})`;
                                   }
-                                  if (remaining !== null) {
+                                  if (isAdmin && remaining !== null) {
                                     return ` (${remaining} ${t("remaining")})`;
                                   }
                                   return '';
@@ -515,7 +517,7 @@ const Tickets = () => {
                       <h3 className="text-lg font-semibold text-foreground">
                         {t("normal")}
                       </h3>
-                      {remainingNormalTickets !== null && (
+                      {isAdmin && remainingNormalTickets !== null && (
                         <span className="text-sm text-muted-foreground">
                           ({remainingNormalTickets} {t("remaining")})
                         </span>
@@ -548,20 +550,20 @@ const Tickets = () => {
                               value={role.value}
                               disabled={!isAvailable}
                               className={!isAvailable ? "text-muted-foreground opacity-50" : ""}
-                            >
-                              {role.label} {(() => {
-                                if (!isAvailable) {
-                                  return `(${t("soldOut")})`;
-                                }
-                                if (remaining !== null) {
-                                  return ` (${remaining} ${t("remaining")})`;
-                                }
-                                return '';
-                              })()}
-                            </SelectItem>
-                          );
-                        })}
-                        {normalRole && (
+                              >
+                                {role.label} {(() => {
+                                  if (!isAvailable) {
+                                    return `(${t("soldOut")})`;
+                                  }
+                                  if (isAdmin && remaining !== null) {
+                                    return ` (${remaining} ${t("remaining")})`;
+                                  }
+                                  return '';
+                                })()}
+                              </SelectItem>
+                            );
+                          })}
+                          {normalRole && (
                           <SelectItem value="__clear__" className="text-muted-foreground">
                             {t("clearSelection")}
                           </SelectItem>
@@ -643,7 +645,7 @@ const Tickets = () => {
                       <h3 className="text-lg font-semibold text-foreground">
                         {t("earlyBird")}
                       </h3>
-                      {remainingEarlyBirdTickets !== null && (
+                      {isAdmin && remainingEarlyBirdTickets !== null && (
                         <span className="text-sm font-medium text-muted-foreground">
                           ({remainingEarlyBirdTickets} {t("remaining")})
                         </span>
@@ -681,7 +683,7 @@ const Tickets = () => {
                                   if (!isAvailable) {
                                     return `(${t("soldOut")})`;
                                   }
-                                  if (remaining !== null) {
+                                  if (isAdmin && remaining !== null) {
                                     return ` (${remaining} ${t("remaining")})`;
                                   }
                                   return '';
@@ -731,7 +733,7 @@ const Tickets = () => {
                       <h3 className="text-lg font-semibold text-foreground">
                         {t("normal")}
                       </h3>
-                      {remainingNormalTickets !== null && (
+                      {isAdmin && remainingNormalTickets !== null && (
                         <span className="text-sm text-muted-foreground">
                           ({remainingNormalTickets} {t("remaining")})
                         </span>
@@ -764,20 +766,20 @@ const Tickets = () => {
                               value={role.value}
                               disabled={!isAvailable}
                               className={!isAvailable ? "text-muted-foreground opacity-50" : ""}
-                            >
-                              {role.label} {(() => {
-                                if (!isAvailable) {
-                                  return `(${t("soldOut")})`;
-                                }
-                                if (remaining !== null) {
-                                  return ` (${remaining} ${t("remaining")})`;
-                                }
-                                return '';
-                              })()}
-                            </SelectItem>
-                          );
-                        })}
-                        {normalReducedRole && (
+                              >
+                                {role.label} {(() => {
+                                  if (!isAvailable) {
+                                    return `(${t("soldOut")})`;
+                                  }
+                                  if (isAdmin && remaining !== null) {
+                                    return ` (${remaining} ${t("remaining")})`;
+                                  }
+                                  return '';
+                                })()}
+                              </SelectItem>
+                            );
+                          })}
+                          {normalReducedRole && (
                           <SelectItem value="__clear__" className="text-muted-foreground">
                             {t("clearSelection")}
                           </SelectItem>
