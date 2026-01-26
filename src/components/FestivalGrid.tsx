@@ -276,21 +276,49 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
     return processedEvents;
   }, [events]);
 
-  const getEventTypeColor = (type: string) => {
-    switch (type) {
-      case 'dj':
-        return 'bg-[rgba(233,30,99,0.9)]'; // Hot pink
-      case 'live':
-        return 'bg-[rgba(156,39,176,0.9)]'; // Purple
-      case 'performance':
-        return 'bg-[rgba(103,58,183,0.9)]'; // Deep purple
-      case 'workshop':
-        return 'bg-[rgba(33,150,243,0.9)]'; // Light blue
-      case 'interaktiv':
-        return 'bg-[rgba(0,188,212,0.9)]'; // Cyan
-      default:
-        return 'bg-[rgba(103,58,183,0.9)]';
+  // Helper function to calculate responsive text size based on card dimensions and title length
+  const getTextSizeClass = (duration: number, titleLength: number, heightInPixels: number): string => {
+    // Determine text size based on height (more important factor)
+    let heightFactor: 'xs' | 'sm' | 'base' | 'lg';
+    if (heightInPixels < 30) {
+      heightFactor = 'xs';
+    } else if (heightInPixels < 50) {
+      heightFactor = 'xs';
+    } else if (heightInPixels < 70) {
+      heightFactor = 'sm';
+    } else if (heightInPixels < 100) {
+      heightFactor = 'base';
+    } else {
+      heightFactor = 'lg';
     }
+    
+    // Adjust based on title length
+    let lengthFactor: 'xs' | 'sm' | 'base' | 'lg';
+    if (titleLength > 40) {
+      lengthFactor = 'xs';
+    } else if (titleLength > 25) {
+      lengthFactor = 'sm';
+    } else if (titleLength > 15) {
+      lengthFactor = 'base';
+    } else {
+      lengthFactor = 'lg';
+    }
+    
+    // Return the smaller of the two to ensure text fits
+    const sizes: ('xs' | 'sm' | 'base' | 'lg')[] = ['xs', 'sm', 'base', 'lg'];
+    const heightIndex = sizes.indexOf(heightFactor);
+    const lengthIndex = sizes.indexOf(lengthFactor);
+    const finalSize = sizes[Math.min(heightIndex, lengthIndex)];
+    
+    return `text-${finalSize}`;
+  };
+
+  // Helper function to determine max lines based on card height
+  const getMaxLines = (heightInPixels: number): number => {
+    if (heightInPixels < 40) return 1;
+    if (heightInPixels < 70) return 2;
+    if (heightInPixels < 100) return 3;
+    return 4;
   };
 
   const getEventTypeLabel = (type: string) => {
@@ -543,31 +571,64 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                           const pixelsPerMinute = 70 / 60; // 70px per hour = 1.167px per minute
                           const heightInPixels = durationInMinutes * pixelsPerMinute;
                           
+                          // Calculate responsive text sizing
+                          const textSizeClass = getTextSizeClass(event.duration, event.title.length, heightInPixels);
+                          const maxLines = getMaxLines(heightInPixels);
+                          const showTime = heightInPixels >= 50; // Show time for events >= 50px tall
+                          const showTypeLabel = heightInPixels >= 80; // Show type label for events >= 80px tall
+                          
                           return (
                             <div
                               key={event.id}
-                              className={`absolute z-20 ${getEventTypeColor(event.type)} 
-                                         rounded-md border-2 border-white/30 shadow-lg cursor-pointer 
-                                         transition-all duration-200 hover:scale-[1.02] hover:shadow-xl 
-                                         hover:border-white/50 hover:z-30 overflow-hidden`}
+                              className="absolute z-20 rounded-lg cursor-pointer 
+                                         transition-all duration-200 hover:scale-[1.02] hover:z-30 
+                                         backdrop-blur-sm border-2 overflow-hidden"
                               style={{
                                 width: `${widthPercent}%`,
                                 left: `${leftPercent}%`,
                                 top: `${topOffset}%`,
-                                height: `${heightInPixels}px`
+                                height: `${heightInPixels}px`,
+                                backgroundColor: `hsl(var(--type-${event.type}) / 0.75)`,
+                                borderColor: `hsl(var(--type-${event.type}) / 0.5)`,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)'
                               }}
                               onClick={() => onEventClick(event)}
                             >
-                              <div className="h-full flex items-center justify-center text-center p-2">
-                                <div className="text-white">
-                                  <div className={`font-semibold leading-tight ${
-                                    event.duration <= 20 ? 'text-[80%]' : 
-                                    event.title.length > 25 ? 'text-sm' : 'text-base'
-                                  }`}>
+                              {/* Type indicator bar at top */}
+                              <div 
+                                className="absolute top-0 left-0 right-0 h-1"
+                                style={{ backgroundColor: `hsl(var(--type-${event.type}))` }}
+                              />
+                              
+                              <div className="h-full flex flex-col items-center justify-center text-center p-2 relative">
+                                {/* Type label badge for larger cards */}
+                                {showTypeLabel && (
+                                  <div 
+                                    className="absolute top-1 right-1 text-[10px] font-medium 
+                                               px-1.5 py-0.5 rounded bg-black/30 text-white/90 backdrop-blur-sm"
+                                  >
+                                    {getEventTypeLabel(event.type)}
+                                  </div>
+                                )}
+                                
+                                <div className="text-white w-full flex-1 flex flex-col justify-center">
+                                  <div 
+                                    className={`font-semibold leading-tight ${textSizeClass} ${
+                                      maxLines === 1 ? 'line-clamp-1' : 
+                                      maxLines === 2 ? 'line-clamp-2' : 
+                                      maxLines === 3 ? 'line-clamp-3' : 'line-clamp-4'
+                                    }`}
+                                    style={{
+                                      wordBreak: 'break-word',
+                                      overflowWrap: 'break-word'
+                                    }}
+                                  >
                                     {event.title}
                                   </div>
-                                  {event.duration >= 60 && (
-                                    <div className="text-sm text-white/80 mt-1">
+                                  {showTime && (
+                                    <div className={`text-white/80 mt-1 ${
+                                      heightInPixels < 70 ? 'text-[10px]' : 'text-xs'
+                                    }`}>
                                       {event.time}
                                     </div>
                                   )}
