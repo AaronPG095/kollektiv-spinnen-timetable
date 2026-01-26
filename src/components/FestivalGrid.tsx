@@ -276,6 +276,24 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
     return processedEvents;
   }, [events]);
 
+  // Get event type color matching the list view styling
+  const getEventTypeColor = (type: string): string => {
+    switch (type) {
+      case 'dj':
+        return 'rgba(233,30,99,0.9)'; // Hot pink
+      case 'live':
+        return 'rgba(156,39,176,0.9)'; // Purple
+      case 'performance':
+        return 'rgba(103,58,183,0.9)'; // Deep purple
+      case 'workshop':
+        return 'rgba(33,150,243,0.9)'; // Light blue
+      case 'interaktiv':
+        return 'rgba(0,188,212,0.9)'; // Cyan
+      default:
+        return 'rgba(103,58,183,0.9)';
+    }
+  };
+
   // Helper function to calculate responsive text size based on card dimensions and title length
   const getTextSizeClass = (duration: number, titleLength: number, heightInPixels: number): string => {
     // Determine text size based on height (more important factor)
@@ -577,6 +595,10 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                           const showTime = heightInPixels >= 50; // Show time for events >= 50px tall
                           const showTypeLabel = heightInPixels >= 80; // Show type label for events >= 80px tall
                           
+                          const eventColor = getEventTypeColor(event.type);
+                          const backgroundColor = eventColor.replace('0.9', '0.2');
+                          const borderColor = eventColor;
+                          
                           return (
                             <div
                               key={event.id}
@@ -588,8 +610,8 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                                 left: `${leftPercent}%`,
                                 top: `${topOffset}%`,
                                 height: `${heightInPixels}px`,
-                                backgroundColor: `hsl(var(--type-${event.type}) / 0.75)`,
-                                borderColor: `hsl(var(--type-${event.type}) / 0.5)`,
+                                backgroundColor: backgroundColor,
+                                borderColor: borderColor,
                                 boxShadow: '0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)'
                               }}
                               onClick={() => onEventClick(event)}
@@ -597,7 +619,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                               {/* Type indicator bar at top */}
                               <div 
                                 className="absolute top-0 left-0 right-0 h-1"
-                                style={{ backgroundColor: `hsl(var(--type-${event.type}))` }}
+                                style={{ backgroundColor: borderColor }}
                               />
                               
                               <div className="h-full flex flex-col items-center justify-center text-center p-2 relative">
