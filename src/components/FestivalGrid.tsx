@@ -867,8 +867,9 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                           const topOffset = (event.minuteOffset / 60) * 100; // percentage of cell height
                           
                           // Calculate actual height based on duration in minutes
+                          // Scale pixelsPerMinute with zoom to match scaled grid row height
                           const durationInMinutes = event.duration;
-                          const pixelsPerMinute = 70 / 60; // 70px per hour = 1.167px per minute
+                          const pixelsPerMinute = (70 * displayZoom) / 60; // Scales with zoom: 70px * zoom per hour
                           const heightInPixels = durationInMinutes * pixelsPerMinute;
                           
                           // Calculate responsive text sizing
