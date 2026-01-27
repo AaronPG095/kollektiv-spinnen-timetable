@@ -1,6 +1,8 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Event } from '@/components/EventCard';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Clock, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface FestivalGridProps {
   events: Event[];
@@ -28,10 +30,35 @@ const venueLabels = {
 
 const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => {
   const { t } = useLanguage();
-  const [zoomLevel, setZoomLevel] = useState(1);
+  const isMobile = useIsMobile();
+  
+  // Zoom state with smooth interpolation
+  const [displayZoom, setDisplayZoom] = useState(1);
+  const targetZoomRef = useRef(1);
+  const animationRef = useRef<number>();
+  
   const [isPinching, setIsPinching] = useState(false);
   const lastDistanceRef = useRef<number>(0);
-  const gridContainerRef = useRef<HTMLDivElement>(null);
+  const gridContainerRef = useRef<HTMLDivElement | null>(null);
+  const scrollViewportRef = useRef<HTMLElement | null>(null);
+  
+  // Set viewport ref when container is ready
+  useEffect(() => {
+    if (gridContainerRef.current) {
+      scrollViewportRef.current = gridContainerRef.current;
+    }
+  }, []);
+  
+  // Visible time range indicator
+  const [visibleTimeRange, setVisibleTimeRange] = useState<{ start: string; end: string } | null>(null);
+  
+  // Mobile gesture hint
+  const [showGestureHint, setShowGestureHint] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem('festival-grid-gesture-hint-dismissed');
+    }
+    return false;
+  });
 
   // Helper function to translate day names
   const translateDay = (day: string): string => {
@@ -350,9 +377,134 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
     return typeLabels[type] || type.toUpperCase();
   };
 
-  // Handle pinch-to-zoom on touch devices
+  // Smooth zoom interpolation
   useEffect(() => {
-    const container = gridContainerRef.current;
+    const animate = () => {
+      setDisplayZoom(prev => {
+        const diff = targetZoomRef.current - prev;
+        if (Math.abs(diff) < 0.01) {
+          return targetZoomRef.current;
+        }
+        return prev + diff * 0.15; // Smooth interpolation factor
+      });
+      animationRef.current = requestAnimationFrame(animate);
+    };
+    animationRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
+
+  // Zoom-to-point handler
+  const handleZoom = useCallback((newZoom: number, centerX?: number, centerY?: number) => {
+    const container = scrollViewportRef.current || gridContainerRef.current;
+    if (!container) {
+      targetZoomRef.current = Math.min(Math.max(newZoom, 0.5), 3);
+      return;
+    }
+
+    // If no center point provided, use container center
+    const rect = container.getBoundingClientRect();
+    const defaultCenterX = centerX ?? rect.width / 2;
+    const defaultCenterY = centerY ?? rect.height / 2;
+
+    // Calculate scroll position to keep center point stable
+    const scrollCenterX = container.scrollLeft + defaultCenterX;
+    const scrollCenterY = container.scrollTop + defaultCenterY;
+
+    const currentZoom = displayZoom;
+    const zoomRatio = newZoom / currentZoom;
+
+    // Update zoom level
+    targetZoomRef.current = Math.min(Math.max(newZoom, 0.5), 3);
+
+    // Adjust scroll position after zoom to keep the same content point centered
+    requestAnimationFrame(() => {
+      if (container) {
+        const newScrollLeft = scrollCenterX * zoomRatio - defaultCenterX;
+        const newScrollTop = scrollCenterY * zoomRatio - defaultCenterY;
+        container.scrollLeft = Math.max(0, newScrollLeft);
+        container.scrollTop = Math.max(0, newScrollTop);
+      }
+    });
+  }, [displayZoom]);
+
+  // Scroll to specific time slot
+  const scrollToTime = useCallback((targetSlotIndex: number, smooth = true) => {
+    const container = scrollViewportRef.current || gridContainerRef.current;
+    if (!container) {
+      console.warn('Scroll container not found');
+      return;
+    }
+
+    const baseRowHeight = 70;
+    const baseHeaderHeight = 60;
+    const rowHeight = baseRowHeight * displayZoom;
+    const headerHeight = baseHeaderHeight * displayZoom;
+    const targetScrollTop = headerHeight + (targetSlotIndex * rowHeight) - (container.clientHeight / 3);
+
+    container.scrollTo({
+      top: Math.max(0, targetScrollTop),
+      behavior: smooth ? 'smooth' : 'auto'
+    });
+  }, [displayZoom]);
+
+  // Scroll to current time
+  const scrollToNow = useCallback(() => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentDay = now.toLocaleDateString('de-DE', { weekday: 'long' });
+    const slotIndex = getSlotIndex(currentHour, currentDay);
+    if (slotIndex >= 0) {
+      scrollToTime(slotIndex);
+    }
+  }, [scrollToTime]);
+
+  // Scroll to specific day
+  const scrollToDay = useCallback((day: string) => {
+    let slotIndex = 0;
+    if (day === 'Freitag') {
+      slotIndex = 0; // First slot of Friday
+    } else if (day === 'Samstag') {
+      slotIndex = 5; // First slot of Saturday (after 5 Friday slots)
+    } else if (day === 'Sonntag') {
+      slotIndex = 29; // First slot of Sunday (after 5 + 24 slots)
+    }
+    scrollToTime(slotIndex);
+  }, [scrollToTime]);
+
+  // Track visible time range
+  const handleScroll = useCallback(() => {
+    const container = scrollViewportRef.current || gridContainerRef.current;
+    if (!container) return;
+
+    const baseRowHeight = 70;
+    const baseHeaderHeight = 60;
+    const rowHeight = baseRowHeight * displayZoom;
+    const headerHeight = baseHeaderHeight * displayZoom;
+    const scrollTop = container.scrollTop;
+
+    const startSlot = Math.floor((scrollTop - headerHeight) / rowHeight);
+    const visibleSlots = Math.ceil(container.clientHeight / rowHeight);
+    const endSlot = Math.min(startSlot + visibleSlots, timeSlots.length - 1);
+
+    const startTime = timeSlots[Math.max(0, startSlot)];
+    const endTime = timeSlots[Math.max(0, endSlot)];
+
+    if (startTime && endTime) {
+      setVisibleTimeRange({
+        start: `${translateDay(startTime.day)} ${startTime.label}`,
+        end: `${translateDay(endTime.day)} ${endTime.label}`
+      });
+    }
+  }, [displayZoom, timeSlots, translateDay]);
+
+
+  // Handle pinch-to-zoom on touch devices with zoom-to-point
+  useEffect(() => {
+    const container = scrollViewportRef.current || gridContainerRef.current;
     if (!container) return;
 
     const handleTouchStart = (e: TouchEvent) => {
@@ -373,6 +525,14 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         e.preventDefault();
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];
+        
+        // Calculate pinch center
+        const centerX = (touch1.clientX + touch2.clientX) / 2;
+        const centerY = (touch1.clientY + touch2.clientY) / 2;
+        const rect = container.getBoundingClientRect();
+        const relativeCenterX = centerX - rect.left;
+        const relativeCenterY = centerY - rect.top;
+        
         const distance = Math.hypot(
           touch2.clientX - touch1.clientX,
           touch2.clientY - touch1.clientY
@@ -380,10 +540,8 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         
         if (lastDistanceRef.current > 0) {
           const scale = distance / lastDistanceRef.current;
-          setZoomLevel(prevZoom => {
-            const newZoom = prevZoom * scale;
-            return Math.min(Math.max(newZoom, 0.5), 3); // Limit zoom between 0.5x and 3x
-          });
+          const newZoom = Math.min(Math.max(displayZoom * scale, 0.5), 3);
+          handleZoom(newZoom, relativeCenterX, relativeCenterY);
         }
         
         lastDistanceRef.current = distance;
@@ -404,7 +562,55 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isPinching]);
+  }, [isPinching, displayZoom, handleZoom]);
+
+  // Mouse wheel zoom for desktop (Ctrl/Cmd + scroll)
+  useEffect(() => {
+    const container = scrollViewportRef.current || gridContainerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const rect = container.getBoundingClientRect();
+        const centerX = e.clientX - rect.left;
+        const centerY = e.clientY - rect.top;
+        
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        const newZoom = Math.min(Math.max(displayZoom + delta, 0.5), 3);
+        
+        handleZoom(newZoom, centerX, centerY);
+      }
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [displayZoom, handleZoom]);
+
+  // Track scroll position for time indicator
+  useEffect(() => {
+    const container = scrollViewportRef.current || gridContainerRef.current;
+    if (!container) {
+      // Retry after a delay if container not ready
+      const timeout = setTimeout(() => {
+        const retryContainer = scrollViewportRef.current || gridContainerRef.current;
+        if (retryContainer) {
+          retryContainer.addEventListener('scroll', handleScroll, { passive: true });
+          handleScroll();
+        }
+      }, 200);
+      return () => clearTimeout(timeout);
+    }
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    // Initial call after a brief delay to ensure container is ready
+    const timeout = setTimeout(() => handleScroll(), 100);
+
+    return () => {
+      clearTimeout(timeout);
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, [handleScroll]);
 
   // Group events by their grid cell for easier rendering
   const eventsByCell = useMemo(() => {
@@ -439,47 +645,123 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       </div>
 
       <div className="festival-grid relative overflow-hidden rounded-lg max-w-[1200px] mx-auto" style={{ backgroundColor: '#0B0E1F' }}>
-        {/* Zoom controls for desktop only */}
-        <div className="absolute top-2 right-2 z-40 hidden md:flex gap-2">
+        {/* Zoom controls */}
+        <div className="absolute top-2 right-2 z-40 flex gap-2">
           <button 
-            onClick={() => setZoomLevel(Math.max(0.5, zoomLevel - 0.25))}
-            className="bg-gray-800/60 hover:bg-gray-700/80 text-white rounded px-3 py-1 text-sm font-medium transition-colors backdrop-blur-sm"
+            onClick={() => handleZoom(Math.max(0.5, displayZoom - 0.25))}
+            className="bg-gray-800/60 hover:bg-gray-700/80 text-white rounded px-3 py-1 text-sm font-medium transition-colors backdrop-blur-sm flex items-center gap-1"
             aria-label="Zoom out"
           >
-            -
+            <ZoomOut className="w-4 h-4" />
+            <span className="hidden md:inline">-</span>
           </button>
           <span className="bg-gray-800/60 text-white rounded px-3 py-1 text-sm backdrop-blur-sm">
-            {Math.round(zoomLevel * 100)}%
+            {Math.round(displayZoom * 100)}%
           </span>
           <button 
-            onClick={() => setZoomLevel(Math.min(3, zoomLevel + 0.25))}
-            className="bg-gray-800/60 hover:bg-gray-700/80 text-white rounded px-3 py-1 text-sm font-medium transition-colors backdrop-blur-sm"
+            onClick={() => handleZoom(Math.min(3, displayZoom + 0.25))}
+            className="bg-gray-800/60 hover:bg-gray-700/80 text-white rounded px-3 py-1 text-sm font-medium transition-colors backdrop-blur-sm flex items-center gap-1"
             aria-label="Zoom in"
           >
-            +
+            <ZoomIn className="w-4 h-4" />
+            <span className="hidden md:inline">+</span>
           </button>
-          {zoomLevel !== 1 && (
+          {displayZoom !== 1 && (
             <button 
-              onClick={() => setZoomLevel(1)}
-              className="bg-gray-800/60 hover:bg-gray-700/80 text-white rounded px-2 py-1 text-sm font-medium transition-colors ml-1 backdrop-blur-sm"
+              onClick={() => handleZoom(1)}
+              className="bg-gray-800/60 hover:bg-gray-700/80 text-white rounded px-2 py-1 text-sm font-medium transition-colors ml-1 backdrop-blur-sm flex items-center gap-1"
               aria-label="Reset zoom"
             >
-              Reset
+              <RotateCcw className="w-4 h-4" />
+              <span className="hidden md:inline">Reset</span>
             </button>
           )}
         </div>
+
+        {/* Quick navigation buttons */}
+        <div className="absolute bottom-2 left-2 z-40 flex gap-1 flex-wrap">
+          <button 
+            onClick={() => scrollToDay('Freitag')}
+            className="bg-gray-800/60 hover:bg-gray-700/80 text-white rounded px-2 py-1 text-xs font-medium transition-colors backdrop-blur-sm"
+            title="Jump to Friday"
+          >
+            FR
+          </button>
+          <button 
+            onClick={() => scrollToDay('Samstag')}
+            className="bg-gray-800/60 hover:bg-gray-700/80 text-white rounded px-2 py-1 text-xs font-medium transition-colors backdrop-blur-sm"
+            title="Jump to Saturday"
+          >
+            SA
+          </button>
+          <button 
+            onClick={() => scrollToDay('Sonntag')}
+            className="bg-gray-800/60 hover:bg-gray-700/80 text-white rounded px-2 py-1 text-xs font-medium transition-colors backdrop-blur-sm"
+            title="Jump to Sunday"
+          >
+            SO
+          </button>
+          <button 
+            onClick={scrollToNow}
+            className="bg-gray-800/60 hover:bg-gray-700/80 text-white rounded px-2 py-1 text-xs font-medium transition-colors backdrop-blur-sm flex items-center gap-1"
+            title="Jump to current time"
+          >
+            <Clock className="w-3 h-3" />
+            <span className="hidden sm:inline">Now</span>
+          </button>
+        </div>
+
+        {/* Time position indicator */}
+        {visibleTimeRange && (
+          <div className="absolute top-12 left-2 z-40 bg-gray-800/80 text-white rounded px-3 py-1.5 text-xs backdrop-blur-sm">
+            <div className="flex items-center gap-2">
+              <Clock className="w-3 h-3" />
+              <span>{visibleTimeRange.start} - {visibleTimeRange.end}</span>
+            </div>
+          </div>
+        )}
         
-        <div ref={gridContainerRef} className="grid-container overflow-auto max-h-[70vh]" style={{ touchAction: 'pan-x pan-y' }}>
-          <div style={{ width: `${100 * zoomLevel}%`, minWidth: '100%' }}>
-          <div className="festival-grid-main grid gap-0"
-               style={{ 
-                 gridTemplateColumns: '80px 60px repeat(3, minmax(200px, 1fr))',
-                 gridTemplateRows: `60px repeat(${timeSlots.length}, 70px)`,
-                 overflow: 'visible',
-                 transform: `scale(${zoomLevel})`,
-                 transformOrigin: 'top left',
-                 transition: isPinching ? 'none' : 'transform 0.2s ease'
-               }}>
+        <div 
+          className="max-h-[70vh] w-full relative overflow-auto"
+          ref={(node) => {
+            if (node) {
+              gridContainerRef.current = node as any;
+              // Set viewport ref directly to this div for scrolling
+              scrollViewportRef.current = node;
+            }
+          }}
+          style={{ touchAction: 'pan-x pan-y' }}
+        >
+          <div className="grid-container" style={{ touchAction: 'pan-x pan-y' }}>
+            {/* Calculate grid dimensions based on zoom */}
+            {(() => {
+              const baseRowHeight = 70;
+              const baseHeaderHeight = 60;
+              const baseDayColWidth = 80;
+              const baseTimeColWidth = 60;
+              const baseVenueColMinWidth = 200;
+              
+              const scaledRowHeight = baseRowHeight * displayZoom;
+              const scaledHeaderHeight = baseHeaderHeight * displayZoom;
+              const scaledDayColWidth = baseDayColWidth * displayZoom;
+              const scaledTimeColWidth = baseTimeColWidth * displayZoom;
+              const scaledVenueColMinWidth = baseVenueColMinWidth * displayZoom;
+              
+              // Calculate total grid dimensions for proper scrolling
+              const totalGridHeight = scaledHeaderHeight + (timeSlots.length * scaledRowHeight);
+              // Estimate total width (day col + time col + 3 venue cols with min width)
+              const estimatedTotalWidth = scaledDayColWidth + scaledTimeColWidth + (3 * scaledVenueColMinWidth);
+              
+              return (
+                <div className="festival-grid-main grid gap-0"
+                     style={{ 
+                       gridTemplateColumns: `${scaledDayColWidth}px ${scaledTimeColWidth}px repeat(3, minmax(${scaledVenueColMinWidth}px, 1fr))`,
+                       gridTemplateRows: `${scaledHeaderHeight}px repeat(${timeSlots.length}, ${scaledRowHeight}px)`,
+                       overflow: 'visible',
+                       width: `${Math.max(estimatedTotalWidth, 800)}px`,
+                       minHeight: `${totalGridHeight}px`,
+                       height: `${totalGridHeight}px`
+                     }}>
             
             {/* Header - Day, Time and Venue labels */}
             <div className="sticky top-0 z-30 border-b-2 border-gray-700 border-r-2 
@@ -665,10 +947,36 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                 </React.Fragment>
               );
             })}
-          </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>
+
+      {/* Mobile gesture hint overlay */}
+      {isMobile && showGestureHint && (
+        <div 
+          className="absolute inset-0 z-50 bg-black/70 flex items-center justify-center animate-in fade-in"
+          onClick={() => {
+            setShowGestureHint(false);
+            localStorage.setItem('festival-grid-gesture-hint-dismissed', 'true');
+          }}
+        >
+          <div className="text-white text-center p-6 bg-gray-900/90 rounded-lg backdrop-blur-sm max-w-xs mx-4">
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                <div className="w-16 h-16 border-2 border-white/30 rounded-full flex items-center justify-center animate-pulse">
+                  <ZoomIn className="w-8 h-8" />
+                </div>
+              </div>
+            </div>
+            <p className="font-semibold mb-2">Pinch to zoom</p>
+            <p className="text-sm text-gray-400 mb-4">Use two fingers to zoom in and out</p>
+            <p className="text-xs text-gray-500">Tap anywhere to dismiss</p>
+          </div>
+        </div>
+      )}
       
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Quantico:wght@400;700&display=swap');
@@ -680,22 +988,22 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         .festival-grid-main {
           position: relative;
         }
-        .grid-container::-webkit-scrollbar {
+        .festival-grid-container .grid-container::-webkit-scrollbar {
           width: 10px;
           height: 10px;
         }
-        .grid-container::-webkit-scrollbar-track {
+        .festival-grid-container .grid-container::-webkit-scrollbar-track {
           background: rgba(0, 0, 0, 0.4);
           border-radius: 5px;
         }
-        .grid-container::-webkit-scrollbar-thumb {
+        .festival-grid-container .grid-container::-webkit-scrollbar-thumb {
           background: rgba(255, 255, 255, 0.2);
           border-radius: 5px;
         }
-        .grid-container::-webkit-scrollbar-thumb:hover {
+        .festival-grid-container .grid-container::-webkit-scrollbar-thumb:hover {
           background: rgba(255, 255, 255, 0.3);
         }
-        .grid-container::-webkit-scrollbar-corner {
+        .festival-grid-container .grid-container::-webkit-scrollbar-corner {
           background: rgba(0, 0, 0, 0.4);
         }
       `}</style>
