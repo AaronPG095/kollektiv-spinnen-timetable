@@ -41,7 +41,7 @@ const translations = {
     performance: 'Performance',
     dj: 'DJ',
     workshop: 'Workshop',
-    live: 'Live-Konzert',
+    live: 'Konzert',
     interaktiv: 'Interaktiv',
     
     // Grid
@@ -458,7 +458,7 @@ const translations = {
     performance: 'Performance',
     dj: 'DJ',
     workshop: 'Workshop',
-    live: 'Live Concert',
+    live: 'Concert',
     interaktiv: 'Interactive',
     
     // Grid

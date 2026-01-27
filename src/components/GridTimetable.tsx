@@ -22,7 +22,7 @@ const typeConfig = {
   performance: { label: "Performance", color: "bg-type-performance" },
   dj: { label: "DJ", color: "bg-type-dj" },
   workshop: { label: "Workshop", color: "bg-type-workshop" },
-  live: { label: "Live-Konzert", color: "bg-type-live" },
+  live: { label: "Konzert", color: "bg-type-live" },
   interaktiv: { label: "Interaktiv", color: "bg-type-interaktiv" }
 };
 

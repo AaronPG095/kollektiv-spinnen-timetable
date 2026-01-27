@@ -369,7 +369,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
   const getEventTypeLabel = (type: string) => {
     const typeLabels: Record<string, string> = {
       'dj': 'DJ',
-      'live': 'Live-Konzert',
+      'live': 'Konzert',
       'performance': 'Performance',
       'workshop': 'Workshop',
       'interaktiv': 'Interaktiv'
@@ -876,7 +876,8 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                           const textSizeClass = getTextSizeClass(event.duration, event.title.length, heightInPixels);
                           const maxLines = getMaxLines(heightInPixels);
                           const showTime = heightInPixels >= 50; // Show time for events >= 50px tall
-                          const showTypeLabel = heightInPixels >= 80; // Show type label for events >= 80px tall
+                          // Show type label for all events
+                          const showTypeLabel = true;
                           
                           const eventColor = getEventTypeColor(event.type);
                           const backgroundColor = eventColor.replace('0.9', '0.2');
