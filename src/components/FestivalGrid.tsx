@@ -644,7 +644,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         </svg>
       </div>
 
-      <div className="festival-grid relative overflow-hidden rounded-lg max-w-[1200px] mx-auto" style={{ backgroundColor: '#0B0E1F' }}>
+      <div className="festival-grid relative overflow-hidden rounded-lg w-full max-w-[1400px] mx-auto flex flex-col items-center" style={{ backgroundColor: '#0B0E1F' }}>
         {/* Zoom controls */}
         <div className="absolute top-2 right-2 z-40 flex gap-2">
           <button 
@@ -722,7 +722,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         )}
         
         <div 
-          className="max-h-[70vh] w-full relative overflow-auto"
+          className="max-h-[70vh] w-full relative overflow-auto flex justify-center"
           ref={(node) => {
             if (node) {
               gridContainerRef.current = node as any;
@@ -732,14 +732,14 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
           }}
           style={{ touchAction: 'pan-x pan-y' }}
         >
-          <div className="grid-container" style={{ touchAction: 'pan-x pan-y' }}>
+          <div className="grid-container mx-auto" style={{ touchAction: 'pan-x pan-y' }}>
             {/* Calculate grid dimensions based on zoom */}
             {(() => {
               const baseRowHeight = 70;
               const baseHeaderHeight = 60;
-              const baseDayColWidth = 80;
-              const baseTimeColWidth = 60;
-              const baseVenueColMinWidth = 200;
+              const baseDayColWidth = 100; // Increased from 80px
+              const baseTimeColWidth = 80; // Increased from 60px
+              const baseVenueColMinWidth = 300; // Increased from 200px
               
               const scaledRowHeight = baseRowHeight * displayZoom;
               const scaledHeaderHeight = baseHeaderHeight * displayZoom;
