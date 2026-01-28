@@ -17,7 +17,7 @@ export interface Event {
     [platform: string]: string;
   };
   is_visible?: boolean;
-  year?: number;
+  year?: number[];
 }
 
 interface EventCardProps {

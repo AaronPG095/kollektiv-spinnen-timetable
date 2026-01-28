@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, X as XIcon } from 'lucide-react';
 import { getTicketSettings, updateTicketSettings, type TicketSettings } from '@/lib/ticketSettings';
 import { getAllPurchases, type TicketPurchase } from '@/lib/ticketPurchases';
@@ -42,7 +43,7 @@ interface DatabaseEvent {
   description: string | null;
   links: any;
   is_visible?: boolean;
-  year: number;
+  year: number[];
 }
 
 interface FAQItem {
@@ -569,10 +570,29 @@ const Admin = () => {
     
     try {
       console.log('[Admin] Toggling year visibility:', year, visible);
+      // Update events where the year array contains the selected year
+      const { data: eventsToUpdate, error: fetchError } = await supabase
+        .from('events')
+        .select('id')
+        .contains('year', [year]);
+      
+      if (fetchError) {
+        console.error('[Admin] Error fetching events for year:', fetchError);
+        throw fetchError;
+      }
+      
+      if (!eventsToUpdate || eventsToUpdate.length === 0) {
+        toast({
+          title: `No events found for year ${year}`,
+        });
+        return;
+      }
+      
+      const eventIds = eventsToUpdate.map(e => e.id);
       const { error } = await supabase
         .from('events')
         .update({ is_visible: visible })
-        .eq('year', year);
+        .in('id', eventIds);
       
       if (error) {
         console.error('[Admin] Error toggling year visibility:', error);
@@ -689,13 +709,13 @@ const Admin = () => {
     navigate('/');
   };
 
-  // Compute available years from events
-  const availableYears = [...new Set(events.map(e => e.year))].sort((a, b) => b - a);
+  // Compute available years from events (flatten all years from all events)
+  const availableYears = [...new Set(events.flatMap(e => e.year || []))].sort((a, b) => b - a);
 
   // Filter events based on selected year and debounced search query
   const filteredEvents = events.filter(event => {
-    // Filter by year first
-    if (selectedYear !== "all" && event.year !== selectedYear) {
+    // Filter by year first - check if selectedYear is in the event's years array
+    if (selectedYear !== "all" && (!event.year || !event.year.includes(selectedYear))) {
       return false;
     }
     
@@ -1838,7 +1858,7 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
     venue: initialEvent?.venue || '',
     day: initialEvent?.day || '',
     type: initialEvent?.type || '',
-    year: initialEvent?.year || new Date().getFullYear(),
+    year: initialEvent?.year || [new Date().getFullYear()],
     description_en: initialDescriptions.en,
     description_de: initialDescriptions.de,
     links: initialEvent?.links || {}
@@ -1891,6 +1911,16 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate that at least one year is selected
+    if (formData.year.length === 0) {
+      toast({
+        title: t("error") || "Error",
+        description: "At least one year must be selected",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Combine descriptions into JSON format
     const description = JSON.stringify({
@@ -2006,19 +2036,40 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="year">Year *</Label>
-          <Input
-            id="year"
-            type="number"
-            value={formData.year}
-            onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) || new Date().getFullYear() })}
-            min="2020"
-            max="2100"
-            required
-          />
+      <div className="space-y-2">
+        <Label>Years *</Label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 border rounded-md">
+          {[2024, 2025, 2026, 2027, 2028, 2029, 2030].map((year) => (
+            <div key={year} className="flex items-center space-x-2">
+              <Checkbox
+                id={`year-${year}`}
+                checked={formData.year.includes(year)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setFormData({
+                      ...formData,
+                      year: [...formData.year, year].sort((a, b) => a - b)
+                    });
+                  } else {
+                    setFormData({
+                      ...formData,
+                      year: formData.year.filter(y => y !== year)
+                    });
+                  }
+                }}
+              />
+              <Label
+                htmlFor={`year-${year}`}
+                className="text-sm font-normal cursor-pointer"
+              >
+                {year}
+              </Label>
+            </div>
+          ))}
         </div>
+        {formData.year.length === 0 && (
+          <p className="text-sm text-destructive">At least one year must be selected</p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
