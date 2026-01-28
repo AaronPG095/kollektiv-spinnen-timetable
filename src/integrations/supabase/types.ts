@@ -29,6 +29,7 @@ export type Database = {
           type: string
           updated_at: string
           venue: string
+          year: number
         }
         Insert: {
           created_at?: string
@@ -44,6 +45,7 @@ export type Database = {
           type: string
           updated_at?: string
           venue: string
+          year?: number
         }
         Update: {
           created_at?: string
@@ -59,6 +61,7 @@ export type Database = {
           type?: string
           updated_at?: string
           venue?: string
+          year?: number
         }
         Relationships: []
       }

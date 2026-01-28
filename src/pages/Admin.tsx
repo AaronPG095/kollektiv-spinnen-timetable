@@ -42,6 +42,7 @@ interface DatabaseEvent {
   description: string | null;
   links: any;
   is_visible?: boolean;
+  year: number;
 }
 
 interface FAQItem {
@@ -70,6 +71,7 @@ const Admin = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [showHiddenMode, setShowHiddenMode] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<number | "all">("all");
   const [activeTab, setActiveTab] = useState<"events" | "faqs" | "tickets" | "about">("events");
   const [ticketSettings, setTicketSettings] = useState<TicketSettings | null>(null);
   const [ticketSettingsLoading, setTicketSettingsLoading] = useState(false);
@@ -544,7 +546,7 @@ const Admin = () => {
         console.error('[Admin] Error toggling event visibility:', error);
         throw error;
       }
-      toast({ 
+      toast({
         title: currentVisibility ? t("eventHiddenFromPublic") : t("eventMadeVisibleToPublic") 
       });
       loadEvents();
@@ -553,6 +555,38 @@ const Admin = () => {
       toast({
         title: t("error"),
         description: error?.message || t("failedToUpdateEventVisibility"),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleYearVisibility = async (year: number, visible: boolean) => {
+    const confirmMessage = visible 
+      ? `Are you sure you want to show all events for ${year}?`
+      : `Are you sure you want to hide all events for ${year}?`;
+    
+    if (!confirm(confirmMessage)) return;
+    
+    try {
+      console.log('[Admin] Toggling year visibility:', year, visible);
+      const { error } = await supabase
+        .from('events')
+        .update({ is_visible: visible })
+        .eq('year', year);
+      
+      if (error) {
+        console.error('[Admin] Error toggling year visibility:', error);
+        throw error;
+      }
+      toast({
+        title: visible ? `All events for ${year} are now visible` : `All events for ${year} are now hidden`,
+      });
+      loadEvents();
+    } catch (error: any) {
+      console.error('[Admin] Error toggling year visibility:', error);
+      toast({
+        title: t("error"),
+        description: error?.message || "Failed to update year visibility",
         variant: "destructive",
       });
     }
@@ -655,8 +689,17 @@ const Admin = () => {
     navigate('/');
   };
 
-  // Filter events based on debounced search query
+  // Compute available years from events
+  const availableYears = [...new Set(events.map(e => e.year))].sort((a, b) => b - a);
+
+  // Filter events based on selected year and debounced search query
   const filteredEvents = events.filter(event => {
+    // Filter by year first
+    if (selectedYear !== "all" && event.year !== selectedYear) {
+      return false;
+    }
+    
+    // Then filter by search query
     const query = debouncedSearchQuery.toLowerCase();
     return (
       event.title.toLowerCase().includes(query) ||
@@ -839,9 +882,60 @@ const Admin = () => {
           </div>
         </div>
 
-        {/* Search Bar - only show for events tab */}
+        {/* Year Filter and Search Bar - only show for events tab */}
         {activeTab === "events" && (
-          <div className="mb-8">
+          <div className="mb-8 space-y-4">
+            {/* Year Filter Tabs */}
+            {availableYears.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground">Filter by Year:</span>
+                <div className="flex gap-1 bg-muted rounded-lg p-1">
+                  <Button
+                    variant={selectedYear === "all" ? "default" : "ghost"}
+                    onClick={() => setSelectedYear("all")}
+                    size="sm"
+                    className="text-sm"
+                  >
+                    All Years
+                  </Button>
+                  {availableYears.map((year) => (
+                    <Button
+                      key={year}
+                      variant={selectedYear === year ? "default" : "ghost"}
+                      onClick={() => setSelectedYear(year)}
+                      size="sm"
+                      className="text-sm"
+                    >
+                      {year}
+                    </Button>
+                  ))}
+                </div>
+                {/* Bulk visibility toggle for selected year */}
+                {selectedYear !== "all" && (
+                  <div className="flex gap-2 ml-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleYearVisibility(selectedYear, true)}
+                      className="text-sm"
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      Show All {selectedYear}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleYearVisibility(selectedYear, false)}
+                      className="text-sm"
+                    >
+                      <EyeOff className="h-3 w-3 mr-1" />
+                      Hide All {selectedYear}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+            {/* Search Bar */}
             <div className="relative max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
@@ -851,7 +945,7 @@ const Admin = () => {
               className="pl-10"
             />
           </div>
-          {searchQuery && (
+          {(searchQuery || selectedYear !== "all") && (
             <p className="text-sm text-muted-foreground mt-3">
               {t("showing")} {filteredEvents.length} {t("of")} {events.length} {filteredEvents.length === 1 ? t("event") : t("events_plural")}
             </p>
@@ -1744,6 +1838,7 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
     venue: initialEvent?.venue || '',
     day: initialEvent?.day || '',
     type: initialEvent?.type || '',
+    year: initialEvent?.year || new Date().getFullYear(),
     description_en: initialDescriptions.en,
     description_de: initialDescriptions.de,
     links: initialEvent?.links || {}
@@ -1908,6 +2003,21 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
               <SelectItem value="interaktiv">{t("interaktiv")}</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="year">Year *</Label>
+          <Input
+            id="year"
+            type="number"
+            value={formData.year}
+            onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) || new Date().getFullYear() })}
+            min="2020"
+            max="2100"
+            required
+          />
         </div>
       </div>
 

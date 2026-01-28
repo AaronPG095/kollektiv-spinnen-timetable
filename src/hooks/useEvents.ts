@@ -173,7 +173,8 @@ export const useEvents = () => {
         type: event.type as "performance" | "dj" | "workshop" | "live" | "interaktiv",
         description: event.description || '',
         links: event.links ? JSON.parse(JSON.stringify(event.links)) : {},
-        is_visible: event.is_visible
+        is_visible: event.is_visible,
+        year: event.year
       }));
 
       console.log(`[useEvents] Transformed ${transformedEvents.length} events, setting state...`);
