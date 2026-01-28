@@ -710,13 +710,16 @@ const Admin = () => {
   };
 
   // Compute available years from events (flatten all years from all events)
-  const availableYears = [...new Set(events.flatMap(e => e.year || []))].sort((a, b) => b - a);
+  const availableYears = [...new Set(events.flatMap(e => Array.isArray(e.year) ? e.year : []))].sort((a, b) => b - a);
 
   // Filter events based on selected year and debounced search query
   const filteredEvents = events.filter(event => {
     // Filter by year first - check if selectedYear is in the event's years array
-    if (selectedYear !== "all" && (!event.year || !event.year.includes(selectedYear))) {
-      return false;
+    if (selectedYear !== "all") {
+      const eventYears = Array.isArray(event.year) ? event.year : [];
+      if (eventYears.length === 0 || !eventYears.includes(selectedYear)) {
+        return false;
+      }
     }
     
     // Then filter by search query
@@ -1858,7 +1861,9 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
     venue: initialEvent?.venue || '',
     day: initialEvent?.day || '',
     type: initialEvent?.type || '',
-    year: initialEvent?.year || [new Date().getFullYear()],
+    year: Array.isArray(initialEvent?.year) && initialEvent.year.length > 0
+      ? initialEvent.year
+      : [new Date().getFullYear()],
     description_en: initialDescriptions.en,
     description_de: initialDescriptions.de,
     links: initialEvent?.links || {}
