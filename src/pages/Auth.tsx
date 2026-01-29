@@ -7,38 +7,88 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { Footer } from '@/components/Footer';
+import { validateAndSanitizeEmail } from '@/lib/validation';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailTouched, setEmailTouched] = useState(false);
   const { signIn, signUp } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (emailTouched) {
+      const validation = validateAndSanitizeEmail(value);
+      setEmailError(validation.valid ? null : validation.error || null);
+    }
+  };
+
+  const handleEmailBlur = () => {
+    setEmailTouched(true);
+    const validation = validateAndSanitizeEmail(email);
+    setEmailError(validation.valid ? null : validation.error || null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate email before submission
+    setEmailTouched(true);
+    const emailValidation = validateAndSanitizeEmail(email);
+    if (!emailValidation.valid) {
+      setEmailError(emailValidation.error || null);
+      toast({
+        title: t("validationError"),
+        description: emailValidation.error || t("pleaseEnterValidEmail"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      toast({
+        title: t("validationError"),
+        description: t("passwordMustBeAtLeast6Characters"),
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       console.log('[Auth] Attempting to', isLogin ? 'sign in' : 'sign up', 'with email:', email);
       
+      // Use sanitized email
+      const sanitizedEmail = emailValidation.sanitized;
+      
       let result;
       if (isLogin) {
         console.log('[Auth] Calling signIn...');
-        result = await signIn(email, password);
-        console.log('[Auth] signIn returned:', { hasError: !!result.error, hasData: !!result.data });
+        result = await signIn(sanitizedEmail, password);
+        console.log('[Auth] signIn returned:', { 
+          hasError: !!result?.error, 
+          hasData: !!result?.data,
+          error: result?.error,
+          data: result?.data 
+        });
       } else {
         console.log('[Auth] Calling signUp...');
-        result = await signUp(email, password);
-        console.log('[Auth] signUp returned:', { hasError: !!result.error });
+        result = await signUp(sanitizedEmail, password);
+        console.log('[Auth] signUp returned:', { hasError: !!result?.error });
       }
 
-      const { error } = result;
+      const error = result?.error;
 
       if (error) {
         console.error('[Auth] Authentication error:', {
@@ -63,17 +113,24 @@ const Auth = () => {
       } else {
         console.log('[Auth] ✅ Authentication successful! Navigating...');
         if (isLogin) {
+          // Reset loading state before navigation to prevent UI freeze
+          setLoading(false);
+          
           // Show success message
           toast({
             title: t("welcomeBackToast"),
             description: t("signedInSuccessfully"),
           });
           
-          // Navigate immediately - auth state listener will handle the rest
-          console.log('[Auth] Calling navigate("/")...');
-          navigate('/', { replace: true });
-          console.log('[Auth] Navigation called');
+          // Small delay to ensure auth state is updated, then navigate
+          // This prevents navigation before auth context is ready
+          setTimeout(() => {
+            console.log('[Auth] Calling navigate("/")...');
+            navigate('/', { replace: true });
+            console.log('[Auth] Navigation called');
+          }, 100);
         } else {
+          setLoading(false);
           toast({
             title: t("accountCreated"),
             description: t("checkEmailVerify"),
@@ -113,10 +170,22 @@ const Auth = () => {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  onBlur={handleEmailBlur}
                   required
                   placeholder="your@email.com"
+                  aria-invalid={emailTouched && !!emailError}
+                  aria-describedby={emailTouched && emailError ? "email-error" : undefined}
+                  className={emailTouched && emailError ? "border-destructive" : ""}
                 />
+                {emailTouched && emailError && (
+                  <Alert variant="destructive" className="py-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription id="email-error" className="text-sm">
+                      {emailError}
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">{t("password")}</Label>

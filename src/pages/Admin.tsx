@@ -30,6 +30,7 @@ import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, A
 import { Footer } from '@/components/Footer';
 import { FestivalHeader } from '@/components/FestivalHeader';
 import { useDebounce } from '@/hooks/useDebounce';
+import { isValidUrl, sanitizeUrl } from '@/lib/validation';
 
 interface DatabaseEvent {
   id: string;
@@ -1913,18 +1914,20 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
 
   const addLink = () => {
     if (newLink.platform.trim() && newLink.url.trim()) {
-        // Validate URL
-        try {
-          const urlObj = new URL(newLink.url.trim());
-          if (!['http:', 'https:'].includes(urlObj.protocol)) {
-            toast({
-              title: t("invalidURL"),
-              description: t("urlMustStartWithHttp"),
-              variant: "destructive",
-            });
-            return;
-          }
-        } catch {
+        // Validate URL using validation utility
+        const trimmedUrl = newLink.url.trim();
+        if (!isValidUrl(trimmedUrl)) {
+          toast({
+            title: t("invalidURL"),
+            description: t("urlMustStartWithHttp"),
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Sanitize URL before storing
+        const sanitizedUrl = sanitizeUrl(trimmedUrl);
+        if (!sanitizedUrl) {
           toast({
             title: t("invalidURL"),
             description: t("pleaseEnterValidURL"),
@@ -1936,7 +1939,7 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
       const linkObj = {
         id: `${newLink.platform}-${Date.now()}`,
         platform: newLink.platform.trim(),
-        url: newLink.url.trim()
+        url: sanitizedUrl
       };
       setLinksArray([...linksArray, linkObj]);
       setNewLink({ platform: '', url: '' });

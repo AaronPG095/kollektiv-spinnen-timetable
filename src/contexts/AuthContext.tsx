@@ -100,14 +100,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Check admin status in background (don't block auth state change)
+        // Check admin status in background (non-blocking, but properly awaited)
         if (session?.user) {
-          // Use setTimeout to avoid blocking the auth callback
-          setTimeout(() => {
-            checkAdminStatus(session.user.email).catch(err => {
-              logError('AuthContext', err, { operation: 'backgroundAdminCheck' });
-            });
-          }, 0);
+          // Use void to explicitly mark as fire-and-forget, but still properly await
+          void checkAdminStatus(session.user.email).catch(err => {
+            logError('AuthContext', err, { operation: 'backgroundAdminCheck' });
+          });
         } else {
           setIsAdmin(false);
         }

@@ -90,7 +90,7 @@ export const GridTimetable = ({
       const startH = parseInt(startHour);
       const startM = parseInt(startMin);
       let endH = parseInt(endHour);
-      let endM = parseInt(endMin);
+      const endM = parseInt(endMin);
       
       // Handle cross-day events
       if (event.day === 'Freitag' && endH < 19) endH += 24;

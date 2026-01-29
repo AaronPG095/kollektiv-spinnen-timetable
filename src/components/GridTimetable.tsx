@@ -138,7 +138,7 @@ export const GridTimetable = ({
     const [endHour, endMin = '0'] = endTime.split(':');
     
     const startMinutes = parseInt(startMin);
-    let endMinutes = parseInt(endMin);
+    const endMinutes = parseInt(endMin);
     const startH = parseInt(startHour);
     let endH = parseInt(endHour);
     
