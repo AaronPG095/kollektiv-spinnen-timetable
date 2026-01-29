@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
@@ -2657,6 +2657,30 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     onSave(settings);
   };
 
+  // Calculate total of all role limits
+  const roleLimitsTotal = useMemo(() => {
+    const allRoles = [...standardRoles, ...reducedRoles];
+    const values: number[] = [];
+    
+    allRoles.forEach((role) => {
+      const value = limitValues[role.key]?.trim();
+      if (value) {
+        const parsed = parseInt(value, 10);
+        if (!isNaN(parsed) && parsed >= 0) {
+          values.push(parsed);
+        }
+      }
+    });
+    
+    return {
+      values,
+      total: values.reduce((sum, val) => sum + val, 0),
+      display: values.length > 0 
+        ? `${values.join(' + ')} = ${values.reduce((sum, val) => sum + val, 0)}`
+        : null
+    };
+  }, [limitValues, standardRoles, reducedRoles]);
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Universal Ticket Limits - Prominent Section */}
@@ -2748,7 +2772,14 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
 
       {/* Ticket Limits */}
       <div className="space-y-4 p-4 border rounded-lg">
-        <h3 className="text-lg font-semibold">{t("ticketAvailabilityLimits")}</h3>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold">{t("ticketAvailabilityLimits")}</h3>
+          {roleLimitsTotal.display && (
+            <div className="text-sm font-medium text-primary bg-primary/10 px-3 py-1.5 rounded-md">
+              {roleLimitsTotal.display}
+            </div>
+          )}
+        </div>
         <p className="text-sm text-muted-foreground mb-4">
           {t("setMaximumTickets")}
         </p>
