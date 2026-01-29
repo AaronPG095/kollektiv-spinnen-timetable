@@ -810,12 +810,12 @@ const Admin = () => {
       <FestivalHeader />
       <div className="flex-1 p-3 md:p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-8 gap-3 md:gap-4">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
               {t("adminDashboard")}
             </h1>
             {/* Tab Navigation - Centered */}
-            <div className="flex gap-1 bg-muted rounded-lg p-1 w-fit">
+            <div className="flex gap-1 bg-muted rounded-lg p-1 w-full sm:w-fit overflow-x-auto">
               <Button
                 variant={activeTab === "about" ? "default" : "ghost"}
                 onClick={() => setActiveTab("about")}
@@ -853,22 +853,22 @@ const Admin = () => {
                 {t("tickets")}
               </Button>
             </div>
-            <div className="flex items-center gap-4">
-              <Button onClick={() => navigate('/')} variant="outline">
+            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+              <Button onClick={() => navigate('/')} variant="outline" size="sm" className="text-xs sm:text-sm flex-1 sm:flex-initial">
                 {t("backToFestival")}
               </Button>
-              <Button onClick={handleSignOut} variant="outline">
-                <LogOut className="h-4 w-4 mr-2" />
+              <Button onClick={handleSignOut} variant="outline" size="sm" className="text-xs sm:text-sm flex-1 sm:flex-initial">
+                <LogOut className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 {t("signOut")}
               </Button>
             </div>
           </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <h2 className="text-lg md:text-xl font-semibold">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-3 md:gap-4">
+          <h2 className="text-base sm:text-lg md:text-xl font-semibold">
             {activeTab === "events" ? t("eventsManagement") : activeTab === "faqs" ? t("faqManagement") : activeTab === "tickets" ? t("ticketSettings") : t("aboutUsManagement")}
           </h2>
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             {activeTab === "events" ? (
               <>
                 <Button
@@ -928,7 +928,7 @@ const Admin = () => {
 
         {/* Year Filter and Search Bar - only show for events tab */}
         {activeTab === "events" && (
-          <div className="mb-8 space-y-4">
+          <div className="mb-4 md:mb-6 lg:mb-8 space-y-3 md:space-y-4">
             {/* Year Filter Tabs */}
             {availableYears.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
@@ -990,13 +990,13 @@ const Admin = () => {
               </div>
             )}
             {/* Search Bar */}
-            <div className="relative max-w-md">
+            <div className="relative w-full sm:max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder={t("searchEvents")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-sm sm:text-base"
             />
           </div>
           {(searchQuery || selectedYear !== "all") && (
@@ -1014,21 +1014,21 @@ const Admin = () => {
                 <p>{t("noEventsFound")}</p>
               </div>
             ) : (
-              <div className="flex gap-6 overflow-x-auto pb-4">
+              <div className="flex flex-col md:flex-row gap-4 md:gap-6 overflow-x-auto pb-4">
                 {sortedDays.map((day) => (
-                  <div key={day} className="flex-shrink-0 w-[calc(33.333%-16px)] min-w-[280px] space-y-4">
+                  <div key={day} className="flex-shrink-0 w-full md:w-[calc(33.333%-16px)] md:min-w-[280px] space-y-3 md:space-y-4">
                     {/* Day Header */}
-                    <div className="flex items-center gap-3 pb-2 border-b border-border">
-                      <h3 className="text-xl md:text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                    <div className="flex items-center gap-2 md:gap-3 pb-2 border-b border-border">
+                      <h3 className="text-lg md:text-xl lg:text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                         {day}
                       </h3>
-                       <span className="text-sm text-muted-foreground">
+                       <span className="text-xs md:text-sm text-muted-foreground">
                          ({eventsByDay[day].length} {eventsByDay[day].length === 1 ? t("event") : t("events_plural")})
                        </span>
                     </div>
 
                     {/* Events for this day */}
-                    <div className="space-y-6">
+                    <div className="space-y-3 md:space-y-4 lg:space-y-6">
                       {eventsByDay[day].map((event) => {
                         const typeConfig = {
                           performance: { label: "Performance", color: "type-performance" },
@@ -1048,11 +1048,11 @@ const Admin = () => {
                             borderColor: `hsl(var(--${type.color}) / 0.6)`
                           } : {}}
                         >
-                          <CardContent className="p-6">
-                            <div className="flex justify-between items-start gap-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <h3 className="font-semibold text-lg">{event.title}</h3>
+                          <CardContent className="p-4 md:p-5 lg:p-6">
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-3 md:gap-4">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
+                                  <h3 className="font-semibold text-base md:text-lg break-words">{event.title}</h3>
                                    {event.is_visible === false ? (
                                      <div className="flex items-center text-destructive text-xs">
                                        <EyeOff className="h-3 w-3 mr-1" />
@@ -1071,11 +1071,11 @@ const Admin = () => {
                                     </div>
                                   )}
                                 </div>
-                                <p className="text-muted-foreground mb-2">
+                                <p className="text-xs md:text-sm text-muted-foreground mb-2 break-words">
                                   {event.time} • {event.venue} • {event.type}
                                 </p>
                                 {event.description && (
-                                  <div className="text-sm text-muted-foreground mt-2">
+                                  <div className="text-xs md:text-sm text-muted-foreground mt-2">
                                     {(() => {
                                       try {
                                         const parsed = JSON.parse(event.description);
@@ -1095,12 +1095,13 @@ const Admin = () => {
                                   </div>
                                 )}
                               </div>
-                              <div className="flex gap-3">
+                              <div className="flex gap-2 md:gap-3 flex-shrink-0">
                                 <Button
                                   variant={event.is_visible === false ? "default" : "outline"}
                                   size="sm"
-                                   onClick={() => handleToggleVisibility(event.id, event.is_visible !== false)}
-                                   title={event.is_visible === false ? t("makeVisible") : t("hideFromPublic")}
+                                  className="h-8 w-8 md:h-9 md:w-9 p-0"
+                                  onClick={() => handleToggleVisibility(event.id, event.is_visible !== false)}
+                                  title={event.is_visible === false ? t("makeVisible") : t("hideFromPublic")}
                                 >
                                   {event.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                                 </Button>
@@ -1118,6 +1119,7 @@ const Admin = () => {
                                     <Button 
                                       variant="outline" 
                                       size="sm"
+                                      className="h-8 w-8 md:h-9 md:w-9 p-0"
                                     >
                                       <Edit className="h-4 w-4" />
                                     </Button>
@@ -1137,6 +1139,7 @@ const Admin = () => {
                                 <Button 
                                   variant="destructive" 
                                   size="sm"
+                                  className="h-8 w-8 md:h-9 md:w-9 p-0"
                                   onClick={() => handleDeleteEvent(event.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
