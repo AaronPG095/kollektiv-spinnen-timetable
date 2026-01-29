@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, X as XIcon } from 'lucide-react';
 import { getTicketSettings, updateTicketSettings, type TicketSettings } from '@/lib/ticketSettings';
 import { getAllPurchases, type TicketPurchase } from '@/lib/ticketPurchases';
@@ -42,7 +43,7 @@ interface DatabaseEvent {
   description: string | null;
   links: any;
   is_visible?: boolean;
-  year: number;
+  years: number[];
 }
 
 interface FAQItem {
@@ -188,12 +189,14 @@ const Admin = () => {
       
       console.log(`[Admin] Successfully loaded ${data?.length || 0} events`);
       
-      // Normalize year field to ensure it's always a number
+      // Normalize years field to ensure it's always an array
       const normalizedEvents = (data || []).map(event => ({
         ...event,
-        year: typeof event.year === 'number' 
-          ? event.year 
-          : parseInt(String(event.year || new Date().getFullYear()), 10)
+        years: Array.isArray(event.years) && event.years.length > 0
+          ? event.years.filter(y => typeof y === 'number' && y > 2000 && y < 2100)
+          : (typeof event.year === 'number' 
+              ? [event.year] 
+              : [new Date().getFullYear()])
       }));
       
       setEvents(normalizedEvents);
@@ -578,10 +581,12 @@ const Admin = () => {
     
     try {
       console.log('[Admin] Toggling year visibility:', year, visible);
+      // Use array contains filter to find events that include this year
+      // PostgreSQL array contains operator: @> (contains)
       const { error } = await supabase
         .from('events')
         .update({ is_visible: visible })
-        .eq('year', year);
+        .filter('years', 'cs', `{${year}}`);
       
       if (error) {
         console.error('[Admin] Error toggling year visibility:', error);
@@ -699,18 +704,21 @@ const Admin = () => {
   };
 
   // Compute available years from events
-  // Ensure years are numbers and filter out any invalid values
+  // Extract all years from events array and deduplicate
   const availableYears = [...new Set(
     events
-      .map(e => typeof e.year === 'number' ? e.year : parseInt(String(e.year || new Date().getFullYear()), 10))
-      .filter(year => !isNaN(year) && year > 2000 && year < 2100)
+      .flatMap(e => Array.isArray(e.years) ? e.years : [])
+      .filter(year => typeof year === 'number' && !isNaN(year) && year > 2000 && year < 2100)
   )].sort((a, b) => b - a);
 
   // Filter events based on selected year and debounced search query
   const filteredEvents = events.filter(event => {
-    // Filter by year first
-    if (selectedYear !== "all" && event.year !== selectedYear) {
-      return false;
+    // Filter by year first - check if event's years array includes selected year
+    if (selectedYear !== "all") {
+      const eventYears = Array.isArray(event.years) ? event.years : [];
+      if (!eventYears.includes(selectedYear)) {
+        return false;
+      }
     }
     
     // Then filter by search query
@@ -1891,7 +1899,9 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
     venue: initialEvent?.venue || '',
     day: initialEvent?.day || '',
     type: initialEvent?.type || '',
-    year: initialEvent?.year || new Date().getFullYear(),
+    years: Array.isArray(initialEvent?.years) && initialEvent.years.length > 0
+      ? initialEvent.years
+      : [new Date().getFullYear()],
     description_en: initialDescriptions.en,
     description_de: initialDescriptions.de,
     links: initialEvent?.links || {},
@@ -1945,6 +1955,16 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate that at least one year is selected
+    if (formData.years.length === 0) {
+      toast({
+        title: t("error"),
+        description: "Please select at least one year",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Combine descriptions into JSON format
     const description = JSON.stringify({
@@ -2060,30 +2080,53 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="year">Year *</Label>
-          <Input
-            id="year"
-            type="number"
-            value={formData.year}
-            onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) || new Date().getFullYear() })}
-            min="2020"
-            max="2100"
-            required
-          />
-        </div>
-        <div className="space-y-2 flex items-end">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="is_visible"
-              checked={formData.is_visible}
-              onCheckedChange={(checked) => setFormData({ ...formData, is_visible: checked })}
-            />
-            <Label htmlFor="is_visible" className="cursor-pointer">
-              {t("visibleToPublic")}
-            </Label>
+          <Label>Years *</Label>
+          <div className="border rounded-md p-4">
+            <div className="flex gap-4">
+              {[2025, 2026, 2027].map((year) => (
+                <div key={year} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`year-${year}`}
+                    checked={formData.years.includes(year)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setFormData({
+                          ...formData,
+                          years: [...formData.years, year].sort((a, b) => a - b)
+                        });
+                      } else {
+                        setFormData({
+                          ...formData,
+                          years: formData.years.filter(y => y !== year)
+                        });
+                      }
+                    }}
+                  />
+                  <Label
+                    htmlFor={`year-${year}`}
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    {year}
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
+          {formData.years.length === 0 && (
+            <p className="text-sm text-destructive">At least one year must be selected</p>
+          )}
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="is_visible"
+            checked={formData.is_visible}
+            onCheckedChange={(checked) => setFormData({ ...formData, is_visible: checked })}
+          />
+          <Label htmlFor="is_visible" className="cursor-pointer">
+            {t("visibleToPublic")}
+          </Label>
         </div>
       </div>
 

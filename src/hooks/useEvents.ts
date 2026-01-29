@@ -174,7 +174,10 @@ export const useEvents = () => {
         description: event.description || '',
         links: event.links ? JSON.parse(JSON.stringify(event.links)) : {},
         is_visible: event.is_visible,
-        year: event.year
+        // Handle both old format (year) and new format (years array) for backward compatibility
+        years: Array.isArray(event.years) && event.years.length > 0
+          ? event.years
+          : (typeof (event as any).year === 'number' ? [(event as any).year] : undefined)
       }));
 
       console.log(`[useEvents] Transformed ${transformedEvents.length} events, setting state...`);
