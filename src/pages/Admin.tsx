@@ -187,7 +187,16 @@ const Admin = () => {
       }
       
       console.log(`[Admin] Successfully loaded ${data?.length || 0} events`);
-      setEvents(data || []);
+      
+      // Normalize year field to ensure it's always a number
+      const normalizedEvents = (data || []).map(event => ({
+        ...event,
+        year: typeof event.year === 'number' 
+          ? event.year 
+          : parseInt(String(event.year || new Date().getFullYear()), 10)
+      }));
+      
+      setEvents(normalizedEvents);
     } catch (error: any) {
       console.error('[Admin] Error loading events:', {
         error,
@@ -690,7 +699,12 @@ const Admin = () => {
   };
 
   // Compute available years from events
-  const availableYears = [...new Set(events.map(e => e.year))].sort((a, b) => b - a);
+  // Ensure years are numbers and filter out any invalid values
+  const availableYears = [...new Set(
+    events
+      .map(e => typeof e.year === 'number' ? e.year : parseInt(String(e.year || new Date().getFullYear()), 10))
+      .filter(year => !isNaN(year) && year > 2000 && year < 2100)
+  )].sort((a, b) => b - a);
 
   // Filter events based on selected year and debounced search query
   const filteredEvents = events.filter(event => {
@@ -701,13 +715,33 @@ const Admin = () => {
     
     // Then filter by search query
     const query = debouncedSearchQuery.toLowerCase();
-    return (
+    if (!query) return true;
+    
+    // Check basic fields
+    if (
       event.title.toLowerCase().includes(query) ||
       event.venue.toLowerCase().includes(query) ||
       event.day.toLowerCase().includes(query) ||
-      event.type.toLowerCase().includes(query) ||
-      (event.description && event.description.toLowerCase().includes(query))
-    );
+      event.type.toLowerCase().includes(query)
+    ) {
+      return true;
+    }
+    
+    // Check description (handle JSON format)
+    if (event.description) {
+      try {
+        const parsed = JSON.parse(event.description);
+        if (typeof parsed === 'object' && (parsed.en || parsed.de)) {
+          const descText = `${parsed.en || ''} ${parsed.de || ''}`.toLowerCase();
+          if (descText.includes(query)) return true;
+        }
+      } catch {
+        // If not JSON, treat as plain text
+        if (event.description.toLowerCase().includes(query)) return true;
+      }
+    }
+    
+    return false;
   });
 
   // Group events by day
@@ -722,8 +756,9 @@ const Admin = () => {
   // Sort events within each day by time
   Object.keys(eventsByDay).forEach(day => {
     eventsByDay[day].sort((a, b) => {
-      const timeA = a.time.split(' - ')[0];
-      const timeB = b.time.split(' - ')[0];
+      // Prefer start_time if available, otherwise parse from time field
+      const timeA = a.start_time || a.time.split(' - ')[0] || a.time;
+      const timeB = b.start_time || b.time.split(' - ')[0] || b.time;
       return timeA.localeCompare(timeB);
     });
   });
@@ -888,27 +923,37 @@ const Admin = () => {
             {/* Year Filter Tabs */}
             {availableYears.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-muted-foreground">Filter by Year:</span>
-                <div className="flex gap-1 bg-muted rounded-lg p-1">
+                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Filter by Year:</span>
+                <div className="flex flex-wrap gap-1 bg-muted rounded-lg p-1 max-w-full">
                   <Button
+                    key="all-years"
                     variant={selectedYear === "all" ? "default" : "ghost"}
                     onClick={() => setSelectedYear("all")}
                     size="sm"
-                    className="text-sm"
+                    className="text-sm whitespace-nowrap shrink-0"
                   >
                     All Years
                   </Button>
-                  {availableYears.map((year) => (
-                    <Button
-                      key={year}
-                      variant={selectedYear === year ? "default" : "ghost"}
-                      onClick={() => setSelectedYear(year)}
-                      size="sm"
-                      className="text-sm"
-                    >
-                      {year}
-                    </Button>
-                  ))}
+                  {availableYears.map((year) => {
+                    // Ensure year is a valid number and convert to string for display
+                    const yearNum = typeof year === 'number' ? year : parseInt(String(year), 10);
+                    if (isNaN(yearNum) || yearNum < 2000 || yearNum > 2100) {
+                      return null; // Skip invalid years
+                    }
+                    const yearStr = String(yearNum);
+                    
+                    return (
+                      <Button
+                        key={`year-${yearNum}`}
+                        variant={selectedYear === yearNum ? "default" : "ghost"}
+                        onClick={() => setSelectedYear(yearNum)}
+                        size="sm"
+                        className="text-sm whitespace-nowrap shrink-0"
+                      >
+                        {yearStr}
+                      </Button>
+                    );
+                  })}
                 </div>
                 {/* Bulk visibility toggle for selected year */}
                 {selectedYear !== "all" && (
@@ -1050,24 +1095,32 @@ const Admin = () => {
                                 >
                                   {event.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                                 </Button>
-                                <Dialog>
+                                <Dialog 
+                                  open={editingEvent?.id === event.id} 
+                                  onOpenChange={(open) => {
+                                    if (!open) {
+                                      setEditingEvent(null);
+                                    } else {
+                                      setEditingEvent(event);
+                                    }
+                                  }}
+                                >
                                   <DialogTrigger asChild>
                                     <Button 
                                       variant="outline" 
                                       size="sm"
-                                      onClick={() => setEditingEvent(event)}
                                     >
                                       <Edit className="h-4 w-4" />
                                     </Button>
                                   </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>{t("editEvent")}</DialogTitle>
-                          </DialogHeader>
+                                  <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
+                                    <DialogHeader>
+                                      <DialogTitle>{t("editEvent")}</DialogTitle>
+                                    </DialogHeader>
                                     <div className="max-h-[75vh] overflow-y-auto pr-2">
                                       <EventForm 
                                         onSave={handleSaveEvent} 
-                                        initialEvent={event}
+                                        initialEvent={editingEvent || event}
                                       />
                                     </div>
                                   </DialogContent>
@@ -1841,7 +1894,8 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
     year: initialEvent?.year || new Date().getFullYear(),
     description_en: initialDescriptions.en,
     description_de: initialDescriptions.de,
-    links: initialEvent?.links || {}
+    links: initialEvent?.links || {},
+    is_visible: initialEvent?.is_visible ?? true
   });
 
   const [linksArray, setLinksArray] = useState(initialLinks);
@@ -2018,6 +2072,18 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
             max="2100"
             required
           />
+        </div>
+        <div className="space-y-2 flex items-end">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="is_visible"
+              checked={formData.is_visible}
+              onCheckedChange={(checked) => setFormData({ ...formData, is_visible: checked })}
+            />
+            <Label htmlFor="is_visible" className="cursor-pointer">
+              {t("visibleToPublic")}
+            </Label>
+          </div>
         </div>
       </div>
 
