@@ -31,6 +31,7 @@ import { Footer } from '@/components/Footer';
 import { FestivalHeader } from '@/components/FestivalHeader';
 import { useDebounce } from '@/hooks/useDebounce';
 import { isValidUrl, sanitizeUrl } from '@/lib/validation';
+import { logError, formatSupabaseError } from '@/lib/errorHandler';
 
 interface DatabaseEvent {
   id: string;
@@ -148,7 +149,9 @@ const Admin = () => {
             });
 
           if (errors.length > 0) {
-            console.error('[Admin] Some data sources failed to load:', errors);
+            errors.forEach(({ name, error }) => {
+              logError('Admin', error, { operation: 'loadDataSources', dataSource: name });
+            });
             // Only show toast if multiple failures or critical ones
             if (errors.length > 1 || errors.some(e => e.name === t("dataSourceTicketSettings"))) {
               toast({
@@ -168,7 +171,9 @@ const Admin = () => {
 
   const loadEvents = async () => {
     try {
-      console.log('[Admin] Loading all events (admin view)...');
+      if (import.meta.env.DEV) {
+        console.log('[Admin] Loading all events (admin view)...');
+      }
       
       // Admin should see all events including hidden ones
       // RLS policies should allow admins to see everything
@@ -179,39 +184,33 @@ const Admin = () => {
         .order('time', { ascending: true });
 
       if (error) {
-        console.error('[Admin] Supabase query error (events):', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
+        logError('Admin', error, { operation: 'loadEvents' });
         throw error;
       }
       
-      console.log(`[Admin] Successfully loaded ${data?.length || 0} events`);
+      if (import.meta.env.DEV) {
+        console.log(`[Admin] Successfully loaded ${data?.length || 0} events`);
+      }
       
       // Normalize years field to ensure it's always an array
-      const normalizedEvents = (data || []).map(event => ({
-        ...event,
-        years: Array.isArray(event.years) && event.years.length > 0
-          ? event.years.filter(y => typeof y === 'number' && y > 2000 && y < 2100)
-          : (typeof event.year === 'number' 
-              ? [event.year] 
-              : [new Date().getFullYear()])
-      }));
+      const normalizedEvents = (data || []).map(event => {
+        const eventWithYear = event as DatabaseEvent & { year?: number };
+        return {
+          ...event,
+          years: Array.isArray(event.years) && event.years.length > 0
+            ? event.years.filter(y => typeof y === 'number' && y > 2000 && y < 2100)
+            : (typeof eventWithYear.year === 'number' 
+                ? [eventWithYear.year] 
+                : [new Date().getFullYear()])
+        };
+      });
       
       setEvents(normalizedEvents);
     } catch (error: any) {
-      console.error('[Admin] Error loading events:', {
-        error,
-        message: error?.message,
-        details: error?.details,
-        hint: error?.hint,
-        code: error?.code
-      });
+      logError('Admin', error, { operation: 'loadEvents' });
       toast({
         title: t("error"),
-        description: error?.message || t("failedToLoadEvents"),
+        description: formatSupabaseError(error) || t("failedToLoadEvents"),
         variant: "destructive",
       });
       setEvents([]);
@@ -222,7 +221,9 @@ const Admin = () => {
 
   const loadFAQs = async () => {
     try {
-      console.log('[Admin] Loading all FAQs (admin view)...');
+      if (import.meta.env.DEV) {
+        console.log('[Admin] Loading all FAQs (admin view)...');
+      }
       
       // Admin should see all FAQs including hidden ones
       // RLS policies should allow admins to see everything
@@ -232,28 +233,19 @@ const Admin = () => {
         .order('order_index', { ascending: true });
 
       if (error) {
-        console.error('[Admin] Supabase query error (FAQs):', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
+        logError('Admin', error, { operation: 'loadFAQs' });
         throw error;
       }
       
-      console.log(`[Admin] Successfully loaded ${data?.length || 0} FAQs`);
+      if (import.meta.env.DEV) {
+        console.log(`[Admin] Successfully loaded ${data?.length || 0} FAQs`);
+      }
       setFaqs(data || []);
     } catch (error: any) {
-      console.error('[Admin] Error loading FAQs:', {
-        error,
-        message: error?.message,
-        details: error?.details,
-        hint: error?.hint,
-        code: error?.code
-      });
+      logError('Admin', error, { operation: 'loadFAQs' });
       toast({
         title: t("error"),
-        description: error?.message || t("failedToLoadFAQs"),
+        description: formatSupabaseError(error) || t("failedToLoadFAQs"),
         variant: "destructive",
       });
       setFaqs([]);
@@ -266,10 +258,10 @@ const Admin = () => {
       const settings = await getTicketSettings();
       setTicketSettings(settings);
     } catch (error: any) {
-      console.error('[Admin] Error loading ticket settings:', error);
+      logError('Admin', error, { operation: 'loadTicketSettings' });
         toast({
           title: t("error"),
-          description: error?.message || t("failedToLoadTicketSettings"),
+          description: formatSupabaseError(error) || t("failedToLoadTicketSettings"),
           variant: "destructive",
         });
     } finally {
@@ -283,10 +275,10 @@ const Admin = () => {
       const purchases = await getAllPurchases();
       setTicketPurchases(purchases);
     } catch (error: any) {
-      console.error('[Admin] Error loading confirmed Soli-Contributions:', error);
+      logError('Admin', error, { operation: 'loadTicketPurchases' });
         toast({
           title: t("error"),
-          description: error?.message || t("failedToLoadTicketPurchases"),
+          description: formatSupabaseError(error) || t("failedToLoadTicketPurchases"),
           variant: "destructive",
         });
     } finally {
@@ -302,10 +294,10 @@ const Admin = () => {
         .eq('id', purchaseId);
 
       if (error) {
-        console.error('[Admin] Error cancelling purchase:', error);
+        logError('Admin', error, { operation: 'cancelPurchase', purchaseId });
         toast({
           title: t("error"),
-          description: error.message || t("failedToCancelPurchase"),
+          description: formatSupabaseError(error) || t("failedToCancelPurchase"),
           variant: "destructive",
         });
       } else {
@@ -321,10 +313,10 @@ const Admin = () => {
         });
       }
     } catch (err: any) {
-      console.error('[Admin] Exception cancelling purchase:', err);
+      logError('Admin', err, { operation: 'cancelPurchase', purchaseId });
       toast({
         title: t("error"),
-        description: err?.message || t("failedToCancelPurchase"),
+        description: formatSupabaseError(err) || t("failedToCancelPurchase"),
         variant: "destructive",
       });
     }
@@ -338,10 +330,10 @@ const Admin = () => {
         .eq('id', purchaseId);
 
       if (error) {
-        console.error('[Admin] Error reactivating purchase:', error);
+        logError('Admin', error, { operation: 'reactivatePurchase', purchaseId });
         toast({
           title: t("error"),
-          description: error.message || t("failedToReactivatePurchase"),
+          description: formatSupabaseError(error) || t("failedToReactivatePurchase"),
           variant: "destructive",
         });
       } else {
@@ -357,10 +349,10 @@ const Admin = () => {
         });
       }
     } catch (err: any) {
-      console.error('[Admin] Exception reactivating purchase:', err);
+      logError('Admin', err, { operation: 'reactivatePurchase', purchaseId });
       toast({
         title: t("error"),
-        description: err?.message || t("failedToReactivatePurchase"),
+        description: formatSupabaseError(err) || t("failedToReactivatePurchase"),
         variant: "destructive",
       });
     }
@@ -374,10 +366,10 @@ const Admin = () => {
         .eq('id', purchaseId);
 
       if (error) {
-        console.error('[Admin] Error deleting purchase:', error);
+        logError('Admin', error, { operation: 'deletePurchase', purchaseId });
         toast({
           title: t("error"),
-          description: error.message || t("failedToDeletePurchase"),
+          description: formatSupabaseError(error) || t("failedToDeletePurchase"),
           variant: "destructive",
         });
       } else {
@@ -391,10 +383,10 @@ const Admin = () => {
       setDeleteDialogOpen(false);
       setPurchaseToDelete(null);
     } catch (err: any) {
-      console.error('[Admin] Exception deleting purchase:', err);
+      logError('Admin', err, { operation: 'deletePurchase', purchaseId: purchaseToDelete });
       toast({
         title: t("error"),
-        description: err?.message || t("failedToDeletePurchase"),
+        description: formatSupabaseError(err) || t("failedToDeletePurchase"),
         variant: "destructive",
       });
       setDeleteDialogOpen(false);
@@ -426,7 +418,7 @@ const Admin = () => {
           loadTicketSettings();
         }, 500);
       } else {
-        console.error('[Admin] Failed to save ticket settings:', result.error);
+        logError('Admin', new Error(result.error || 'Unknown error'), { operation: 'saveTicketSettings' });
         // Show the specific error message from the database
         toast({
           title: t("error"),
@@ -435,10 +427,10 @@ const Admin = () => {
         });
       }
     } catch (error: any) {
-      console.error('[Admin] Exception saving ticket settings:', error);
+      logError('Admin', error, { operation: 'saveTicketSettings' });
       toast({
         title: t("error"),
-        description: error?.message || t("failedToSaveTicketSettings"),
+        description: formatSupabaseError(error) || t("failedToSaveTicketSettings"),
         variant: "destructive",
       });
     }
@@ -457,7 +449,7 @@ const Admin = () => {
       console.error('[Admin] Error loading about page data:', error);
       toast({
         title: t("error"),
-        description: error?.message || t("failedToLoadAboutPageData"),
+        description: formatSupabaseError(error) || t("failedToLoadAboutPageData"),
         variant: "destructive",
       });
     } finally {
@@ -472,10 +464,10 @@ const Admin = () => {
       // Reload data to get updated content
       await loadAboutPageData();
     } catch (error: any) {
-      console.error('[Admin] Error saving about page content:', error);
+      logError('Admin', error, { operation: 'saveAboutPageContent' });
       toast({
         title: t("error"),
-        description: error?.message || error?.details || t("failedToSaveAboutPageContent"),
+        description: formatSupabaseError(error) || t("failedToSaveAboutPageContent"),
         variant: "destructive",
       });
     }
@@ -484,25 +476,29 @@ const Admin = () => {
   const handleSaveEvent = async (eventData: Omit<DatabaseEvent, 'id'>) => {
     try {
       if (editingEvent) {
-        console.log('[Admin] Updating event:', editingEvent.id);
+        if (import.meta.env.DEV) {
+          console.log('[Admin] Updating event:', editingEvent.id);
+        }
         const { error } = await supabase
           .from('events')
           .update(eventData)
           .eq('id', editingEvent.id);
         
         if (error) {
-          console.error('[Admin] Error updating event:', error);
+          logError('Admin', error, { operation: 'updateEvent', eventId: editingEvent.id });
           throw error;
         }
         toast({ title: t("eventUpdatedSuccessfully") });
       } else {
-        console.log('[Admin] Creating new event');
+        if (import.meta.env.DEV) {
+          console.log('[Admin] Creating new event');
+        }
         const { error } = await supabase
           .from('events')
           .insert([eventData]);
         
         if (error) {
-          console.error('[Admin] Error creating event:', error);
+          logError('Admin', error, { operation: 'createEvent' });
           throw error;
         }
         toast({ title: t("eventCreatedSuccessfully") });
@@ -512,10 +508,10 @@ const Admin = () => {
       setEditingEvent(null);
       setIsCreateOpen(false);
     } catch (error: any) {
-      console.error('[Admin] Error saving event:', error);
+      logError('Admin', error, { operation: 'saveEvent' });
       toast({
         title: t("error"),
-        description: error?.message || t("failedToSaveEvent"),
+        description: formatSupabaseError(error) || t("failedToSaveEvent"),
         variant: "destructive",
       });
     }
@@ -525,23 +521,25 @@ const Admin = () => {
     if (!confirm(t("areYouSureDeleteEvent"))) return;
     
     try {
-      console.log('[Admin] Deleting event:', id);
+      if (import.meta.env.DEV) {
+        console.log('[Admin] Deleting event:', id);
+      }
       const { error } = await supabase
         .from('events')
         .delete()
         .eq('id', id);
       
       if (error) {
-        console.error('[Admin] Error deleting event:', error);
+        logError('Admin', error, { operation: 'deleteEvent', eventId: id });
         throw error;
       }
       toast({ title: t("eventDeletedSuccessfully") });
       loadEvents();
     } catch (error: any) {
-      console.error('[Admin] Error deleting event:', error);
+      logError('Admin', error, { operation: 'deleteEvent', eventId: id });
       toast({
         title: t("error"),
-        description: error?.message || t("failedToDeleteEvent"),
+        description: formatSupabaseError(error) || t("failedToDeleteEvent"),
         variant: "destructive",
       });
     }
@@ -556,7 +554,7 @@ const Admin = () => {
         .eq('id', id);
       
       if (error) {
-        console.error('[Admin] Error toggling event visibility:', error);
+        logError('Admin', error, { operation: 'toggleEventVisibility', eventId: id });
         throw error;
       }
       toast({
@@ -564,10 +562,10 @@ const Admin = () => {
       });
       loadEvents();
     } catch (error: any) {
-      console.error('[Admin] Error toggling event visibility:', error);
+      logError('Admin', error, { operation: 'toggleEventVisibility', eventId: id });
       toast({
         title: t("error"),
-        description: error?.message || t("failedToUpdateEventVisibility"),
+        description: formatSupabaseError(error) || t("failedToUpdateEventVisibility"),
         variant: "destructive",
       });
     }
@@ -590,7 +588,7 @@ const Admin = () => {
         .filter('years', 'cs', `{${year}}`);
       
       if (error) {
-        console.error('[Admin] Error toggling year visibility:', error);
+        logError('Admin', error, { operation: 'toggleYearVisibility', year });
         throw error;
       }
       toast({
@@ -598,10 +596,10 @@ const Admin = () => {
       });
       loadEvents();
     } catch (error: any) {
-      console.error('[Admin] Error toggling year visibility:', error);
+      logError('Admin', error, { operation: 'toggleYearVisibility', year });
       toast({
         title: t("error"),
-        description: error?.message || "Failed to update year visibility",
+        description: formatSupabaseError(error) || "Failed to update year visibility",
         variant: "destructive",
       });
     }
@@ -610,25 +608,29 @@ const Admin = () => {
   const handleSaveFAQ = async (faqData: Omit<FAQItem, 'id'>) => {
     try {
       if (editingFAQ) {
-        console.log('[Admin] Updating FAQ:', editingFAQ.id);
+        if (import.meta.env.DEV) {
+          console.log('[Admin] Updating FAQ:', editingFAQ.id);
+        }
         const { error } = await supabase
           .from('faqs')
           .update(faqData)
           .eq('id', editingFAQ.id);
         
         if (error) {
-          console.error('[Admin] Error updating FAQ:', error);
+          logError('Admin', error, { operation: 'updateFAQ', faqId: editingFAQ.id });
           throw error;
         }
         toast({ title: t("faqUpdatedSuccessfully") });
       } else {
-        console.log('[Admin] Creating new FAQ');
+        if (import.meta.env.DEV) {
+          console.log('[Admin] Creating new FAQ');
+        }
         const { error } = await supabase
           .from('faqs')
           .insert([faqData]);
         
         if (error) {
-          console.error('[Admin] Error creating FAQ:', error);
+          logError('Admin', error, { operation: 'createFAQ' });
           throw error;
         }
         toast({ title: t("faqCreatedSuccessfully") });
@@ -638,10 +640,10 @@ const Admin = () => {
       setEditingFAQ(null);
       setIsFAQCreateOpen(false);
     } catch (error: any) {
-      console.error('[Admin] Error saving FAQ:', error);
+      logError('Admin', error, { operation: 'saveFAQ' });
       toast({
         title: t("error"),
-        description: error?.message || t("failedToSaveFAQ"),
+        description: formatSupabaseError(error) || t("failedToSaveFAQ"),
         variant: "destructive",
       });
     }
@@ -651,23 +653,25 @@ const Admin = () => {
     if (!confirm(t("areYouSureDeleteFAQ"))) return;
     
     try {
-      console.log('[Admin] Deleting FAQ:', id);
+      if (import.meta.env.DEV) {
+        console.log('[Admin] Deleting FAQ:', id);
+      }
       const { error } = await supabase
         .from('faqs')
         .delete()
         .eq('id', id);
       
       if (error) {
-        console.error('[Admin] Error deleting FAQ:', error);
+        logError('Admin', error, { operation: 'deleteFAQ', faqId: id });
         throw error;
       }
       toast({ title: t("faqDeletedSuccessfully") });
       loadFAQs();
     } catch (error: any) {
-      console.error('[Admin] Error deleting FAQ:', error);
+      logError('Admin', error, { operation: 'deleteFAQ', faqId: id });
       toast({
         title: t("error"),
-        description: error?.message || t("failedToDeleteFAQ"),
+        description: formatSupabaseError(error) || t("failedToDeleteFAQ"),
         variant: "destructive",
       });
     }
@@ -682,18 +686,18 @@ const Admin = () => {
         .eq('id', id);
       
       if (error) {
-        console.error('[Admin] Error toggling FAQ visibility:', error);
+        logError('Admin', error, { operation: 'toggleFAQVisibility', faqId: id });
         throw error;
       }
-      toast({ 
+      toast({
         title: currentVisibility ? t("faqHiddenFromPublic") : t("faqMadeVisibleToPublic") 
       });
       loadFAQs();
     } catch (error: any) {
-      console.error('[Admin] Error toggling FAQ visibility:', error);
+      logError('Admin', error, { operation: 'toggleFAQVisibility', faqId: id });
       toast({
         title: t("error"),
-        description: error?.message || t("failedToUpdateFAQVisibility"),
+        description: formatSupabaseError(error) || t("failedToUpdateFAQVisibility"),
         variant: "destructive",
       });
     }
@@ -1513,10 +1517,10 @@ const Admin = () => {
                                             .eq('id', purchase.id);
 
                                           if (error) {
-                                            console.error('[Admin] Error updating checked flag:', error);
+                                            logError('Admin', error, { operation: 'updateCheckedFlag', purchaseId: purchase.id });
                                             toast({
                                               title: t("error"),
-                                              description: error.message || t("failedToUpdateCheckedState"),
+                                              description: formatSupabaseError(error) || t("failedToUpdateCheckedState"),
                                               variant: "destructive",
                                             });
                                           } else {
@@ -1528,10 +1532,10 @@ const Admin = () => {
                                             );
                                           }
                                         } catch (err: any) {
-                                          console.error('[Admin] Exception updating checked flag:', err);
+                                          logError('Admin', err, { operation: 'updateCheckedFlag', purchaseId: purchase.id });
                                           toast({
                                             title: t("error"),
-                                            description: err?.message || t("failedToUpdateCheckedState"),
+                                            description: formatSupabaseError(err) || t("failedToUpdateCheckedState"),
                                             variant: "destructive",
                                           });
                                         }
@@ -1645,10 +1649,10 @@ const Admin = () => {
                                               .eq('id', purchase.id);
 
                                             if (error) {
-                                              console.error('[Admin] Error updating checked flag:', error);
+                                              logError('Admin', error, { operation: 'updateCheckedFlag', purchaseId: purchase.id });
                                               toast({
                                                 title: t("error"),
-                                                description: error.message || t("failedToUpdateCheckedState"),
+                                                description: formatSupabaseError(error) || t("failedToUpdateCheckedState"),
                                                 variant: "destructive",
                                               });
                                             } else {
@@ -1665,7 +1669,7 @@ const Admin = () => {
                                               }
                                             }
                                           } catch (err: any) {
-                                            console.error('[Admin] Exception updating checked flag:', err);
+                                            logError('Admin', err, { operation: 'updateCheckedFlag', purchaseId: purchase.id });
                                             toast({
                                               title: t("error"),
                                               description: err?.message || t("failedToUpdateCheckedState"),
@@ -2531,6 +2535,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         abbau: "",
         aufbau: "",
         awareness: "",
+        tech: "",
       };
       (Object.keys(newLimitValues) as RoleKey[]).forEach((role) => {
         const field = limitFieldByRole[role];
@@ -2555,6 +2560,8 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         aufbau_normal: "",
         awareness_early: "",
         awareness_normal: "",
+        tech_early: "",
+        tech_normal: "",
       };
       (Object.keys(priceFieldByRole) as RoleKey[]).forEach((role) => {
         const fields = priceFieldByRole[role];
@@ -2975,7 +2982,7 @@ const AboutPageForm = ({ onSaveContent, initialContent, photos, onPhotosChange }
     } catch (error: any) {
       toast({
         title: t("error"),
-        description: error?.message || t("failedToUploadPhoto"),
+        description: formatSupabaseError(error) || t("failedToUploadPhoto"),
         variant: "destructive",
       });
     } finally {
@@ -2993,7 +3000,7 @@ const AboutPageForm = ({ onSaveContent, initialContent, photos, onPhotosChange }
     } catch (error: any) {
       toast({
         title: t("error"),
-        description: error?.message || t("failedToUpdatePhoto"),
+        description: formatSupabaseError(error) || t("failedToUpdatePhoto"),
         variant: "destructive",
       });
     }
@@ -3009,7 +3016,7 @@ const AboutPageForm = ({ onSaveContent, initialContent, photos, onPhotosChange }
     } catch (error: any) {
       toast({
         title: t("error"),
-        description: error?.message || t("failedToDeletePhoto"),
+        description: formatSupabaseError(error) || t("failedToDeletePhoto"),
         variant: "destructive",
       });
     }
