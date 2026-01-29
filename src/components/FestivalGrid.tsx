@@ -303,8 +303,8 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
     return processedEvents;
   }, [events]);
 
-  // Get event type color matching the list view styling
-  const getEventTypeColor = (type: string): string => {
+  // Get event type color matching the list view styling - memoized
+  const getEventTypeColor = useCallback((type: string): string => {
     switch (type) {
       case 'dj':
         return 'rgba(233,30,99,0.9)'; // Hot pink
@@ -319,7 +319,19 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       default:
         return 'rgba(103,58,183,0.9)';
     }
-  };
+  }, []);
+
+  // Get event type label - memoized
+  const getEventTypeLabel = useCallback((type: string): string => {
+    const typeLabels: Record<string, string> = {
+      'dj': 'DJ',
+      'live': 'Konzert',
+      'performance': 'Performance',
+      'workshop': 'Workshop',
+      'interaktiv': 'Interaktiv'
+    };
+    return typeLabels[type] || type.toUpperCase();
+  }, []);
 
   // Helper function to calculate responsive text size based on card dimensions and title length
   const getTextSizeClass = (duration: number, titleLength: number, heightInPixels: number): string => {
@@ -366,16 +378,6 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
     return 4;
   };
 
-  const getEventTypeLabel = (type: string) => {
-    const typeLabels: Record<string, string> = {
-      'dj': 'DJ',
-      'live': 'Konzert',
-      'performance': 'Performance',
-      'workshop': 'Workshop',
-      'interaktiv': 'Interaktiv'
-    };
-    return typeLabels[type] || type.toUpperCase();
-  };
 
   // Smooth zoom interpolation
   useEffect(() => {
@@ -981,8 +983,6 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       )}
       
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Quantico:wght@400;700&display=swap');
-        
         .festival-grid-container {
           font-family: 'Quantico', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
           color: white;

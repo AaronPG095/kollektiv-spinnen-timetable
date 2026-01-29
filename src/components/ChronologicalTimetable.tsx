@@ -2,6 +2,7 @@ import { Clock, MapPin, Music, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Event } from "@/components/EventCard";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useMemo } from "react";
 
 interface ChronologicalTimetableProps {
   events: Event[];
@@ -71,40 +72,46 @@ export const ChronologicalTimetable = ({
         return 'rgba(103,58,183,0.9)';
     }
   };
-  // Filter events
-  const filteredEvents = events.filter(event => {
-    const matchesDay = selectedDay === "Alle" || event.day === selectedDay;
-    const matchesVenue = selectedVenues.length === 0 || selectedVenues.includes(event.venue);
-    const matchesEventType = selectedEventTypes.length === 0 || selectedEventTypes.includes(event.type);
-    const matchesSearch = searchQuery === "" || 
-      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.description?.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filter and group events - memoized for performance
+  const eventsByDay = useMemo(() => {
+    const searchLower = searchQuery.toLowerCase();
     
-    return matchesDay && matchesVenue && matchesEventType && matchesSearch;
-  });
-
-  // Group events by day, preserving order
-  const eventsByDay = filteredEvents.reduce((acc, event) => {
-    if (!acc[event.day]) {
-      acc[event.day] = [];
-    }
-    acc[event.day].push(event);
-    return acc;
-  }, {} as Record<string, Event[]>);
-
-  // Sort events within each day by time
-  Object.keys(eventsByDay).forEach(day => {
-    eventsByDay[day].sort((a, b) => {
-      const timeA = a.time.split(' - ')[0];
-      const timeB = b.time.split(' - ')[0];
-      return timeA.localeCompare(timeB);
+    // Filter events with optimized order (most selective first)
+    const filtered = events.filter(event => {
+      if (selectedDay !== "Alle" && event.day !== selectedDay) return false;
+      if (selectedVenues.length > 0 && !selectedVenues.includes(event.venue)) return false;
+      if (selectedEventTypes.length > 0 && !selectedEventTypes.includes(event.type)) return false;
+      if (searchLower && !event.title.toLowerCase().includes(searchLower) &&
+          !(event.description && event.description.toLowerCase().includes(searchLower))) return false;
+      return true;
     });
-  });
+
+    // Group events by day
+    const grouped = filtered.reduce((acc, event) => {
+      if (!acc[event.day]) {
+        acc[event.day] = [];
+      }
+      acc[event.day].push(event);
+      return acc;
+    }, {} as Record<string, Event[]>);
+
+    // Sort events within each day by time
+    Object.keys(grouped).forEach(day => {
+      grouped[day].sort((a, b) => {
+        const timeA = a.time.split(' - ')[0];
+        const timeB = b.time.split(' - ')[0];
+        return timeA.localeCompare(timeB);
+      });
+    });
+
+    return grouped;
+  }, [events, selectedDay, selectedVenues, selectedEventTypes, searchQuery]);
 
   const dayOrder = ["Freitag", "Samstag", "Sonntag"];
   const sortedDays = dayOrder.filter(day => eventsByDay[day]);
+  const totalFilteredEvents = Object.values(eventsByDay).flat().length;
 
-  if (filteredEvents.length === 0) {
+  if (totalFilteredEvents === 0) {
     return (
       <div className="text-center text-muted-foreground py-12">
         <p>{t('noEvents')}</p>

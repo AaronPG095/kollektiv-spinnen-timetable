@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { formatSupabaseError, logError } from '@/lib/errorHandler';
+import { cache } from '@/lib/cache';
 
 export interface AboutPageContent {
   id: string;
@@ -23,8 +24,18 @@ export interface AboutPagePhoto {
 
 const DEFAULT_CONTENT_ID = '00000000-0000-0000-0000-000000000002';
 
+const CONTENT_CACHE_KEY = 'about_page_content';
+const PHOTOS_CACHE_KEY = 'about_page_photos';
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
 export const getAboutPageContent = async (): Promise<AboutPageContent | null> => {
   try {
+    // Check cache first
+    const cached = cache.get<AboutPageContent | null>(CONTENT_CACHE_KEY);
+    if (cached !== null) {
+      return cached;
+    }
+
     const { data, error } = await supabase
       .from('about_page_content')
       .select('*')
@@ -35,6 +46,7 @@ export const getAboutPageContent = async (): Promise<AboutPageContent | null> =>
       logError('AboutPage', error, { operation: 'getAboutPageContent' });
       // PGRST116 means no row found - return null as this is a valid state (content not set yet)
       if (error.code === 'PGRST116') {
+        cache.set(CONTENT_CACHE_KEY, null, CACHE_TTL);
         return null;
       }
       // 42P01 means table doesn't exist - provide helpful error message
@@ -47,6 +59,8 @@ export const getAboutPageContent = async (): Promise<AboutPageContent | null> =>
       throw new Error(formatSupabaseError(error));
     }
 
+    // Cache the result
+    cache.set(CONTENT_CACHE_KEY, data, CACHE_TTL);
     return data;
   } catch (error) {
     logError('AboutPage', error, { operation: 'getAboutPageContent' });
@@ -78,6 +92,9 @@ export const updateAboutPageContent = async (content: Partial<AboutPageContent>)
       throw new Error(formatSupabaseError(error));
     }
 
+    // Invalidate cache on update
+    cache.delete(CONTENT_CACHE_KEY);
+
     return true;
   } catch (error: any) {
     logError('AboutPage', error, { operation: 'updateAboutPageContent', content });
@@ -87,6 +104,12 @@ export const updateAboutPageContent = async (content: Partial<AboutPageContent>)
 
 export const getAboutPagePhotos = async (): Promise<AboutPagePhoto[]> => {
   try {
+    // Check cache first
+    const cached = cache.get<AboutPagePhoto[]>(PHOTOS_CACHE_KEY);
+    if (cached) {
+      return cached;
+    }
+
     const { data, error } = await supabase
       .from('about_page_photos')
       .select('*')
@@ -104,7 +127,10 @@ export const getAboutPagePhotos = async (): Promise<AboutPagePhoto[]> => {
       throw new Error(formatSupabaseError(error));
     }
 
-    return data || [];
+    const photos = data || [];
+    // Cache the result
+    cache.set(PHOTOS_CACHE_KEY, photos, CACHE_TTL);
+    return photos;
   } catch (error) {
     logError('AboutPage', error, { operation: 'getAboutPagePhotos' });
     throw error instanceof Error ? error : new Error(formatSupabaseError(error));
@@ -165,6 +191,9 @@ export const uploadAboutPagePhoto = async (
       throw new Error('Photo record was not created');
     }
 
+    // Invalidate cache on photo upload
+    cache.delete(PHOTOS_CACHE_KEY);
+
     return data;
   } catch (error) {
     logError('AboutPage', error, { operation: 'uploadAboutPagePhoto', fileName: file.name });
@@ -189,6 +218,9 @@ export const updateAboutPagePhoto = async (
       logError('AboutPage', error, { operation: 'updateAboutPagePhoto', id, updates });
       throw new Error(formatSupabaseError(error));
     }
+
+    // Invalidate cache on photo update
+    cache.delete(PHOTOS_CACHE_KEY);
   } catch (error) {
     logError('AboutPage', error, { operation: 'updateAboutPagePhoto', id, updates });
     throw error instanceof Error ? error : new Error(formatSupabaseError(error));
@@ -217,6 +249,9 @@ export const deleteAboutPagePhoto = async (id: string, imagePath: string): Promi
       logError('AboutPage', error, { operation: 'deleteAboutPagePhoto', id });
       throw new Error(formatSupabaseError(error));
     }
+
+    // Invalidate cache on photo deletion
+    cache.delete(PHOTOS_CACHE_KEY);
   } catch (error) {
     logError('AboutPage', error, { operation: 'deleteAboutPagePhoto', id, imagePath });
     throw error instanceof Error ? error : new Error(formatSupabaseError(error));

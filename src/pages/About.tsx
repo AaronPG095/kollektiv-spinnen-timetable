@@ -23,7 +23,9 @@ const About = () => {
       setContent(pageContent);
       setPhotos(pagePhotos);
     } catch (error: any) {
-      console.error('[About] Error loading data:', error);
+      if (import.meta.env.DEV) {
+        console.error('[About] Error loading data:', error);
+      }
       // Set empty state on error - page will still render without content
       setContent(null);
       setPhotos([]);
@@ -34,9 +36,7 @@ const About = () => {
 
   useEffect(() => {
     loadData();
-    // Refresh data every 30 seconds to pick up admin changes
-    const interval = setInterval(loadData, 30000);
-    return () => clearInterval(interval);
+    // Cache handles TTL, no need for polling - data will refresh on next visit or manual refresh
   }, []);
 
   const getSizeClasses = (size: string) => {
@@ -128,6 +128,9 @@ const About = () => {
                     <img
                       src={photo.image_url}
                       alt={photo.caption || "Festival photo"}
+                      loading="lazy"
+                      width={photo.size === 'small' ? 400 : photo.size === 'medium' ? 600 : photo.size === 'large' ? 800 : 1200}
+                      height={photo.size === 'small' ? 300 : photo.size === 'medium' ? 400 : photo.size === 'large' ? 600 : 500}
                       className={cn(
                         "w-full rounded-lg object-cover",
                         photo.size === 'small' && "h-48",

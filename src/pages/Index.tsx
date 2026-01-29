@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { FestivalHeader } from "@/components/FestivalHeader";
 import { ChronologicalTimetable } from "@/components/ChronologicalTimetable";
 import FestivalGrid from "@/components/FestivalGrid";
@@ -13,11 +13,13 @@ import { Clock, Calendar, MapPin, Instagram, Youtube, ExternalLink, Music, Headp
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Input } from "@/components/ui/input";
 import { Footer } from "@/components/Footer";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const Index = () => {
   const { t, language } = useLanguage();
   const { events } = useEvents();
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedDay, setSelectedDay] = useState("Alle");
   const [selectedVenues, setSelectedVenues] = useState<string[]>([]);
   const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([]);
@@ -63,16 +65,20 @@ const Index = () => {
     }
   };
 
-  // Filter events for both views
-  const filteredEvents = events.filter((event) => {
-    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesDay = selectedDay === "Alle" || event.day === selectedDay;
-    const matchesVenue = selectedVenues.length === 0 || selectedVenues.includes(event.venue);
-    const matchesEventType = selectedEventTypes.length === 0 || selectedEventTypes.includes(event.type);
-    
-    return matchesSearch && matchesDay && matchesVenue && matchesEventType;
-  });
+  // Filter events for both views - memoized with optimized filter order (most selective first)
+  const filteredEvents = useMemo(() => {
+    const searchLower = debouncedSearchQuery.toLowerCase();
+    return events.filter((event) => {
+      // Most selective filters first for better performance
+      if (selectedDay !== "Alle" && event.day !== selectedDay) return false;
+      if (selectedVenues.length > 0 && !selectedVenues.includes(event.venue)) return false;
+      if (selectedEventTypes.length > 0 && !selectedEventTypes.includes(event.type)) return false;
+      if (searchLower && !event.title.toLowerCase().includes(searchLower) &&
+          !(event.description && event.description.toLowerCase().includes(searchLower))) return false;
+      
+      return true;
+    });
+  }, [events, debouncedSearchQuery, selectedDay, selectedVenues, selectedEventTypes]);
 
   const days = [
     { key: "Alle", label: t('allDays') },

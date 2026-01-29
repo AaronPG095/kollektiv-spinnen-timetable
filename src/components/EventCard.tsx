@@ -1,3 +1,4 @@
+import React from "react";
 import { Clock, MapPin, Music, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +26,7 @@ interface EventCardProps {
   onClick: (event: Event) => void;
 }
 
-export const EventCard = ({ event, onClick }: EventCardProps) => {
+export const EventCard = React.memo(({ event, onClick }: EventCardProps) => {
   const { t, language } = useLanguage();
   
   const venueConfig = {
@@ -134,4 +135,4 @@ export const EventCard = ({ event, onClick }: EventCardProps) => {
       </div>
     </Card>
   );
-};
+});
