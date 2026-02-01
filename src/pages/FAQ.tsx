@@ -228,7 +228,7 @@ const FAQ = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {Object.entries(subcategories).map(([subcategory, subcategoryFaqs]) => (
-                      <div key={subcategory}>
+                      <div key={subcategory} className="space-y-3">
                         {subcategory !== t('allgemein') && (
                           <h3 className="text-lg font-semibold mb-3 text-primary">
                             {subcategory}
