@@ -119,6 +119,52 @@ export const validateAndSanitizeEmail = (email: string): { valid: boolean; sanit
 };
 
 /**
+ * Sanitizes phone number input
+ */
+export const sanitizePhone = (phone: string): string => {
+  // Remove all non-digit characters except +, spaces, hyphens, and parentheses
+  return phone
+    .trim()
+    .replace(/[^\d+\s\-()]/g, '')
+    .slice(0, 30); // Limit length
+};
+
+/**
+ * Validates and sanitizes phone number input
+ * Accepts international formats with +, spaces, hyphens, and parentheses
+ * Phone number is optional - empty string is valid
+ */
+export const validateAndSanitizePhone = (phone: string): { valid: boolean; sanitized: string; error?: string } => {
+  const trimmed = phone.trim();
+  
+  // Phone number is optional, so empty string is valid
+  if (!trimmed) {
+    return { valid: true, sanitized: '' };
+  }
+  
+  // Remove all formatting characters for validation
+  const digitsOnly = trimmed.replace(/[^\d+]/g, '');
+  
+  // Check minimum length (at least 7 digits for a valid phone number)
+  if (digitsOnly.replace('+', '').length < 7) {
+    return { valid: false, sanitized: trimmed, error: 'Phone number must contain at least 7 digits' };
+  }
+  
+  // Check maximum length (reasonable limit for international numbers)
+  if (digitsOnly.length > 20) {
+    return { valid: false, sanitized: trimmed.slice(0, 30), error: 'Phone number is too long (maximum 20 digits)' };
+  }
+  
+  // Basic format validation - should start with + or digit
+  if (!/^[\d+]/.test(trimmed)) {
+    return { valid: false, sanitized: trimmed, error: 'Phone number must start with a digit or +' };
+  }
+  
+  const sanitized = sanitizePhone(trimmed);
+  return { valid: true, sanitized };
+};
+
+/**
  * Validates URL format
  */
 export const isValidUrl = (url: string): boolean => {

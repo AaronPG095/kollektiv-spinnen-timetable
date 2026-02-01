@@ -1957,6 +1957,9 @@ const Admin = () => {
                                     </span>
                                   </div>
                                   <p className="text-sm text-muted-foreground">{purchase.purchaser_email}</p>
+                                  {purchase.phone_number && (
+                                    <p className="text-sm text-muted-foreground">{t("phoneNumber")}: {purchase.phone_number}</p>
+                                  )}
                                   <p className="text-sm">
                                     <span className="font-medium">{purchase.contribution_type}</span> - {purchase.role} - {purchase.price.toFixed(2)}€
                                   </p>
@@ -2089,6 +2092,9 @@ const Admin = () => {
                                       </span>
                                     </div>
                                     <p className="text-sm text-muted-foreground">{purchase.purchaser_email}</p>
+                                    {purchase.phone_number && (
+                                      <p className="text-sm text-muted-foreground">{t("phoneNumber")}: {purchase.phone_number}</p>
+                                    )}
                                     <p className="text-sm">
                                       <span className="font-medium">{purchase.contribution_type}</span> - {purchase.role} - {purchase.price.toFixed(2)}€
                                     </p>
@@ -2225,6 +2231,9 @@ const Admin = () => {
                                       </span>
                                     </div>
                                     <p className="text-sm text-muted-foreground">{purchase.purchaser_email}</p>
+                                    {purchase.phone_number && (
+                                      <p className="text-sm text-muted-foreground">{t("phoneNumber")}: {purchase.phone_number}</p>
+                                    )}
                                     <p className="text-sm">
                                       <span className="font-medium">{purchase.contribution_type}</span> - {purchase.role} - {purchase.price.toFixed(2)}€
                                     </p>
