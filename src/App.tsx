@@ -10,11 +10,13 @@ import { Loader2 } from "lucide-react";
 // Lazy load all route components for code splitting
 const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Admin = lazy(() => import("./pages/Admin"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const Tickets = lazy(() => import("./pages/Soli-Beitrag"));
 const TicketCheckout = lazy(() => import("./pages/Soli-BeitragCheckout"));
 const About = lazy(() => import("./pages/About"));
+const Profile = lazy(() => import("./pages/Profile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading fallback component
@@ -39,6 +41,7 @@ const App = () => {
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
+                  <Route path="/auth/reset-password" element={<ResetPassword />} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/faq" element={<FAQ />} />
                   {/* Soli-Beitrag routes */}
@@ -48,6 +51,7 @@ const App = () => {
                   <Route path="/tickets" element={<Navigate to="/soli-beitrag" replace />} />
                   <Route path="/tickets/checkout" element={<Navigate to="/soli-beitrag/checkout" replace />} />
                   <Route path="/about" element={<About />} />
+                  <Route path="/profile" element={<Profile />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
