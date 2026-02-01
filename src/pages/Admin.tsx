@@ -70,7 +70,7 @@ interface UserWithAdminStatus {
 }
 
 const Admin = () => {
-  const { user, isAdmin, isSuperAdmin, signOut, loading: authLoading } = useAuth();
+  const { user, isAdmin, isSuperAdmin, signOut, loading: authLoading, resetPasswordForEmail } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -110,6 +110,8 @@ const Admin = () => {
   const [usersSearchQuery, setUsersSearchQuery] = useState("");
   const [removeAdminDialogOpen, setRemoveAdminDialogOpen] = useState(false);
   const [userToModify, setUserToModify] = useState<UserWithAdminStatus | null>(null);
+  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
+  const [userToResetPassword, setUserToResetPassword] = useState<UserWithAdminStatus | null>(null);
 
   // Derived collections for ticket views
   // "Pending Soli-Contributions" tab shows: confirmed but unchecked purchases
@@ -962,6 +964,45 @@ const Admin = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+  };
+
+  // Reset password for user (admin function)
+  const handleResetPassword = async (targetUser: UserWithAdminStatus) => {
+    if (!targetUser.email) {
+      toast({
+        title: t("error"),
+        description: t("invalidEmail"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const result = await resetPasswordForEmail(targetUser.email);
+      
+      if (result?.error) {
+        logError('Admin', result.error, { operation: 'resetPassword', userId: targetUser.id, email: targetUser.email });
+        toast({
+          title: t("error"),
+          description: result.error.message || t("unexpectedError"),
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: t("adminResetPasswordSent").replace('{email}', targetUser.email),
+        });
+      }
+    } catch (error: any) {
+      logError('Admin', error, { operation: 'resetPassword', userId: targetUser.id });
+      toast({
+        title: t("error"),
+        description: error?.message || t("unexpectedError"),
+        variant: "destructive",
+      });
+    } finally {
+      setResetPasswordDialogOpen(false);
+      setUserToResetPassword(null);
+    }
   };
 
   // Compute available years from events
@@ -2271,7 +2312,7 @@ const Admin = () => {
                             </div>
                           </div>
                           {isSuperAdmin && (
-                            <div className="flex gap-2 flex-shrink-0">
+                            <div className="flex gap-2 flex-shrink-0 flex-wrap">
                               {user.isAdmin ? (
                                 <Button
                                   variant="destructive"
@@ -2294,6 +2335,20 @@ const Admin = () => {
                                 >
                                   <Shield className="h-4 w-4" />
                                   {t("addAdminPrivileges")}
+                                </Button>
+                              )}
+                              {user.email && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setUserToResetPassword(user);
+                                    setResetPasswordDialogOpen(true);
+                                  }}
+                                  className="gap-2"
+                                >
+                                  <UsersIcon className="h-4 w-4" />
+                                  {t("adminResetPassword")}
                                 </Button>
                               )}
                             </div>
@@ -2373,6 +2428,42 @@ const Admin = () => {
               }}
             >
               {t("removeAdminPrivileges")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Confirmation Dialog */}
+      <Dialog open={resetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("adminResetPassword")}</DialogTitle>
+            <DialogDescription>
+              {userToResetPassword?.email 
+                ? t("adminResetPasswordConfirm").replace('{email}', userToResetPassword.email)
+                : t("adminResetPasswordConfirm").replace('{email}', 'this user')
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setResetPasswordDialogOpen(false);
+                setUserToResetPassword(null);
+              }}
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => {
+                if (userToResetPassword) {
+                  handleResetPassword(userToResetPassword);
+                }
+              }}
+            >
+              {t("sendResetEmail")}
             </Button>
           </DialogFooter>
         </DialogContent>

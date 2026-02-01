@@ -14,12 +14,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailTouched, setEmailTouched] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPasswordForEmail } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -51,6 +52,38 @@ const Auth = () => {
         description: emailValidation.error || t("pleaseEnterValidEmail"),
         variant: "destructive",
       });
+      return;
+    }
+
+    // Handle forgot password flow
+    if (isForgotPassword) {
+      setLoading(true);
+      try {
+        const sanitizedEmail = emailValidation.sanitized;
+        const result = await resetPasswordForEmail(sanitizedEmail);
+        
+        if (result?.error) {
+          toast({
+            title: t("error"),
+            description: result.error.message || t("unexpectedError"),
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: t("resetEmailSent"),
+            description: t("resetEmailSentDesc"),
+          });
+          setIsForgotPassword(false);
+        }
+      } catch (error: any) {
+        toast({
+          title: t("error"),
+          description: error?.message || t("unexpectedError"),
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -156,10 +189,13 @@ const Auth = () => {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl bg-gradient-primary bg-clip-text text-transparent">
-              {isLogin ? t("signIn") : t("signUp")}
+              {isForgotPassword ? t("forgotPassword") : (isLogin ? t("signIn") : t("signUp"))}
             </CardTitle>
             <CardDescription>
-              {isLogin ? t("welcomeBack") : t("createAccount")}
+              {isForgotPassword 
+                ? t("forgotPasswordDesc")
+                : (isLogin ? t("welcomeBack") : t("createAccount"))
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -187,39 +223,73 @@ const Auth = () => {
                   </Alert>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">{t("password")}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  minLength={6}
-                />
-              </div>
+              {!isForgotPassword && (
+                <div className="space-y-2">
+                  <Label htmlFor="password">{t("password")}</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                    minLength={6}
+                  />
+                  {isLogin && (
+                    <div className="text-right">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsForgotPassword(true);
+                          setPassword('');
+                        }}
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {t("forgotPassword")}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               <Button 
                 type="submit" 
                 className="w-full" 
                 disabled={loading}
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isLogin ? t("signIn") : t("signUp")}
+                {isForgotPassword 
+                  ? t("sendResetEmail")
+                  : (isLogin ? t("signIn") : t("signUp"))
+                }
               </Button>
             </form>
             
             <div className="mt-4 text-center">
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                {isLogin 
-                  ? t("dontHaveAccount")
-                  : t("alreadyHaveAccount")
-                }
-              </button>
+              {isForgotPassword ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotPassword(false);
+                    setEmail('');
+                    setEmailError(null);
+                    setEmailTouched(false);
+                  }}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {t("backToFestival")} / {t("signIn")}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {isLogin 
+                    ? t("dontHaveAccount")
+                    : t("alreadyHaveAccount")
+                  }
+                </button>
+              )}
             </div>
             
             <div className="mt-4 text-center">

@@ -12,6 +12,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  resetPasswordForEmail: (email: string) => Promise<{ error: any }>;
+  updatePassword: (newPassword: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -204,6 +206,51 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     await supabase.auth.signOut();
   };
 
+  const resetPasswordForEmail = async (email: string) => {
+    try {
+      if (import.meta.env.DEV) {
+        console.log('[AuthContext] Sending password reset email to:', email);
+      }
+      const redirectUrl = `${window.location.origin}/auth/reset-password`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+        redirectTo: redirectUrl,
+      });
+      
+      if (error) {
+        logError('AuthContext', error, { operation: 'resetPasswordForEmail', email });
+      } else if (import.meta.env.DEV) {
+        console.log('[AuthContext] Password reset email sent successfully!');
+      }
+      
+      return { error };
+    } catch (err: any) {
+      logError('AuthContext', err, { operation: 'resetPasswordForEmail' });
+      return { error: err };
+    }
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    try {
+      if (import.meta.env.DEV) {
+        console.log('[AuthContext] Updating password');
+      }
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      
+      if (error) {
+        logError('AuthContext', error, { operation: 'updatePassword' });
+      } else if (import.meta.env.DEV) {
+        console.log('[AuthContext] Password updated successfully!');
+      }
+      
+      return { error };
+    } catch (err: any) {
+      logError('AuthContext', err, { operation: 'updatePassword' });
+      return { error: err };
+    }
+  };
+
   const value = {
     user,
     session,
@@ -213,6 +260,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signIn,
     signUp,
     signOut,
+    resetPasswordForEmail,
+    updatePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
