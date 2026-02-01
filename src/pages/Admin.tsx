@@ -66,6 +66,7 @@ interface UserWithAdminStatus {
   full_name: string | null;
   created_at: string;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
 }
 
 const Admin = () => {
@@ -749,8 +750,8 @@ const Admin = () => {
     
     setUsersLoading(true);
     try {
-      // Fetch all profiles, admin roles, and admin emails in parallel
-      const [profilesResult, adminRolesResult, adminEmailsResult] = await Promise.all([
+      // Fetch all profiles, admin roles, super admin roles, and admin emails in parallel
+      const [profilesResult, adminRolesResult, superAdminRolesResult, adminEmailsResult] = await Promise.all([
         supabase
           .from('profiles')
           .select('id, email, full_name, created_at')
@@ -759,6 +760,10 @@ const Admin = () => {
           .from('user_roles')
           .select('user_id')
           .eq('role', 'admin'),
+        supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'super_admin'),
         supabase
           .from('admin_emails')
           .select('email')
@@ -772,6 +777,10 @@ const Admin = () => {
         console.error('[Admin] Error loading admin roles:', adminRolesResult.error);
         throw adminRolesResult.error;
       }
+      if (superAdminRolesResult.error) {
+        console.error('[Admin] Error loading super admin roles:', superAdminRolesResult.error);
+        throw superAdminRolesResult.error;
+      }
       if (adminEmailsResult.error) {
         console.error('[Admin] Error loading admin emails:', adminEmailsResult.error);
         throw adminEmailsResult.error;
@@ -779,6 +788,7 @@ const Admin = () => {
 
       // Create sets for fast lookup
       const adminUserIds = new Set((adminRolesResult.data || []).map(r => r.user_id));
+      const superAdminUserIds = new Set((superAdminRolesResult.data || []).map(r => r.user_id));
       const adminEmailSet = new Set(
         (adminEmailsResult.data || []).map((e: { email: string }) => normalizeEmail(e.email)).filter(Boolean)
       );
@@ -786,13 +796,16 @@ const Admin = () => {
       // Combine data in memory
       const usersWithStatus: UserWithAdminStatus[] = (profilesResult.data || []).map(profile => {
         const normalizedProfileEmail = normalizeEmail(profile.email);
+        const isSuperAdmin = superAdminUserIds.has(profile.id);
         const isAdmin = 
           adminUserIds.has(profile.id) ||
-          (normalizedProfileEmail !== null && adminEmailSet.has(normalizedProfileEmail));
+          (normalizedProfileEmail !== null && adminEmailSet.has(normalizedProfileEmail)) ||
+          isSuperAdmin; // Super admins are also admins
         
         return {
           ...profile,
-          isAdmin
+          isAdmin,
+          isSuperAdmin
         };
       });
 
@@ -2247,6 +2260,11 @@ const Admin = () => {
                               <h3 className="font-semibold text-base md:text-lg break-words">
                                 {user.email || t("userNotFound")}
                               </h3>
+                              {user.isSuperAdmin && (
+                                <Badge variant="default" className="bg-purple-600 hover:bg-purple-700">
+                                  {t("isSuperAdmin")}
+                                </Badge>
+                              )}
                               <Badge variant={user.isAdmin ? "default" : "outline"}>
                                 {user.isAdmin ? t("isAdmin") : t("notAdmin")}
                               </Badge>
