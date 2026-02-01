@@ -189,8 +189,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  // Helper function to get the correct base URL for redirects
+  const getBaseUrl = (): string => {
+    // In production, use VITE_APP_URL if set, otherwise use window.location.origin
+    const appUrl = import.meta.env.VITE_APP_URL;
+    if (appUrl && !import.meta.env.DEV) {
+      // Remove trailing slash if present
+      return appUrl.replace(/\/$/, '');
+    }
+    return window.location.origin;
+  };
+
   const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${getBaseUrl()}/`;
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -211,7 +222,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (import.meta.env.DEV) {
         console.log('[AuthContext] Sending password reset email to:', email);
       }
-      const redirectUrl = `${window.location.origin}/auth/reset-password`;
+      const redirectUrl = `${getBaseUrl()}/auth/reset-password`;
+      if (import.meta.env.DEV) {
+        console.log('[AuthContext] Using redirect URL:', redirectUrl);
+      }
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
         redirectTo: redirectUrl,
       });

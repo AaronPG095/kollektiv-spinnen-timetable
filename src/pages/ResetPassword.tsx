@@ -18,7 +18,8 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
-  const { updatePassword } = useAuth();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const { updatePassword, resetPasswordForEmail } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -29,6 +30,29 @@ const ResetPassword = () => {
     const accessToken = hashParams.get('access_token');
     const type = hashParams.get('type');
     const refreshToken = hashParams.get('refresh_token');
+    
+    // Check for error parameters (expired/invalid OTP)
+    const errorParam = hashParams.get('error');
+    const errorCode = hashParams.get('error_code');
+    const errorDescription = hashParams.get('error_description');
+
+    // Handle error parameters first
+    if (errorParam || errorCode) {
+      setIsValidToken(false);
+      let errorMessage = t("resetLinkInvalid");
+      
+      if (errorCode === 'otp_expired') {
+        errorMessage = t("resetLinkExpired");
+      } else if (errorCode === 'access_denied') {
+        errorMessage = t("resetLinkAccessDenied");
+      } else if (errorDescription) {
+        // Decode URL-encoded error description
+        errorMessage = decodeURIComponent(errorDescription.replace(/\+/g, ' '));
+      }
+      
+      setError(errorMessage);
+      return;
+    }
 
     if (accessToken && type === 'recovery' && refreshToken) {
       // Set the session with the recovery token
@@ -41,9 +65,13 @@ const ResetPassword = () => {
           setIsValidToken(false);
         } else if (data.session) {
           setIsValidToken(true);
+          // Store email for potential reset request
+          if (data.session.user?.email) {
+            setUserEmail(data.session.user.email);
+          }
         } else {
           setIsValidToken(false);
-          setError('Invalid or expired reset token. Please request a new password reset.');
+          setError(t("resetLinkInvalid"));
         }
       });
     } else {
@@ -51,13 +79,16 @@ const ResetPassword = () => {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) {
           setIsValidToken(true);
+          if (session.user?.email) {
+            setUserEmail(session.user.email);
+          }
         } else {
           setIsValidToken(false);
-          setError('Invalid or missing reset token. Please request a new password reset.');
+          setError(t("resetLinkInvalid"));
         }
       });
     }
-  }, []);
+  }, [t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +147,38 @@ const ResetPassword = () => {
     );
   }
 
+  const handleRequestNewReset = async () => {
+    if (userEmail) {
+      setLoading(true);
+      try {
+        const result = await resetPasswordForEmail(userEmail);
+        if (result?.error) {
+          toast({
+            title: t("error"),
+            description: result.error.message || t("unexpectedError"),
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: t("resetEmailSent"),
+            description: t("resetEmailSentDesc"),
+          });
+        }
+      } catch (err: any) {
+        toast({
+          title: t("error"),
+          description: err?.message || t("unexpectedError"),
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Navigate to auth page with forgot password mode
+      navigate('/auth?mode=forgot-password');
+    }
+  };
+
   if (isValidToken === false) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -129,13 +192,21 @@ const ResetPassword = () => {
             <CardContent>
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error || 'Invalid reset link'}</AlertDescription>
+                <AlertDescription>{error || t("resetLinkInvalid")}</AlertDescription>
               </Alert>
-              <div className="mt-4 text-center">
+              <div className="mt-4 space-y-2">
+                <Button
+                  onClick={handleRequestNewReset}
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t("requestNewResetLink")}
+                </Button>
                 <Button
                   variant="ghost"
                   onClick={() => navigate('/auth')}
-                  className="text-sm"
+                  className="w-full text-sm"
                 >
                   {t("backToFestival")} / {t("signIn")}
                 </Button>
