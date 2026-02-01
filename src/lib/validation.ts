@@ -204,3 +204,75 @@ export const validateInteger = (value: string, min?: number, max?: number): { va
   return { valid: true, parsed };
 };
 
+/**
+ * Allowed PayPal domains for payment links
+ */
+const ALLOWED_PAYPAL_DOMAINS = [
+  'paypal.com',
+  'www.paypal.com',
+  'paypal.me',
+  'www.paypal.me'
+];
+
+/**
+ * Validates PayPal payment URL to ensure it's from a trusted PayPal domain
+ * This prevents tampering and ensures only legitimate PayPal URLs are used
+ */
+export const validatePayPalUrl = (url: string | undefined | null): { valid: boolean; sanitized?: string; error?: string } => {
+  // Check if URL is provided
+  if (!url || !url.trim()) {
+    return { 
+      valid: false, 
+      error: 'PayPal payment link is not configured. Please set VITE_PAYPAL_PAYMENT_LINK environment variable.' 
+    };
+  }
+
+  const trimmed = url.trim();
+
+  // Validate URL format
+  let urlObj: URL;
+  try {
+    urlObj = new URL(trimmed);
+  } catch {
+    return { 
+      valid: false, 
+      error: 'Invalid URL format. Please provide a valid PayPal payment link.' 
+    };
+  }
+
+  // Require HTTPS protocol for security
+  if (urlObj.protocol !== 'https:') {
+    return { 
+      valid: false, 
+      error: 'PayPal payment link must use HTTPS protocol for security.' 
+    };
+  }
+
+  // Extract domain (handle both www and non-www)
+  const hostname = urlObj.hostname.toLowerCase();
+  
+  // Check if domain matches whitelist
+  const isAllowedDomain = ALLOWED_PAYPAL_DOMAINS.some(allowedDomain => {
+    // Exact match
+    if (hostname === allowedDomain) {
+      return true;
+    }
+    // Match without www prefix
+    const hostnameWithoutWww = hostname.replace(/^www\./, '');
+    const allowedWithoutWww = allowedDomain.replace(/^www\./, '');
+    return hostnameWithoutWww === allowedWithoutWww;
+  });
+
+  if (!isAllowedDomain) {
+    return { 
+      valid: false, 
+      error: `PayPal payment link must be from a trusted PayPal domain. Allowed domains: ${ALLOWED_PAYPAL_DOMAINS.join(', ')}` 
+    };
+  }
+
+  // Return sanitized URL (using the original trimmed URL)
+  return { 
+    valid: true, 
+    sanitized: trimmed 
+  };
+};

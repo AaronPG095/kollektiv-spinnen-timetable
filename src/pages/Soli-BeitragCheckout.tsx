@@ -18,7 +18,7 @@ import {
   getRemainingEarlyBirdTickets,
   getRemainingNormalTickets 
 } from "@/lib/ticketPurchases";
-import { validateAndSanitizeName, validateAndSanitizeEmail, sanitizeString } from "@/lib/validation";
+import { validateAndSanitizeName, validateAndSanitizeEmail, sanitizeString, validatePayPalUrl } from "@/lib/validation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -86,8 +86,32 @@ const TicketCheckout = () => {
     paidViaPayPal: false,
   });
 
-  // PayPal configuration - can be moved to env or ticket settings
-  const paypalUrl = import.meta.env.VITE_PAYPAL_PAYMENT_LINK || "https://www.paypal.com/pool/9mgYId30SR?sr=ancr";
+  // PayPal URL validation state
+  const [paypalUrlValidation, setPaypalUrlValidation] = useState<{
+    valid: boolean;
+    url?: string;
+    error?: string;
+  }>({ valid: false });
+
+  // Validate PayPal URL on mount
+  useEffect(() => {
+    const envUrl = import.meta.env.VITE_PAYPAL_PAYMENT_LINK;
+    const validation = validatePayPalUrl(envUrl);
+    setPaypalUrlValidation(validation);
+    
+    if (!validation.valid) {
+      toast({
+        title: t("error"),
+        description: validation.error || "PayPal payment link configuration error",
+        variant: "destructive",
+      });
+    }
+  }, [toast, t]);
+
+  // Validated PayPal URL (only use if validation passed)
+  const paypalUrl = paypalUrlValidation.valid && paypalUrlValidation.sanitized 
+    ? paypalUrlValidation.sanitized 
+    : null;
   
   useEffect(() => {
     const loadData = async () => {
@@ -317,6 +341,16 @@ const TicketCheckout = () => {
       toast({
         title: t("error"),
         description: t("missingTicketInformation"),
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check if PayPal URL is valid
+    if (!paypalUrlValidation.valid || !paypalUrl) {
+      toast({
+        title: t("error"),
+        description: paypalUrlValidation.error || "PayPal payment link is not configured correctly",
         variant: "destructive",
       });
       return;
@@ -715,41 +749,53 @@ const TicketCheckout = () => {
                     <QrCode className="h-5 w-5" />
                     {t("payWithPayPal")}
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {t("paypalPaymentInstructions").replace("{amount}", getPrice().toFixed(2))}
-                  </p>
                   
-                  <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-                    {/* QR Code */}
-                    <div className="flex flex-col items-center gap-2 flex-shrink-0">
-                      <div className="w-48 h-48 bg-white rounded-lg border-2 border-border p-4 flex items-center justify-center">
-                        <QRCodeSVG
-                          value={paypalUrl}
-                          size={160}
-                          level="H"
-                          includeMargin={false}
-                          className="w-full h-full"
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground text-center max-w-[192px]">
-                        {t("scanQRCode")}
+                  {!paypalUrlValidation.valid ? (
+                    <Alert variant="destructive" className="border-2 border-destructive/50 dark:border-destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-sm font-semibold">
+                        {paypalUrlValidation.error || "PayPal payment link configuration error"}
+                      </AlertDescription>
+                    </Alert>
+                  ) : paypalUrl ? (
+                    <>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        {t("paypalPaymentInstructions").replace("{amount}", getPrice().toFixed(2))}
                       </p>
-                    </div>
-                    
-                    {/* PayPal Link */}
-                    <div className="flex-1 flex flex-col gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => window.open(paypalUrl, '_blank', 'noopener,noreferrer')}
-                        className="w-full sm:w-auto justify-start gap-2"
-                        title={paypalUrl}
-                      >
-                        <ExternalLink className="h-4 w-4 flex-shrink-0" />
-                        <span>{t("openPayPalPool")}</span>
-                      </Button>
-                    </div>
-                  </div>
+                      
+                      <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
+                        {/* QR Code */}
+                        <div className="flex flex-col items-center gap-2 flex-shrink-0">
+                          <div className="w-48 h-48 bg-white rounded-lg border-2 border-border p-4 flex items-center justify-center">
+                            <QRCodeSVG
+                              value={paypalUrl}
+                              size={160}
+                              level="H"
+                              includeMargin={false}
+                              className="w-full h-full"
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground text-center max-w-[192px]">
+                            {t("scanQRCode")}
+                          </p>
+                        </div>
+                        
+                        {/* PayPal Link */}
+                        <div className="flex-1 flex flex-col gap-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => window.open(paypalUrl, '_blank', 'noopener,noreferrer')}
+                            className="w-full sm:w-auto justify-start gap-2"
+                            title={paypalUrl}
+                          >
+                            <ExternalLink className="h-4 w-4 flex-shrink-0" />
+                            <span>{t("openPayPalPool")}</span>
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
                 </div>
                 
                 {/* Important Warning */}
