@@ -558,64 +558,6 @@ const TicketCheckout = () => {
                   </div>
                 </div>
                 
-                {/* Checklist */}
-                <div className="p-4 bg-background/50 rounded-lg border border-border/30">
-                  <h3 className="font-semibold mb-3">{t("checklist")}</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        id="checklist-1"
-                        checked={checklist.enteredDetails}
-                        onCheckedChange={(checked) => 
-                          setChecklist(prev => ({ ...prev, enteredDetails: checked === true }))
-                        }
-                        className="h-5 w-5"
-                      />
-                      <label
-                        htmlFor="checklist-1"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {t("checklistItem1")}
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        id="checklist-2"
-                        checked={checklist.generatedReference}
-                        onCheckedChange={(checked) => 
-                          setChecklist(prev => ({ ...prev, generatedReference: checked === true }))
-                        }
-                        className="h-5 w-5"
-                      />
-                      <label
-                        htmlFor="checklist-2"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {t("checklistItem2")}
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        id="checklist-3"
-                        checked={checklist.paidViaPayPal}
-                        onCheckedChange={(checked) => 
-                          setChecklist(prev => ({ ...prev, paidViaPayPal: checked === true }))
-                        }
-                        className="h-5 w-5"
-                      />
-                      <label
-                        htmlFor="checklist-3"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {t("checklistItem3")}
-                      </label>
-                    </div>
-                  </div>
-                  <p className="text-sm text-destructive font-semibold mt-4 pt-4 border-2 border-destructive/50 dark:border-destructive rounded-lg p-4">
-                    {t("pleaseFollowChecklist")}
-                  </p>
-                </div>
-                
                 {/* Purchaser Information */}
                 <div className="p-4 bg-background/50 rounded-lg border border-border/30 space-y-4">
                   <h3 className="font-semibold">{t("purchaserInformation")}</h3>
@@ -792,6 +734,65 @@ const TicketCheckout = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Checklist */}
+                <div className="p-4 bg-background/50 rounded-lg border border-border/30">
+                  <h3 className="font-semibold mb-3">{t("checklist")}</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="checklist-1"
+                        checked={checklist.enteredDetails}
+                        onCheckedChange={(checked) => 
+                          setChecklist(prev => ({ ...prev, enteredDetails: checked === true }))
+                        }
+                        className="h-5 w-5"
+                      />
+                      <label
+                        htmlFor="checklist-1"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {t("checklistItem1")}
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="checklist-2"
+                        checked={checklist.generatedReference}
+                        onCheckedChange={(checked) => 
+                          setChecklist(prev => ({ ...prev, generatedReference: checked === true }))
+                        }
+                        className="h-5 w-5"
+                      />
+                      <label
+                        htmlFor="checklist-2"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {t("checklistItem2")}
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="checklist-3"
+                        checked={checklist.paidViaPayPal}
+                        onCheckedChange={(checked) => 
+                          setChecklist(prev => ({ ...prev, paidViaPayPal: checked === true }))
+                        }
+                        className="h-5 w-5"
+                      />
+                      <label
+                        htmlFor="checklist-3"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {t("checklistItem3")}
+                      </label>
+                    </div>
+                  </div>
+                  <div className="text-sm text-destructive font-semibold mt-4 pt-4 border-2 border-destructive/50 dark:border-destructive rounded-lg p-4 flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                    <p>{t("pleaseFollowChecklist")}</p>
+                  </div>
+                </div>
                 
                 {/* PayPal Payment Section */}
                 <div className="p-4 bg-background/50 rounded-lg border border-border/30">
