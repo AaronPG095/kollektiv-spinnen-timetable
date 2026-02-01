@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, AlertCircle, ExternalLink, QrCode, Copy, Check } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { getTicketSettings, type TicketSettings } from "@/lib/ticketSettings";
 import { 
   checkRoleAvailability, 
@@ -86,9 +87,7 @@ const TicketCheckout = () => {
   });
 
   // PayPal configuration - can be moved to env or ticket settings
-  const paypalUrl = import.meta.env.VITE_PAYPAL_PAYMENT_LINK || "https://paypal.me/kollektivspinnen";
-  const paypalQrCodeUrl = import.meta.env.VITE_PAYPAL_QR_CODE_URL || "/paypal-qr-code.png";
-  const [qrCodeError, setQrCodeError] = useState(false);
+  const paypalUrl = import.meta.env.VITE_PAYPAL_PAYMENT_LINK || "https://www.paypal.com/pool/9mgYId30SR?sr=ancr";
   
   useEffect(() => {
     const loadData = async () => {
@@ -724,20 +723,13 @@ const TicketCheckout = () => {
                     {/* QR Code */}
                     <div className="flex flex-col items-center gap-2 flex-shrink-0">
                       <div className="w-48 h-48 bg-white rounded-lg border-2 border-border p-4 flex items-center justify-center">
-                        {qrCodeError ? (
-                          <div className="text-muted-foreground text-sm text-center p-4">
-                            <QrCode className="h-12 w-12 mx-auto mb-2" />
-                            <p>{t("qrCodeImage")}</p>
-                            <p className="text-xs mt-1">{t("placeQRCodeInPublicFolder")}</p>
-                          </div>
-                        ) : (
-                          <img 
-                            src={paypalQrCodeUrl} 
-                            alt={t("paypalQRCode")}
-                            className="w-full h-full object-contain"
-                            onError={() => setQrCodeError(true)}
-                          />
-                        )}
+                        <QRCodeSVG
+                          value={paypalUrl}
+                          size={160}
+                          level="H"
+                          includeMargin={false}
+                          className="w-full h-full"
+                        />
                       </div>
                       <p className="text-xs text-muted-foreground text-center max-w-[192px]">
                         {t("scanQRCode")}
@@ -746,22 +738,16 @@ const TicketCheckout = () => {
                     
                     {/* PayPal Link */}
                     <div className="flex-1 flex flex-col gap-3">
-                      <div className="flex items-center gap-2">
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">{t("paypalLink")}</span>
-                      </div>
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => window.open(paypalUrl, '_blank', 'noopener,noreferrer')}
                         className="w-full sm:w-auto justify-start gap-2"
+                        title={paypalUrl}
                       >
-                        <ExternalLink className="h-4 w-4" />
-                        {paypalUrl}
+                        <ExternalLink className="h-4 w-4 flex-shrink-0" />
+                        <span>{t("openPayPalPool")}</span>
                       </Button>
-                      <p className="text-xs text-muted-foreground">
-                        {t("orClickLink")}
-                      </p>
                     </div>
                   </div>
                 </div>

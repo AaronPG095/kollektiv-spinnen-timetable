@@ -188,7 +188,8 @@ const translations = {
     allChecklistItemsRequired: 'Bitte alle Checklistenpunkte abschließen',
     paypalQRCode: 'PayPal QR-Code',
     paypalLink: 'PayPal Link',
-    scanQRCode: 'Scanne den QR-Code mit deinem Handy, um zu bezahlen',
+    openPayPalPool: 'PayPal Money Pool öffnen',
+    scanQRCode: 'Scanne den QR-Code mit deinem Handy, um zu überweisen',
     orClickLink: 'oder klicke auf den Link',
     paypalPaymentInstructions: 'Bitte überweise den Betrag von {amount}€ über PayPal, bevor du das Formular absendest.',
     pleaseFillNameBeforeGenerating: 'Bitte fülle Vorname und Nachname aus, bevor du den Referenzcode generierst',
@@ -390,7 +391,7 @@ const translations = {
     checked: 'Geprüft',
     unchecked: 'Nicht geprüft',
     payment: 'Zahlung',
-    notes: 'Notizen',
+    purchaseNotes: 'Notizen',
     failedToUpdateCheckedState: 'Geprüft-Status konnte nicht aktualisiert werden',
     
     // Admin - Event Form
@@ -408,7 +409,7 @@ const translations = {
     selectDay: 'Tag auswählen',
     selectVenue: 'Veranstaltungsort auswählen',
     selectType: 'Typ auswählen',
-    links: 'Links',
+    eventLinks: 'Links',
     platformPlaceholder: 'Plattform (z.B. Instagram, Spotify)',
     urlPlaceholder: 'URL',
     addLink: 'Link hinzufügen',
@@ -426,7 +427,31 @@ const translations = {
     createFAQ: 'FAQ erstellen',
     
     // Admin - About Page Form
-    editFAQ: 'FAQ bearbeiten'
+    // Note: editFAQ is already defined in FAQ Management section
+    
+    // Admin - User Management
+    users: 'Benutzer',
+    userManagement: 'Benutzerverwaltung',
+    userEmail: 'E-Mail',
+    userFullName: 'Vollständiger Name',
+    adminStatus: 'Admin-Status',
+    addAdminPrivileges: 'Adminrechte hinzufügen',
+    removeAdminPrivileges: 'Adminrechte entfernen',
+    isAdmin: 'Admin',
+    notAdmin: 'Kein Administrator',
+    adminPrivilegesAdded: 'Adminrechte erfolgreich hinzugefügt',
+    adminPrivilegesRemoved: 'Adminrechte erfolgreich entfernt',
+    confirmRemoveAdmin: 'Adminrechte entfernen?',
+    confirmRemoveAdminDesc: 'Möchten Sie wirklich die Adminrechte von diesem Benutzer entfernen?',
+    loadingUsers: 'Benutzer werden geladen...',
+    noUsersFound: 'Keine Benutzer gefunden',
+    searchUsers: 'Benutzer suchen...',
+    cannotRemoveOwnAdmin: 'Sie können Ihre eigenen Adminrechte nicht entfernen',
+    invalidEmail: 'Ungültige E-Mail-Adresse',
+    userNotFound: 'Benutzer nicht gefunden',
+    errorLoadingUsers: 'Fehler beim Laden der Benutzer',
+    errorAddingAdmin: 'Fehler beim Hinzufügen der Adminrechte',
+    errorRemovingAdmin: 'Fehler beim Entfernen der Adminrechte'
   },
   en: {
     // Header
@@ -605,7 +630,8 @@ const translations = {
     allChecklistItemsRequired: 'Please complete all checklist items',
     paypalQRCode: 'PayPal QR Code',
     paypalLink: 'PayPal Link',
-    scanQRCode: 'Scan the QR code with your phone to pay',
+    openPayPalPool: 'Open PayPal Money Pool',
+    scanQRCode: 'Scan the QR code with your phone to transfer',
     orClickLink: 'or click the link',
     paypalPaymentInstructions: 'Please transfer the Soli-Contribution amount of {amount}€ via PayPal before submitting the form.',
     pleaseFillNameBeforeGenerating: 'Please fill in first name and last name before generating reference code',
@@ -807,7 +833,7 @@ const translations = {
     failedToDeletePurchase: 'Failed to delete purchase',
     checked: 'Checked',
     payment: 'Payment',
-    notes: 'Notes',
+    purchaseNotes: 'Notes',
     failedToUpdateCheckedState: 'Failed to update checked state',
     
     // Admin - Event Form
@@ -825,7 +851,7 @@ const translations = {
     selectDay: 'Select day',
     selectVenue: 'Select venue',
     selectType: 'Select type',
-    links: 'Links',
+    eventLinks: 'Links',
     platformPlaceholder: 'Platform (e.g., Instagram, Spotify)',
     urlPlaceholder: 'URL',
     addLink: 'Add Link',
@@ -843,7 +869,31 @@ const translations = {
     createFAQ: 'Create FAQ',
     
     // Admin - About Page Form
-    editFAQ: 'Edit FAQ'
+    // Note: editFAQ is already defined in FAQ Management section
+    
+    // Admin - User Management
+    users: 'Users',
+    userManagement: 'User Management',
+    userEmail: 'Email',
+    userFullName: 'Full Name',
+    adminStatus: 'Admin Status',
+    addAdminPrivileges: 'Add Admin Privileges',
+    removeAdminPrivileges: 'Remove Admin Privileges',
+    isAdmin: 'Admin',
+    notAdmin: 'Not Admin',
+    adminPrivilegesAdded: 'Admin privileges added successfully',
+    adminPrivilegesRemoved: 'Admin privileges removed successfully',
+    confirmRemoveAdmin: 'Remove Admin Privileges?',
+    confirmRemoveAdminDesc: 'Are you sure you want to remove admin privileges from this user?',
+    loadingUsers: 'Loading users...',
+    noUsersFound: 'No users found',
+    searchUsers: 'Search users...',
+    cannotRemoveOwnAdmin: 'You cannot remove your own admin privileges',
+    invalidEmail: 'Invalid email address',
+    userNotFound: 'User not found',
+    errorLoadingUsers: 'Error loading users',
+    errorAddingAdmin: 'Error adding admin privileges',
+    errorRemovingAdmin: 'Error removing admin privileges'
   }
 };
 
