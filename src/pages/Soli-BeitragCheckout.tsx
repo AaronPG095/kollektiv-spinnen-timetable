@@ -18,7 +18,7 @@ import {
   getRemainingEarlyBirdTickets,
   getRemainingNormalTickets 
 } from "@/lib/ticketPurchases";
-import { validateAndSanitizeName, validateAndSanitizeEmail, sanitizeString, validatePayPalUrl } from "@/lib/validation";
+import { validateAndSanitizeName, validateAndSanitizeEmail, validateAndSanitizePhone, sanitizeString, validatePayPalUrl } from "@/lib/validation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -42,6 +42,7 @@ interface FormErrors {
   first_name?: string;
   last_name?: string;
   purchaser_email?: string;
+  phone_number?: string;
 }
 
 const TicketCheckout = () => {
@@ -69,12 +70,14 @@ const TicketCheckout = () => {
     first_name: "",
     last_name: "",
     purchaser_email: "",
+    phone_number: "",
   });
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState({
     first_name: false,
     last_name: false,
     purchaser_email: false,
+    phone_number: false,
   });
   const [dataStorageConsent, setDataStorageConsent] = useState(false);
   const [consentTouched, setConsentTouched] = useState(false);
@@ -271,7 +274,7 @@ const TicketCheckout = () => {
     }
   };
 
-  const validateField = (field: 'first_name' | 'last_name' | 'purchaser_email', value: string) => {
+  const validateField = (field: 'first_name' | 'last_name' | 'purchaser_email' | 'phone_number', value: string) => {
     if (field === 'first_name' || field === 'last_name') {
       const validation = validateAndSanitizeName(value);
       if (!validation.valid) {
@@ -292,16 +295,26 @@ const TicketCheckout = () => {
         const { purchaser_email, ...rest } = prev;
         return rest;
       });
+    } else if (field === 'phone_number') {
+      const validation = validateAndSanitizePhone(value);
+      if (!validation.valid) {
+        setFormErrors(prev => ({ ...prev, phone_number: validation.error }));
+        return false;
+      }
+      setFormErrors(prev => {
+        const { phone_number, ...rest } = prev;
+        return rest;
+      });
     }
     return true;
   };
 
-  const handleBlur = (field: 'first_name' | 'last_name' | 'purchaser_email') => {
+  const handleBlur = (field: 'first_name' | 'last_name' | 'purchaser_email' | 'phone_number') => {
     setTouched(prev => ({ ...prev, [field]: true }));
     validateField(field, formData[field]);
   };
 
-  const handleChange = (field: 'first_name' | 'last_name' | 'purchaser_email', value: string) => {
+  const handleChange = (field: 'first_name' | 'last_name' | 'purchaser_email' | 'phone_number', value: string) => {
     const updatedFormData = { ...formData, [field]: value };
     setFormData(updatedFormData);
     
@@ -324,8 +337,10 @@ const TicketCheckout = () => {
     const firstNameValid = updatedFormData.first_name && !formErrors.first_name;
     const lastNameValid = updatedFormData.last_name && !formErrors.last_name;
     const emailValid = updatedFormData.purchaser_email && !formErrors.purchaser_email;
+    // Phone is optional, so only validate if it has a value
+    const phoneValid = !updatedFormData.phone_number || !formErrors.phone_number;
     
-    if (firstNameValid && lastNameValid && emailValid) {
+    if (firstNameValid && lastNameValid && emailValid && phoneValid) {
       setChecklist(prev => ({ ...prev, enteredDetails: true }));
     } else {
       setChecklist(prev => ({ ...prev, enteredDetails: false }));
@@ -391,14 +406,16 @@ const TicketCheckout = () => {
     }
     
     // Mark all fields as touched
-    setTouched({ first_name: true, last_name: true, purchaser_email: true });
+    setTouched({ first_name: true, last_name: true, purchaser_email: true, phone_number: true });
     
-    // Validate all fields
+    // Validate all required fields
     const firstNameValid = validateField('first_name', formData.first_name);
     const lastNameValid = validateField('last_name', formData.last_name);
     const emailValid = validateField('purchaser_email', formData.purchaser_email);
+    // Phone is optional, so only validate if it has a value
+    const phoneValid = !formData.phone_number || validateField('phone_number', formData.phone_number);
     
-    if (!firstNameValid || !lastNameValid || !emailValid) {
+    if (!firstNameValid || !lastNameValid || !emailValid || !phoneValid) {
       toast({
         title: t("validationError"),
         description: t("pleaseCheckFormErrors"),
@@ -430,6 +447,15 @@ const TicketCheckout = () => {
     setSubmitting(true);
     
     try {
+      // Validate and sanitize phone number if provided
+      let phoneNumber: string | undefined = undefined;
+      if (formData.phone_number) {
+        const phoneValidation = validateAndSanitizePhone(formData.phone_number);
+        if (phoneValidation.valid && phoneValidation.sanitized) {
+          phoneNumber = phoneValidation.sanitized;
+        }
+      }
+
       const price = getPrice();
       const result = await createTicketPurchase({
         contribution_type: type as 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal',
@@ -437,6 +463,7 @@ const TicketCheckout = () => {
         price,
         purchaser_name: `${firstNameValidation.sanitized} ${lastNameValidation.sanitized}`.trim(),
         purchaser_email: emailValidation.sanitized,
+        phone_number: phoneNumber,
         payment_reference: referenceCode || undefined,
       }, true); // Enable validation for both universal and role limits
       
@@ -671,6 +698,31 @@ const TicketCheckout = () => {
                       <p id="purchaser_email-hint" className="text-xs text-green-600 dark:text-green-400">
                         {t("validEmailFormat")}
                       </p>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="phone_number">
+                      {t("phoneNumber")} <span className="text-muted-foreground">({t("optional")})</span>
+                    </Label>
+                    <Input
+                      id="phone_number"
+                      type="tel"
+                      value={formData.phone_number}
+                      onChange={(e) => handleChange('phone_number', e.target.value)}
+                      onBlur={() => handleBlur('phone_number')}
+                      aria-invalid={touched.phone_number && !!formErrors.phone_number}
+                      aria-describedby={touched.phone_number && formErrors.phone_number ? "phone_number-error" : undefined}
+                      placeholder={t("enterPhoneNumber")}
+                      className={touched.phone_number && formErrors.phone_number ? "border-destructive" : ""}
+                    />
+                    {touched.phone_number && formErrors.phone_number && (
+                      <Alert variant="destructive" className="py-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription id="phone_number-error" className="text-sm">
+                          {formErrors.phone_number}
+                        </AlertDescription>
+                      </Alert>
                     )}
                   </div>
 

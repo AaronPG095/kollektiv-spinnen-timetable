@@ -9,6 +9,7 @@ export interface TicketPurchase {
   price: number;
   purchaser_name: string;
   purchaser_email: string;
+  phone_number: string | null;
   status: 'confirmed' | 'cancelled';
   payment_reference: string | null;
   notes: string | null;
@@ -23,6 +24,7 @@ export interface CreatePurchaseData {
   price: number;
   purchaser_name: string;
   purchaser_email: string;
+  phone_number?: string;
   payment_reference?: string;
   notes?: string;
   status?: 'confirmed' | 'cancelled';
@@ -316,6 +318,7 @@ export const createTicketPurchase = async (
         price: purchaseData.price,
         purchaser_name: purchaseData.purchaser_name,
         purchaser_email: purchaseData.purchaser_email,
+        phone_number: purchaseData.phone_number || null,
         payment_reference: purchaseData.payment_reference || null,
         notes: purchaseData.notes || null,
         status: purchaseData.status || 'confirmed', // Always 'confirmed' for new purchases
