@@ -206,6 +206,13 @@ const translations = {
     onlyClickAfterPayment: 'Klicke nur auf den Button "Überweisung bestätigt", nachdem du deinen Soli-Beitrag über PayPal überwiesen hast und die Checkliste oben auf der Seite abgeschlossen hast',
     dataStorageConsent: 'Ich stimme zu, dass meine Daten gespeichert werden dürfen, um mich bezüglich meiner Schichtbuchung zu kontaktieren.',
     dataStorageConsentRequired: 'Bitte stimme der Datenspeicherung zu, um fortzufahren.',
+    purchaseConfirmed: 'Überweisung Bestätigt',
+    purchaseConfirmedDesc: 'Dein Soli-Beitrag wurde erfolgreich registriert.',
+    confirmationDetails: 'Bestätigungsdetails',
+    confirmationReferenceCode: 'Referenzcode',
+    confirmationEmailSent: 'Eine Bestätigungs-E-Mail wird in Kürze an deine E-Mail-Adresse gesendet.',
+    returnToTickets: 'Zurück zu Soli-Beiträgen',
+    thankYou: 'Vielen Dank!',
     
     // Footer
     sitemap: 'Sitemap',
@@ -678,6 +685,13 @@ const translations = {
     onlyClickAfterPayment: 'Only click the transfer confirmed button after transferring your Soli-Contribution over PayPal, and completing the checklist at the top of the page.',
     dataStorageConsent: 'I consent to the storage of my data for the purpose of contacting me regarding my shift booking.',
     dataStorageConsentRequired: 'Please consent to data storage to continue.',
+    purchaseConfirmed: 'Transfer Confirmed',
+    purchaseConfirmedDesc: 'Your Soli-Contribution has been successfully registered.',
+    confirmationDetails: 'Confirmation Details',
+    confirmationReferenceCode: 'Reference Code',
+    confirmationEmailSent: 'A confirmation email will be sent to your email address shortly.',
+    returnToTickets: 'Return to Soli-Contributions',
+    thankYou: 'Thank You!',
     
     // Footer
     sitemap: 'Sitemap',
