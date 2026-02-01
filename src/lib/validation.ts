@@ -223,7 +223,7 @@ export const validatePayPalUrl = (url: string | undefined | null): { valid: bool
   if (!url || !url.trim()) {
     return { 
       valid: false, 
-      error: 'PayPal payment link is not configured. Please set VITE_PAYPAL_PAYMENT_LINK environment variable.' 
+      error: 'PayPal payment link is not configured. Please configure it in the admin settings.' 
     };
   }
 

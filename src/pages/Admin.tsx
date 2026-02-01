@@ -2979,6 +2979,9 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
       ? initialSettings.normal_total_limit.toString()
       : ""
   );
+  const [paypalPaymentLink, setPaypalPaymentLink] = useState(
+    initialSettings?.paypal_payment_link || ""
+  );
 
   const [limitValues, setLimitValues] = useState<Record<RoleKey, string>>(() => {
     const initial: Record<RoleKey, string> = {
@@ -3251,6 +3254,10 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         }
       }
     });
+
+    // PayPal payment link
+    const trimmedPaypalLink = paypalPaymentLink.trim();
+    settings.paypal_payment_link = trimmedPaypalLink || null;
 
     // Log the aufbau limit specifically for debugging
     console.log('[TicketSettingsForm] Submitting settings:', {
@@ -3553,6 +3560,24 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
               ))}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* PayPal Payment Link */}
+      <div className="space-y-4 p-4 border rounded-lg">
+        <h3 className="text-lg font-semibold">{t("paypalPaymentLink") || "PayPal Payment Link"}</h3>
+        <div className="space-y-2">
+          <Label htmlFor="paypal_payment_link">{t("paypalLink") || "PayPal Link"}</Label>
+          <Input
+            id="paypal_payment_link"
+            type="url"
+            value={paypalPaymentLink}
+            onChange={(e) => setPaypalPaymentLink(e.target.value)}
+            placeholder="https://paypal.me/kollektivspinnen"
+          />
+          <p className="text-xs text-muted-foreground">
+            {t("paypalLinkDescription") || "Enter the PayPal payment link URL. Must be from a trusted PayPal domain (paypal.com, paypal.me) and use HTTPS."}
+          </p>
         </div>
       </div>
 

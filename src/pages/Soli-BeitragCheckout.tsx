@@ -93,21 +93,6 @@ const TicketCheckout = () => {
     error?: string;
   }>({ valid: false });
 
-  // Validate PayPal URL on mount
-  useEffect(() => {
-    const envUrl = import.meta.env.VITE_PAYPAL_PAYMENT_LINK;
-    const validation = validatePayPalUrl(envUrl);
-    setPaypalUrlValidation(validation);
-    
-    if (!validation.valid) {
-      toast({
-        title: t("error"),
-        description: validation.error || "PayPal payment link configuration error",
-        variant: "destructive",
-      });
-    }
-  }, [toast, t]);
-
   // Validated PayPal URL (only use if validation passed)
   const paypalUrl = paypalUrlValidation.valid && paypalUrlValidation.sanitized 
     ? paypalUrlValidation.sanitized 
@@ -129,6 +114,19 @@ const TicketCheckout = () => {
       try {
         const settings = await getTicketSettings();
         setTicketSettings(settings);
+        
+        // Validate PayPal URL from database settings
+        const dbPaypalUrl = settings.paypal_payment_link;
+        const validation = validatePayPalUrl(dbPaypalUrl);
+        setPaypalUrlValidation(validation);
+        
+        if (!validation.valid) {
+          toast({
+            title: t("error"),
+            description: validation.error || "PayPal payment link configuration error",
+            variant: "destructive",
+          });
+        }
       
         // Check availability
         const roleConfig = ROLE_CONFIG[role];
