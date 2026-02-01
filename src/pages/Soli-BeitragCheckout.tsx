@@ -510,7 +510,7 @@ const TicketCheckout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-16">
       <FestivalHeader />
       
       <main className="container mx-auto px-4 py-8">
