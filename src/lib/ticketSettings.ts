@@ -37,6 +37,7 @@ export interface TicketSettings {
   schichtleitung_price_normal: number | null;
   tech_price_early: number | null;
   tech_price_normal: number | null;
+  paypal_payment_link: string | null;
   created_at: string;
   updated_at: string;
 }
