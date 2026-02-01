@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -26,7 +27,7 @@ import {
   type AboutPageContent as AboutPageContentType,
   type AboutPagePhoto 
 } from '@/lib/aboutPage';
-import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, ArrowUpDown, Calendar, Ticket, Info, Check, X, XCircle } from 'lucide-react';
+import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, ArrowUpDown, Calendar, Ticket, Info, Check, X, XCircle, Users as UsersIcon, Shield, ShieldOff } from 'lucide-react';
 import { Footer } from '@/components/Footer';
 import { FestivalHeader } from '@/components/FestivalHeader';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -59,6 +60,14 @@ interface FAQItem {
   language?: string;
 }
 
+interface UserWithAdminStatus {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  created_at: string;
+  isAdmin: boolean;
+}
+
 const Admin = () => {
   const { user, isAdmin, signOut, loading: authLoading } = useAuth();
   const { t } = useLanguage();
@@ -75,7 +84,7 @@ const Admin = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [showHiddenMode, setShowHiddenMode] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | "all">("all");
-  const [activeTab, setActiveTab] = useState<"events" | "faqs" | "tickets" | "about">("events");
+  const [activeTab, setActiveTab] = useState<"events" | "faqs" | "tickets" | "about" | "users">("events");
   const [ticketSettings, setTicketSettings] = useState<TicketSettings | null>(null);
   const [ticketSettingsLoading, setTicketSettingsLoading] = useState(false);
   const [ticketPurchases, setTicketPurchases] = useState<TicketPurchase[]>([]);
@@ -89,6 +98,13 @@ const Admin = () => {
   const [cancelledSearchQuery, setCancelledSearchQuery] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [purchaseToDelete, setPurchaseToDelete] = useState<string | null>(null);
+  
+  // User Management State
+  const [users, setUsers] = useState<UserWithAdminStatus[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersSearchQuery, setUsersSearchQuery] = useState("");
+  const [removeAdminDialogOpen, setRemoveAdminDialogOpen] = useState(false);
+  const [userToModify, setUserToModify] = useState<UserWithAdminStatus | null>(null);
 
   // Derived collections for ticket views
   // "Pending Soli-Contributions" tab shows: confirmed but unchecked purchases
@@ -168,6 +184,14 @@ const Admin = () => {
       }
     }
   }, [isAdmin, authLoading]);
+
+  // Load users when users tab is active
+  useEffect(() => {
+    if (isAdmin && activeTab === "users" && !usersLoading) {
+      loadUsers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, activeTab]);
 
   const loadEvents = async () => {
     try {
@@ -703,6 +727,221 @@ const Admin = () => {
     }
   };
 
+  // Email validation helper
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Normalize email helper
+  const normalizeEmail = (email: string | null | undefined): string | null => {
+    if (!email) return null;
+    return email.trim().toLowerCase();
+  };
+
+  // Load users with admin status (optimized single query approach)
+  const loadUsers = async () => {
+    if (!isAdmin) return;
+    
+    setUsersLoading(true);
+    try {
+      // Fetch all profiles, admin roles, and admin emails in parallel
+      const [profilesResult, adminRolesResult, adminEmailsResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, email, full_name, created_at')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'admin'),
+        supabase
+          .from('admin_emails')
+          .select('email')
+      ]);
+
+      if (profilesResult.error) {
+        console.error('[Admin] Error loading profiles:', profilesResult.error);
+        throw profilesResult.error;
+      }
+      if (adminRolesResult.error) {
+        console.error('[Admin] Error loading admin roles:', adminRolesResult.error);
+        throw adminRolesResult.error;
+      }
+      if (adminEmailsResult.error) {
+        console.error('[Admin] Error loading admin emails:', adminEmailsResult.error);
+        throw adminEmailsResult.error;
+      }
+
+      // Create sets for fast lookup
+      const adminUserIds = new Set((adminRolesResult.data || []).map(r => r.user_id));
+      const adminEmailSet = new Set(
+        (adminEmailsResult.data || []).map((e: { email: string }) => normalizeEmail(e.email)).filter(Boolean)
+      );
+
+      // Combine data in memory
+      const usersWithStatus: UserWithAdminStatus[] = (profilesResult.data || []).map(profile => {
+        const normalizedProfileEmail = normalizeEmail(profile.email);
+        const isAdmin = 
+          adminUserIds.has(profile.id) ||
+          (normalizedProfileEmail !== null && adminEmailSet.has(normalizedProfileEmail));
+        
+        return {
+          ...profile,
+          isAdmin
+        };
+      });
+
+      setUsers(usersWithStatus);
+      if (import.meta.env.DEV) {
+        console.log(`[Admin] Successfully loaded ${usersWithStatus.length} users with admin status`);
+      }
+    } catch (error: any) {
+      console.error('[Admin] Error in loadUsers:', error);
+      logError('Admin', error, { operation: 'loadUsers' });
+      toast({
+        title: t("error"),
+        description: error?.message || t("errorLoadingUsers"),
+        variant: "destructive",
+      });
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  // Add admin privileges (optimized parallel batch operation)
+  const addAdminPrivileges = async (userId: string, email: string | null) => {
+    if (!email) {
+      toast({
+        title: t("error"),
+        description: t("invalidEmail"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail || !validateEmail(normalizedEmail)) {
+      toast({
+        title: t("error"),
+        description: t("invalidEmail"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Optimistic update
+      const userIndex = users.findIndex(u => u.id === userId);
+      if (userIndex !== -1) {
+        const updatedUsers = [...users];
+        updatedUsers[userIndex] = { ...updatedUsers[userIndex], isAdmin: true };
+        setUsers(updatedUsers);
+      }
+
+      // Execute parallel batch operations
+      const [roleResult, emailResult] = await Promise.all([
+        supabase
+          .from('user_roles')
+          .upsert({ user_id: userId, role: 'admin' }, { onConflict: 'user_id,role' })
+          .select()
+          .single(),
+        supabase
+          .from('admin_emails')
+          .upsert({ email: normalizedEmail }, { onConflict: 'email' })
+          .select()
+          .single()
+      ]);
+
+      if (roleResult.error) {
+        throw roleResult.error;
+      }
+      if (emailResult.error) {
+        throw emailResult.error;
+      }
+
+      toast({
+        title: t("adminPrivilegesAdded"),
+      });
+      
+      // Reload to ensure consistency
+      await loadUsers();
+    } catch (error: any) {
+      logError('Admin', error, { operation: 'addAdminPrivileges', userId, email });
+      toast({
+        title: t("error"),
+        description: t("errorAddingAdmin"),
+        variant: "destructive",
+      });
+      // Rollback optimistic update
+      await loadUsers();
+    }
+  };
+
+  // Remove admin privileges (optimized parallel batch operation)
+  const removeAdminPrivileges = async (userId: string, email: string | null) => {
+    // Prevent self-demotion
+    if (user?.id === userId) {
+      toast({
+        title: t("error"),
+        description: t("cannotRemoveOwnAdmin"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+
+    try {
+      // Optimistic update
+      const userIndex = users.findIndex(u => u.id === userId);
+      if (userIndex !== -1) {
+        const updatedUsers = [...users];
+        updatedUsers[userIndex] = { ...updatedUsers[userIndex], isAdmin: false };
+        setUsers(updatedUsers);
+      }
+
+      // Execute parallel batch deletions
+      const [userRoleDeleteResult, adminEmailDeleteResult] = await Promise.all([
+        supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', userId)
+          .eq('role', 'admin'),
+        normalizedEmail
+          ? supabase
+              .from('admin_emails')
+              .delete()
+              .eq('email', normalizedEmail)
+          : Promise.resolve({ data: null, error: null })
+      ]);
+
+      // Check for errors
+      if (userRoleDeleteResult.error) {
+        throw userRoleDeleteResult.error;
+      }
+      if (adminEmailDeleteResult && 'error' in adminEmailDeleteResult && adminEmailDeleteResult.error) {
+        throw adminEmailDeleteResult.error;
+      }
+
+      toast({
+        title: t("adminPrivilegesRemoved"),
+      });
+      
+      // Reload to ensure consistency
+      await loadUsers();
+    } catch (error: any) {
+      logError('Admin', error, { operation: 'removeAdminPrivileges', userId, email });
+      toast({
+        title: t("error"),
+        description: t("errorRemovingAdmin"),
+        variant: "destructive",
+      });
+      // Rollback optimistic update
+      await loadUsers();
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
@@ -856,6 +1095,15 @@ const Admin = () => {
                 <Ticket className="h-3 w-3" />
                 {t("tickets")}
               </Button>
+              <Button
+                variant={activeTab === "users" ? "default" : "ghost"}
+                onClick={() => setActiveTab("users")}
+                className="gap-2 text-sm py-2 px-3"
+                size="sm"
+              >
+                <UsersIcon className="h-3 w-3" />
+                {t("users")}
+              </Button>
             </div>
             <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
               <Button onClick={() => navigate('/')} variant="outline" size="sm" className="text-xs sm:text-sm flex-1 sm:flex-initial">
@@ -870,7 +1118,7 @@ const Admin = () => {
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-3 md:gap-4">
           <h2 className="text-base sm:text-lg md:text-xl font-semibold">
-            {activeTab === "events" ? t("eventsManagement") : activeTab === "faqs" ? t("faqManagement") : activeTab === "tickets" ? t("ticketSettings") : t("aboutUsManagement")}
+            {activeTab === "events" ? t("eventsManagement") : activeTab === "faqs" ? t("faqManagement") : activeTab === "tickets" ? t("ticketSettings") : activeTab === "users" ? t("userManagement") : t("aboutUsManagement")}
           </h2>
           <div className="flex gap-2 sm:gap-3">
             {activeTab === "events" ? (
@@ -1497,7 +1745,7 @@ const Admin = () => {
                                     <p className="text-xs text-muted-foreground">{t("payment")}: {purchase.payment_reference}</p>
                                   )}
                                   {purchase.notes && (
-                                    <p className="text-xs text-muted-foreground">{t("notes")}: {purchase.notes}</p>
+                                    <p className="text-xs text-muted-foreground">{t("purchaseNotes")}: {purchase.notes}</p>
                                   )}
                                   <p className="text-xs text-muted-foreground">
                                     {new Date(purchase.created_at).toLocaleString()}
@@ -1817,6 +2065,94 @@ const Admin = () => {
               />
             )}
           </div>
+        ) : activeTab === "users" ? (
+          <div className="w-full space-y-4">
+            {/* Search Bar */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t("searchUsers")}
+                  value={usersSearchQuery}
+                  onChange={(e) => setUsersSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+
+            {/* Users List */}
+            {usersLoading ? (
+              <div className="text-center text-muted-foreground py-12">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                <p>{t("loadingUsers")}</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {(() => {
+                  const filteredUsers = users.filter(user => {
+                    if (!usersSearchQuery) return true;
+                    const query = usersSearchQuery.toLowerCase();
+                    return (
+                      (user.email?.toLowerCase().includes(query))
+                    );
+                  });
+
+                  if (filteredUsers.length === 0) {
+                    return (
+                      <div className="text-center text-muted-foreground py-12">
+                        <p>{t("noUsersFound")}</p>
+                      </div>
+                    );
+                  }
+
+                  return filteredUsers.map((user) => (
+                    <Card key={user.id} className="border-2">
+                      <CardContent className="p-4 md:p-5">
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-base md:text-lg break-words">
+                                {user.email || t("userNotFound")}
+                              </h3>
+                              <Badge variant={user.isAdmin ? "default" : "outline"}>
+                                {user.isAdmin ? t("isAdmin") : t("notAdmin")}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 flex-shrink-0">
+                            {user.isAdmin ? (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  setUserToModify(user);
+                                  setRemoveAdminDialogOpen(true);
+                                }}
+                                className="gap-2"
+                              >
+                                <ShieldOff className="h-4 w-4" />
+                                {t("removeAdminPrivileges")}
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => addAdminPrivileges(user.id, user.email)}
+                                className="gap-2"
+                              >
+                                <Shield className="h-4 w-4" />
+                                {t("addAdminPrivileges")}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ));
+                })()}
+              </div>
+            )}
+          </div>
         ) : null}
         </div>
       </div>
@@ -1849,6 +2185,41 @@ const Admin = () => {
               }}
             >
               {t("delete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove Admin Confirmation Dialog */}
+      <Dialog open={removeAdminDialogOpen} onOpenChange={setRemoveAdminDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("confirmRemoveAdmin")}</DialogTitle>
+            <DialogDescription>
+              {t("confirmRemoveAdminDesc")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRemoveAdminDialogOpen(false);
+                setUserToModify(null);
+              }}
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (userToModify) {
+                  removeAdminPrivileges(userToModify.id, userToModify.email);
+                  setRemoveAdminDialogOpen(false);
+                  setUserToModify(null);
+                }
+              }}
+            >
+              {t("removeAdminPrivileges")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2165,7 +2536,7 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
 
       {/* Links Management */}
       <div className="space-y-4">
-        <Label className="text-lg font-semibold">{t("links")}</Label>
+        <Label className="text-lg font-semibold">{t("eventLinks")}</Label>
         
         {/* Existing Links */}
         {linksArray.length > 0 && (

@@ -149,6 +149,27 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_emails: {
+        Row: {
+          id: string
+          email: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       soli_contribution_settings: {
         Row: {
           id: string
