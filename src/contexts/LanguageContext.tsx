@@ -252,6 +252,10 @@ const translations = {
     adminResetPasswordSent: 'Passwort-Reset-E-Mail wurde an {email} gesendet',
     pleaseEnterValidEmail: 'Bitte gib eine gültige E-Mail-Adresse ein',
     passwordMustBeAtLeast6Characters: 'Das Passwort muss mindestens 6 Zeichen lang sein',
+    resetLinkExpired: 'Dieser Passwort-Reset-Link ist abgelaufen. Bitte fordere einen neuen an.',
+    resetLinkInvalid: 'Ungültiger oder fehlender Reset-Link. Bitte fordere einen neuen Passwort-Reset an.',
+    resetLinkAccessDenied: 'Zugriff verweigert. Bitte fordere einen neuen Passwort-Reset-Link an.',
+    requestNewResetLink: 'Neuen Reset-Link anfordern',
     
     // Admin Page
     adminDashboard: 'Admin Dashboard',
@@ -333,6 +337,10 @@ const translations = {
     faqDeletedSuccessfully: 'FAQ erfolgreich gelöscht',
     faqHiddenFromPublic: 'FAQ vor der Öffentlichkeit verborgen',
     faqMadeVisibleToPublic: 'FAQ für die Öffentlichkeit sichtbar gemacht',
+    hideAllFAQs: 'Alle FAQs verbergen',
+    areYouSureHideAllFAQs: 'Bist du sicher, dass du alle FAQs verbergen möchtest? Dies macht alle FAQs für die Öffentlichkeit unsichtbar.',
+    allFAQsHiddenSuccessfully: 'Alle FAQs erfolgreich verborgen',
+    failedToHideAllFAQs: 'Alle FAQs konnten nicht verborgen werden. Bitte überprüfe deine Verbindung und versuche es erneut.',
     ticketSettingsUpdatedSuccessfully: 'Soli-Beitrags-Einstellungen erfolgreich aktualisiert',
     aboutPageContentUpdatedSuccessfully: 'Über uns Seiteninhalt erfolgreich aktualisiert',
     failedToLoadEvents: 'Events konnten nicht geladen werden. Bitte überprüfe deine Verbindung und versuche es erneut.',
@@ -714,6 +722,10 @@ const translations = {
     adminResetPasswordSent: 'Password reset email has been sent to {email}',
     pleaseEnterValidEmail: 'Please enter a valid email address',
     passwordMustBeAtLeast6Characters: 'Password must be at least 6 characters',
+    resetLinkExpired: 'This password reset link has expired. Please request a new one.',
+    resetLinkInvalid: 'Invalid or missing reset link. Please request a new password reset.',
+    resetLinkAccessDenied: 'Access denied. Please request a new password reset link.',
+    requestNewResetLink: 'Request New Reset Link',
     
     // Admin Page
     adminDashboard: 'Admin Dashboard',
@@ -795,6 +807,10 @@ const translations = {
     faqDeletedSuccessfully: 'FAQ deleted successfully',
     faqHiddenFromPublic: 'FAQ hidden from public',
     faqMadeVisibleToPublic: 'FAQ made visible to public',
+    hideAllFAQs: 'Hide All FAQs',
+    areYouSureHideAllFAQs: 'Are you sure you want to hide all FAQs? This will make all FAQs invisible to the public.',
+    allFAQsHiddenSuccessfully: 'All FAQs hidden successfully',
+    failedToHideAllFAQs: 'Failed to hide all FAQs. Please check your connection and try again.',
     ticketSettingsUpdatedSuccessfully: 'Soli-Contribution settings updated successfully',
     aboutPageContentUpdatedSuccessfully: 'About page content updated successfully',
     failedToLoadEvents: 'Failed to load events. Please check your connection and try again.',

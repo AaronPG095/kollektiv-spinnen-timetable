@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { validateAndSanitizeEmail } from '@/lib/validation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Auth = () => {
+  const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -24,6 +25,15 @@ const Auth = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Check for forgot-password mode in URL
+  useEffect(() => {
+    const mode = searchParams.get('mode');
+    if (mode === 'forgot-password') {
+      setIsForgotPassword(true);
+      setIsLogin(true);
+    }
+  }, [searchParams]);
 
   const handleEmailChange = (value: string) => {
     setEmail(value);

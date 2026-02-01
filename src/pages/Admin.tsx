@@ -734,6 +734,34 @@ const Admin = () => {
     }
   };
 
+  const handleHideAllFAQs = async () => {
+    if (!confirm(t("areYouSureHideAllFAQs") || "Are you sure you want to hide all FAQs? This will make all FAQs invisible to the public.")) return;
+    
+    try {
+      console.log('[Admin] Hiding all FAQs');
+      const { error } = await supabase
+        .from('faqs')
+        .update({ is_visible: false });
+      
+      if (error) {
+        logError('Admin', error, { operation: 'hideAllFAQs' });
+        throw error;
+      }
+      
+      toast({
+        title: t("allFAQsHiddenSuccessfully") || "All FAQs hidden successfully"
+      });
+      loadFAQs();
+    } catch (error: any) {
+      logError('Admin', error, { operation: 'hideAllFAQs' });
+      toast({
+        title: t("error"),
+        description: formatSupabaseError(error) || t("failedToHideAllFAQs") || "Failed to hide all FAQs. Please check your connection and try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Email validation helper
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1216,22 +1244,32 @@ const Admin = () => {
                 </Dialog>
               </>
             ) : activeTab === "faqs" ? (
-              <Dialog open={isFAQCreateOpen} onOpenChange={setIsFAQCreateOpen}>
-                <DialogTrigger asChild>
-                  <Button className="min-h-[44px]">
-                    <Plus className="h-4 w-4 mr-2" />
-                    {t("addFAQ")}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>{t("createNewFAQ")}</DialogTitle>
-                  </DialogHeader>
-                  <div className="max-h-[75vh] overflow-y-auto pr-2">
-                    <FAQForm onSave={handleSaveFAQ} allFAQs={faqs} />
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <div className="flex gap-2">
+                <Dialog open={isFAQCreateOpen} onOpenChange={setIsFAQCreateOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="min-h-[44px]">
+                      <Plus className="h-4 w-4 mr-2" />
+                      {t("addFAQ")}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>{t("createNewFAQ")}</DialogTitle>
+                    </DialogHeader>
+                    <div className="max-h-[75vh] overflow-y-auto pr-2">
+                      <FAQForm onSave={handleSaveFAQ} allFAQs={faqs} />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                <Button 
+                  variant="destructive" 
+                  className="min-h-[44px]"
+                  onClick={handleHideAllFAQs}
+                >
+                  <EyeOff className="h-4 w-4 mr-2" />
+                  {t("hideAllFAQs") || "Hide All FAQs"}
+                </Button>
+              </div>
             ) : null}
           </div>
         </div>
@@ -1641,18 +1679,58 @@ const Admin = () => {
                     {sortedSubcategories.map((subcategory) => {
                       const subcategoryFAQs = faqsBySubcategory[subcategory];
                       
-                      // Group FAQs by order_index (matching questions in different languages)
-                      const faqsByOrder = subcategoryFAQs.reduce((acc, faq) => {
-                        const orderKey = faq.order_index.toString();
-                        if (!acc[orderKey]) {
-                          acc[orderKey] = [];
-                        }
-                        acc[orderKey].push(faq);
-                        return acc;
-                      }, {} as Record<string, FAQItem[]>);
-
-                      // Sort by order_index
-                      const sortedOrders = Object.keys(faqsByOrder).sort((a, b) => parseInt(a) - parseInt(b));
+                      // Topic-based FAQ pairing algorithm
+                      // Pair FAQs by their position/topic within the subcategory, not by order_index
+                      // order_index is only used for sorting the final display order
+                      
+                      // Separate FAQs by language and sort by order_index for display
+                      const germanFAQs = subcategoryFAQs
+                        .filter(faq => faq.language === 'de')
+                        .sort((a, b) => a.order_index - b.order_index);
+                      const englishFAQs = subcategoryFAQs
+                        .filter(faq => faq.language === 'en')
+                        .sort((a, b) => a.order_index - b.order_index);
+                      
+                      // Pair FAQs by position within subcategory (1st DE with 1st EN, 2nd DE with 2nd EN, etc.)
+                      // This matches FAQs by topic since they're already grouped by category/subcategory
+                      const pairedFAQs: Array<{ de?: FAQItem; en?: FAQItem; orderIndex: number }> = [];
+                      const minCount = Math.min(germanFAQs.length, englishFAQs.length);
+                      
+                      // Pair FAQs by position (topic matching)
+                      for (let i = 0; i < minCount; i++) {
+                        // Use the minimum order_index from the pair for display sorting
+                        const orderIndex = Math.min(
+                          germanFAQs[i].order_index,
+                          englishFAQs[i].order_index
+                        );
+                        
+                        pairedFAQs.push({
+                          de: germanFAQs[i],
+                          en: englishFAQs[i],
+                          orderIndex: orderIndex
+                        });
+                      }
+                      
+                      // Add remaining unpaired FAQs as single-language entries
+                      // Use order_index for sorting these as well
+                      if (germanFAQs.length > englishFAQs.length) {
+                        germanFAQs.slice(minCount).forEach(faq => {
+                          pairedFAQs.push({
+                            de: faq,
+                            orderIndex: faq.order_index
+                          });
+                        });
+                      } else if (englishFAQs.length > germanFAQs.length) {
+                        englishFAQs.slice(minCount).forEach(faq => {
+                          pairedFAQs.push({
+                            en: faq,
+                            orderIndex: faq.order_index
+                          });
+                        });
+                      }
+                      
+                      // Sort all pairs by orderIndex for display (order_index is for website visitor display order)
+                      pairedFAQs.sort((a, b) => a.orderIndex - b.orderIndex);
 
                       return (
                         <div key={subcategory} className="space-y-4 ml-4">
@@ -1666,140 +1744,94 @@ const Admin = () => {
                              </span>
                           </div>
 
-                          {/* FAQs grouped by question (order_index) */}
+                          {/* FAQs grouped by intelligent pairing */}
                           <div className="space-y-4">
-                            {sortedOrders.map((orderKey) => {
-                              const questionFAQs = faqsByOrder[orderKey];
-                              const germanFAQ = questionFAQs.find(faq => faq.language === 'de') || questionFAQs[0];
-                              const englishFAQ = questionFAQs.find(faq => faq.language === 'en') || questionFAQs[0];
+                            {pairedFAQs.map((pair, pairIndex) => {
+                              const germanFAQ = pair.de;
+                              const englishFAQ = pair.en;
+                              const pairKey = `${subcategory}-${pairIndex}-${pair.orderIndex}`;
+
+                              // Helper function to render FAQ card
+                              const renderFAQCards = (faq: FAQItem | undefined, language: 'de' | 'en', label: string) => {
+                                if (!faq) return null;
+
+                                return (
+                                  <Card key={`${pairKey}-${language}`} className={`flex-1 ${faq.is_visible === false ? "border-destructive/50 bg-destructive/5" : ""}`}>
+                                    <CardContent className="p-4">
+                                      <div className="flex justify-between items-start gap-4">
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-xs font-semibold text-muted-foreground uppercase">{label}</span>
+                                             {faq.is_visible === false && (
+                                               <div className="flex items-center text-destructive text-xs">
+                                                 <EyeOff className="h-3 w-3 mr-1" />
+                                                 {t("hidden")}
+                                               </div>
+                                             )}
+                                          </div>
+                                          <h3 className="font-semibold text-base mb-1">{faq.question}</h3>
+                                          <div className="text-sm text-muted-foreground mt-2">
+                                            {faq.answer}
+                                          </div>
+                                        </div>
+                                        <div className="flex gap-2 flex-shrink-0">
+                                          <Button
+                                            variant={faq.is_visible === false ? "default" : "outline"}
+                                            size="sm"
+                                             onClick={() => handleToggleFAQVisibility(faq.id, faq.is_visible !== false)}
+                                             title={faq.is_visible === false ? t("makeVisible") : t("hideFromPublic")}
+                                          >
+                                            {faq.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                                          </Button>
+                                          <Dialog>
+                                            <DialogTrigger asChild>
+                                              <Button 
+                                                variant="outline" 
+                                                size="sm"
+                                                onClick={() => setEditingFAQ(faq)}
+                                              >
+                                                <Edit className="h-4 w-4" />
+                                              </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
+                                              <DialogHeader>
+                                                <DialogTitle>{t("editFAQ")}</DialogTitle>
+                                              </DialogHeader>
+                                              <div className="max-h-[75vh] overflow-y-auto pr-2">
+                                                <FAQForm 
+                                                  onSave={handleSaveFAQ} 
+                                                  initialFAQ={faq}
+                                                  allFAQs={faqs}
+                                                />
+                                              </div>
+                                            </DialogContent>
+                                          </Dialog>
+                                          <Button 
+                                            variant="destructive" 
+                                            size="sm"
+                                            onClick={() => handleDeleteFAQ(faq.id)}
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+                                );
+                              };
 
                               return (
-                                <div key={orderKey} className="flex gap-4">
-                                  {/* German FAQ Card */}
-                                  <Card className={`flex-1 ${germanFAQ.is_visible === false ? "border-destructive/50 bg-destructive/5" : ""}`}>
-                                    <CardContent className="p-4">
-                                      <div className="flex justify-between items-start gap-4">
-                                        <div className="flex-1 min-w-0">
-                                          <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-xs font-semibold text-muted-foreground uppercase">DE</span>
-                                             {germanFAQ.is_visible === false && (
-                                               <div className="flex items-center text-destructive text-xs">
-                                                 <EyeOff className="h-3 w-3 mr-1" />
-                                                 {t("hidden")}
-                                               </div>
-                                             )}
-                                          </div>
-                                          <h3 className="font-semibold text-base mb-1">{germanFAQ.question}</h3>
-                                          <div className="text-sm text-muted-foreground mt-2">
-                                            {germanFAQ.answer}
-                                          </div>
-                                        </div>
-                                        <div className="flex gap-2 flex-shrink-0">
-                                          <Button
-                                            variant={germanFAQ.is_visible === false ? "default" : "outline"}
-                                            size="sm"
-                                             onClick={() => handleToggleFAQVisibility(germanFAQ.id, germanFAQ.is_visible !== false)}
-                                             title={germanFAQ.is_visible === false ? t("makeVisible") : t("hideFromPublic")}
-                                          >
-                                            {germanFAQ.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                                          </Button>
-                                          <Dialog>
-                                            <DialogTrigger asChild>
-                                              <Button 
-                                                variant="outline" 
-                                                size="sm"
-                                                onClick={() => setEditingFAQ(germanFAQ)}
-                                              >
-                                                <Edit className="h-4 w-4" />
-                                              </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
-                                              <DialogHeader>
-                                                <DialogTitle>{t("editFAQ")}</DialogTitle>
-                                              </DialogHeader>
-                                              <div className="max-h-[75vh] overflow-y-auto pr-2">
-                                                <FAQForm 
-                                                  onSave={handleSaveFAQ} 
-                                                  initialFAQ={germanFAQ}
-                                                  allFAQs={faqs}
-                                                />
-                                              </div>
-                                            </DialogContent>
-                                          </Dialog>
-                                          <Button 
-                                            variant="destructive" 
-                                            size="sm"
-                                            onClick={() => handleDeleteFAQ(germanFAQ.id)}
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    </CardContent>
-                                  </Card>
-
-                                  {/* English FAQ Card */}
-                                  <Card className={`flex-1 ${englishFAQ.is_visible === false ? "border-destructive/50 bg-destructive/5" : ""}`}>
-                                    <CardContent className="p-4">
-                                      <div className="flex justify-between items-start gap-4">
-                                        <div className="flex-1 min-w-0">
-                                          <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-xs font-semibold text-muted-foreground uppercase">EN</span>
-                                             {englishFAQ.is_visible === false && (
-                                               <div className="flex items-center text-destructive text-xs">
-                                                 <EyeOff className="h-3 w-3 mr-1" />
-                                                 {t("hidden")}
-                                               </div>
-                                             )}
-                                          </div>
-                                          <h3 className="font-semibold text-base mb-1">{englishFAQ.question}</h3>
-                                          <div className="text-sm text-muted-foreground mt-2">
-                                            {englishFAQ.answer}
-                                          </div>
-                                        </div>
-                                        <div className="flex gap-2 flex-shrink-0">
-                                          <Button
-                                            variant={englishFAQ.is_visible === false ? "default" : "outline"}
-                                            size="sm"
-                                             onClick={() => handleToggleFAQVisibility(englishFAQ.id, englishFAQ.is_visible !== false)}
-                                             title={englishFAQ.is_visible === false ? t("makeVisible") : t("hideFromPublic")}
-                                          >
-                                            {englishFAQ.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                                          </Button>
-                                          <Dialog>
-                                            <DialogTrigger asChild>
-                                              <Button 
-                                                variant="outline" 
-                                                size="sm"
-                                                onClick={() => setEditingFAQ(englishFAQ)}
-                                              >
-                                                <Edit className="h-4 w-4" />
-                                              </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
-                                              <DialogHeader>
-                                                <DialogTitle>{t("editFAQ")}</DialogTitle>
-                                              </DialogHeader>
-                                              <div className="max-h-[75vh] overflow-y-auto pr-2">
-                                                <FAQForm 
-                                                  onSave={handleSaveFAQ} 
-                                                  initialFAQ={englishFAQ}
-                                                  allFAQs={faqs}
-                                                />
-                                              </div>
-                                            </DialogContent>
-                                          </Dialog>
-                                          <Button 
-                                            variant="destructive" 
-                                            size="sm"
-                                            onClick={() => handleDeleteFAQ(englishFAQ.id)}
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    </CardContent>
-                                  </Card>
+                                <div key={pairKey} className="flex gap-4">
+                                  {renderFAQCards(germanFAQ, 'de', 'DE')}
+                                  {renderFAQCards(englishFAQ, 'en', 'EN')}
+                                  {/* Show message if no FAQs exist in this pair */}
+                                  {!germanFAQ && !englishFAQ && (
+                                    <Card className="flex-1 border-dashed">
+                                      <CardContent className="p-4 text-center text-muted-foreground">
+                                        {t("noFAQsFound") || "No FAQs found in this pair"}
+                                      </CardContent>
+                                    </Card>
+                                  )}
                                 </div>
                               );
                             })}
