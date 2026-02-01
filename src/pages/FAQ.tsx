@@ -92,8 +92,8 @@ const FAQ = () => {
 
   // Group filtered FAQs by category and subcategory
   const groupedFAQs = filteredFaqs.reduce((acc, faq) => {
-    const category = faq.category || t('allgemein');
-    const subcategory = faq.subcategory || t('allgemein');
+    const category = faq.category || (language === 'de' ? 'Allgemein' : 'General');
+    const subcategory = faq.subcategory || (language === 'de' ? 'Allgemein' : 'General');
     
     if (!acc[category]) {
       acc[category] = {};
@@ -143,7 +143,7 @@ const FAQ = () => {
                   {language === 'de' ? (
                     <div className="text-center space-y-4">
                       <h2 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                        Kollektiv Spinnen Festival - das FAQ von A bis Z
+                        Kollektiv Spinnen Festival II - das FAQ von A bis Z
                       </h2>
                       <p className="text-lg font-semibold text-primary">
                         [Privatveranstaltung vom 07.08.2026 - 09.08.2026]
@@ -155,7 +155,7 @@ const FAQ = () => {
                   ) : (
                     <div className="text-center space-y-4">
                       <h2 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                        Kollektiv Spinnen Festival - FAQ from A to Z
+                        Kollektiv Spinnen Festival II - FAQ from A to Z
                       </h2>
                       <p className="text-lg font-semibold text-primary">
                         [Private event from 07.08.2026 - 09.08.2026]
@@ -229,7 +229,7 @@ const FAQ = () => {
                   <CardContent className="space-y-4">
                     {Object.entries(subcategories).map(([subcategory, subcategoryFaqs]) => (
                       <div key={subcategory} className="space-y-3">
-                        {subcategory !== t('allgemein') && (
+                        {subcategory !== (language === 'de' ? 'Allgemein' : 'General') && (
                           <h3 className="text-lg font-semibold mb-3 text-primary">
                             {subcategory}
                           </h3>
