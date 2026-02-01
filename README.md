@@ -148,10 +148,63 @@ This project includes Capacitor configuration for building native iOS and Androi
 
 ## Additional Documentation
 
+- `BRANCH_PROTECTION_SETUP.md` – guide for setting up GitHub branch protection rules
+- `VERCEL_BRANCH_CONFIG.md` – guide for configuring Vercel branch deployments
 - `ENV_SETUP.md` – detailed environment variable and local setup notes
 - `SUPABASE_AUDIT.md` / `DATABASE_AUDIT_REPORT.md` – Supabase and database/RLS auditing notes
 - `LOGIN_TROUBLESHOOTING.md` – tips for debugging authentication and admin access
 - `REFACTORING_SUMMARY.md` – overview of recent security, performance, and reliability improvements
+
+## Git Workflow
+
+This project uses a two-branch strategy for stability:
+
+### Branch Structure
+
+- **`main`** - Production branch (protected, only merges from develop)
+- **`develop`** - Development branch (default for all new work)
+
+### Workflow
+
+1. **Daily Development**
+   - Work directly on the `develop` branch
+   - Commit and push frequently to `develop`
+   - Vercel will create preview deployments for `develop` branch
+
+2. **Production Releases**
+   - When ready to deploy to production:
+     - Create a pull request from `develop` → `main`
+     - Review and approve the PR
+     - Merge the PR to `main`
+   - Vercel will automatically deploy `main` to production
+
+3. **Urgent Fixes**
+   - Fix issues on `develop` branch
+   - Test thoroughly
+   - Merge `develop` → `main` via PR immediately
+
+### Setting Up Branch Protection
+
+To protect the `main` branch, follow the guide in [BRANCH_PROTECTION_SETUP.md](./BRANCH_PROTECTION_SETUP.md).
+
+### Configuring Vercel
+
+To configure Vercel for the two-branch workflow, see [VERCEL_BRANCH_CONFIG.md](./VERCEL_BRANCH_CONFIG.md).
+
+### Quick Commands
+
+```bash
+# Switch to develop branch for daily work
+git checkout develop
+
+# Create a new feature (optional, can work directly on develop)
+git checkout -b feature/my-feature develop
+
+# Merge develop to main (after PR approval)
+git checkout main
+git merge develop
+git push origin main
+```
 
 ## Contributing
 
