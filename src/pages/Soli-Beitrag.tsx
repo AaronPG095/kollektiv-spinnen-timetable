@@ -618,7 +618,7 @@ const Tickets = () => {
                       <div className="font-semibold text-foreground">{role.label}</div>
                       <div className="text-muted-foreground pl-0">{getRoleDescription(role.value)}</div>
                       {role.value === "abbau" && (
-                        <div className="text-foreground pl-0 mt-3 p-2 bg-festival-light/10 border border-festival-light/30 rounded-md font-medium italic">
+                        <div className="text-foreground pl-2 mt-3 p-2 bg-festival-light/10 border border-festival-light/30 rounded-md font-medium italic">
                           {t("abbauRefundNote")}
                         </div>
                       )}
