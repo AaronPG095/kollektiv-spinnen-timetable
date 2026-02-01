@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
@@ -31,12 +32,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
-    // Helper function to check admin status by email
+    // Helper function to check admin and super admin status
     const checkAdminStatus = async (userEmail: string | undefined): Promise<void> => {
       if (import.meta.env.DEV) {
         console.log('[AuthContext] Checking admin status for:', userEmail);
@@ -45,18 +47,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (!userEmail) {
           if (mounted) {
             setIsAdmin(false);
+            setIsSuperAdmin(false);
           }
           return;
         }
 
-        // Skip admin_emails check for now - RLS policy has infinite recursion bug
-        // TODO: Re-enable after running FIX_ADMIN_EMAILS_RLS.sql in Supabase Dashboard
-        // The user_roles fallback below will handle admin checks
-
-        // Fallback: Check user_roles table (user_id-based) for backward compatibility
+        // Check super admin status first (email-based check)
+        const normalizedEmail = userEmail.trim().toLowerCase();
+        const isSuperAdminEmail = normalizedEmail === 'aaron.p.greyling@gmail.com';
+        
+        // Check user_roles table for both admin and super_admin roles
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
+            // Check for super_admin role
+            const { data: roleSuperAdmin, error: superAdminError } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', user.id)
+              .eq('role', 'super_admin')
+              .single();
+            
+            // Check for admin role
             const { data: roleAdmin, error: roleError } = await supabase
               .from('user_roles')
               .select('role')
@@ -64,12 +76,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               .eq('role', 'admin')
               .single();
             
+            const hasSuperAdminRole = !!roleSuperAdmin && !superAdminError;
+            const hasAdminRole = !!roleAdmin && !roleError;
+            
+            // Super admin if they have super_admin role OR if email matches (for robustness)
+            const isSuperAdminUser = hasSuperAdminRole || (isSuperAdminEmail && hasAdminRole);
+            
             if (mounted) {
-              setIsAdmin(!!roleAdmin && !roleError);
+              setIsSuperAdmin(isSuperAdminUser);
+              // User is admin if they have admin role OR super_admin role
+              setIsAdmin(hasAdminRole || hasSuperAdminRole);
             }
           } else {
             if (mounted) {
               setIsAdmin(false);
+              setIsSuperAdmin(false);
             }
           }
         } catch (userRolesError: any) {
@@ -78,12 +99,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           }
           if (mounted) {
             setIsAdmin(false);
+            setIsSuperAdmin(false);
           }
         }
       } catch (error) {
         logError('AuthContext', error, { operation: 'checkAdminStatus' });
         if (mounted) {
           setIsAdmin(false);
+          setIsSuperAdmin(false);
         }
       }
     };
@@ -108,6 +131,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           });
         } else {
           setIsAdmin(false);
+          setIsSuperAdmin(false);
         }
       }
     );
@@ -130,6 +154,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         });
       } else {
         setIsAdmin(false);
+        setIsSuperAdmin(false);
       }
     });
 
@@ -183,6 +208,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     user,
     session,
     isAdmin,
+    isSuperAdmin,
     loading,
     signIn,
     signUp,

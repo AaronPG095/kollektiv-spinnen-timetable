@@ -69,7 +69,7 @@ interface UserWithAdminStatus {
 }
 
 const Admin = () => {
-  const { user, isAdmin, signOut, loading: authLoading } = useAuth();
+  const { user, isAdmin, isSuperAdmin, signOut, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -2252,32 +2252,34 @@ const Admin = () => {
                               </Badge>
                             </div>
                           </div>
-                          <div className="flex gap-2 flex-shrink-0">
-                            {user.isAdmin ? (
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => {
-                                  setUserToModify(user);
-                                  setRemoveAdminDialogOpen(true);
-                                }}
-                                className="gap-2"
-                              >
-                                <ShieldOff className="h-4 w-4" />
-                                {t("removeAdminPrivileges")}
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => addAdminPrivileges(user.id, user.email)}
-                                className="gap-2"
-                              >
-                                <Shield className="h-4 w-4" />
-                                {t("addAdminPrivileges")}
-                              </Button>
-                            )}
-                          </div>
+                          {isSuperAdmin && (
+                            <div className="flex gap-2 flex-shrink-0">
+                              {user.isAdmin ? (
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => {
+                                    setUserToModify(user);
+                                    setRemoveAdminDialogOpen(true);
+                                  }}
+                                  className="gap-2"
+                                >
+                                  <ShieldOff className="h-4 w-4" />
+                                  {t("removeAdminPrivileges")}
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => addAdminPrivileges(user.id, user.email)}
+                                  className="gap-2"
+                                >
+                                  <Shield className="h-4 w-4" />
+                                  {t("addAdminPrivileges")}
+                                </Button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
