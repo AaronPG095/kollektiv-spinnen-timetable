@@ -14,6 +14,10 @@ export type Database = {
   }
   public: {
     Tables: {
+      // NOTE: Events are now stored in yearly tables (events_2025, events_2026, etc.)
+      // Each yearly table has the same schema as the events table below, but without the 'years' field.
+      // The 'years' field in the DatabaseEvent interface is for compatibility and is derived from the table name.
+      // To regenerate types after migration, run: npx supabase gen types typescript --project-id <project-id> > src/integrations/supabase/types.ts
       events: {
         Row: {
           created_at: string

@@ -27,7 +27,7 @@ import {
   type AboutPageContent as AboutPageContentType,
   type AboutPagePhoto 
 } from '@/lib/aboutPage';
-import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, ArrowUpDown, Calendar, Ticket, Info, Check, X, XCircle, Users as UsersIcon, Shield, ShieldOff } from 'lucide-react';
+import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, ArrowUpDown, Calendar, Ticket, Info, Check, X, XCircle, Users as UsersIcon, Shield, ShieldOff, Copy } from 'lucide-react';
 import { Footer } from '@/components/Footer';
 import { FestivalHeader } from '@/components/FestivalHeader';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -116,6 +116,11 @@ const Admin = () => {
   const [userToModify, setUserToModify] = useState<UserWithAdminStatus | null>(null);
   const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
   const [userToResetPassword, setUserToResetPassword] = useState<UserWithAdminStatus | null>(null);
+  
+  // Event Duplication State
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [eventToDuplicate, setEventToDuplicate] = useState<DatabaseEvent | null>(null);
+  const [targetYear, setTargetYear] = useState<number>(new Date().getFullYear() + 1);
 
   // Derived collections for ticket views
   // "Pending Soli-Contributions" tab shows: confirmed but unchecked purchases
@@ -143,6 +148,14 @@ const Admin = () => {
   const filteredPendingPurchases = filterPurchasesBySearch(uncheckedPurchases, pendingSearchQuery);
   const filteredCheckedPurchases = filterPurchasesBySearch(checkedConfirmedPurchases, checkedSearchQuery);
   const filteredCancelledPurchases = filterPurchasesBySearch(cancelledPurchases, cancelledSearchQuery);
+
+  // Load events when selectedYear changes
+  useEffect(() => {
+    if (isAdmin && activeTab === "events") {
+      loadEvents();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear, isAdmin, activeTab]);
 
   useEffect(() => {
     // Allow all users to access admin page, but only load data if admin
@@ -210,35 +223,40 @@ const Admin = () => {
         console.log('[Admin] Loading all events (admin view)...');
       }
       
-      // Admin should see all events including hidden ones
-      // RLS policies should allow admins to see everything
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('day', { ascending: true })
-        .order('time', { ascending: true });
-
-      if (error) {
-        logError('Admin', error, { operation: 'loadEvents' });
-        throw error;
+      // Import year utilities
+      const { queryAllYearlyEvents, queryYearlyEvents, getAvailableYears } = await import('@/lib/yearEvents');
+      
+      let allEventsData: (DatabaseEvent & { year: number })[] = [];
+      
+      if (selectedYear === "all") {
+        // Load events from all yearly tables
+        const eventsWithYears = await queryAllYearlyEvents(true); // includeHidden = true for admin
+        allEventsData = eventsWithYears.map(event => ({
+          ...event,
+          year: (event as any).year,
+          years: [(event as any).year] // Convert to array format for compatibility
+        })) as (DatabaseEvent & { year: number })[];
+      } else {
+        // Load events from specific year's table
+        const yearEvents = await queryYearlyEvents(selectedYear, true); // includeHidden = true for admin
+        allEventsData = yearEvents.map(event => ({
+          ...event,
+          year: selectedYear,
+          years: [selectedYear]
+        })) as (DatabaseEvent & { year: number })[];
       }
       
       if (import.meta.env.DEV) {
-        console.log(`[Admin] Successfully loaded ${data?.length || 0} events`);
+        console.log(`[Admin] Successfully loaded ${allEventsData.length} events`);
       }
       
       // Normalize years field to ensure it's always an array
-      const normalizedEvents = (data || []).map(event => {
-        const eventWithYear = event as DatabaseEvent & { year?: number };
-        return {
-          ...event,
-          years: Array.isArray(event.years) && event.years.length > 0
-            ? event.years.filter(y => typeof y === 'number' && y > 2000 && y < 2100)
-            : (typeof eventWithYear.year === 'number' 
-                ? [eventWithYear.year] 
-                : [new Date().getFullYear()])
-        };
-      });
+      const normalizedEvents: DatabaseEvent[] = allEventsData.map(event => ({
+        ...event,
+        years: Array.isArray(event.years) && event.years.length > 0
+          ? event.years.filter(y => typeof y === 'number' && y > 2000 && y < 2100)
+          : [event.year || new Date().getFullYear()]
+      }));
       
       setEvents(normalizedEvents);
     } catch (error: any) {
@@ -510,30 +528,43 @@ const Admin = () => {
 
   const handleSaveEvent = async (eventData: Omit<DatabaseEvent, 'id'>) => {
     try {
+      const { getEventsTableName, getCurrentYear } = await import('@/lib/yearEvents');
+      
+      // Determine which year's table to use
+      // Events now belong to a single year (first year in years array, or current year as default)
+      const eventYear = Array.isArray(eventData.years) && eventData.years.length > 0
+        ? eventData.years[0]
+        : getCurrentYear();
+      
+      const tableName = getEventsTableName(eventYear);
+      
+      // Remove years field from data (not stored in yearly tables)
+      const { years, ...dataToSave } = eventData;
+      
       if (editingEvent) {
         if (import.meta.env.DEV) {
-          console.log('[Admin] Updating event:', editingEvent.id);
+          console.log('[Admin] Updating event:', editingEvent.id, 'in table:', tableName);
         }
         const { error } = await supabase
-          .from('events')
-          .update(eventData)
+          .from(tableName)
+          .update(dataToSave)
           .eq('id', editingEvent.id);
         
         if (error) {
-          logError('Admin', error, { operation: 'updateEvent', eventId: editingEvent.id });
+          logError('Admin', error, { operation: 'updateEvent', eventId: editingEvent.id, tableName });
           throw error;
         }
         toast({ title: t("eventUpdatedSuccessfully") });
       } else {
         if (import.meta.env.DEV) {
-          console.log('[Admin] Creating new event');
+          console.log('[Admin] Creating new event in table:', tableName);
         }
         const { error } = await supabase
-          .from('events')
-          .insert([eventData]);
+          .from(tableName)
+          .insert([dataToSave]);
         
         if (error) {
-          logError('Admin', error, { operation: 'createEvent' });
+          logError('Admin', error, { operation: 'createEvent', tableName });
           throw error;
         }
         toast({ title: t("eventCreatedSuccessfully") });
@@ -552,20 +583,39 @@ const Admin = () => {
     }
   };
 
-  const handleDeleteEvent = async (id: string) => {
+  const handleDeleteEvent = async (id: string, eventYear?: number) => {
     if (!confirm(t("areYouSureDeleteEvent"))) return;
     
     try {
-      if (import.meta.env.DEV) {
-        console.log('[Admin] Deleting event:', id);
+      const { getEventsTableName, getCurrentYear } = await import('@/lib/yearEvents');
+      
+      // Determine which year's table to delete from
+      // If eventYear is provided, use it; otherwise try to find the event first
+      let yearToDelete = eventYear;
+      
+      if (!yearToDelete) {
+        // Find the event to determine its year
+        const eventToDelete = events.find(e => e.id === id);
+        if (eventToDelete && Array.isArray(eventToDelete.years) && eventToDelete.years.length > 0) {
+          yearToDelete = eventToDelete.years[0];
+        } else {
+          yearToDelete = getCurrentYear();
+        }
       }
+      
+      const tableName = getEventsTableName(yearToDelete);
+      
+      if (import.meta.env.DEV) {
+        console.log('[Admin] Deleting event:', id, 'from table:', tableName);
+      }
+      
       const { error } = await supabase
-        .from('events')
+        .from(tableName)
         .delete()
         .eq('id', id);
       
       if (error) {
-        logError('Admin', error, { operation: 'deleteEvent', eventId: id });
+        logError('Admin', error, { operation: 'deleteEvent', eventId: id, tableName });
         throw error;
       }
       toast({ title: t("eventDeletedSuccessfully") });
@@ -580,16 +630,36 @@ const Admin = () => {
     }
   };
 
-  const handleToggleVisibility = async (id: string, currentVisibility: boolean) => {
+  const handleToggleVisibility = async (id: string, currentVisibility: boolean, eventYear?: number) => {
     try {
-      console.log('[Admin] Toggling event visibility:', id, !currentVisibility);
+      const { getEventsTableName, getCurrentYear } = await import('@/lib/yearEvents');
+      
+      // Determine which year's table to update
+      let yearToUpdate = eventYear;
+      
+      if (!yearToUpdate) {
+        // Find the event to determine its year
+        const eventToUpdate = events.find(e => e.id === id);
+        if (eventToUpdate && Array.isArray(eventToUpdate.years) && eventToUpdate.years.length > 0) {
+          yearToUpdate = eventToUpdate.years[0];
+        } else {
+          yearToUpdate = getCurrentYear();
+        }
+      }
+      
+      const tableName = getEventsTableName(yearToUpdate);
+      
+      if (import.meta.env.DEV) {
+        console.log('[Admin] Toggling event visibility:', id, !currentVisibility, 'in table:', tableName);
+      }
+      
       const { error } = await supabase
-        .from('events')
+        .from(tableName)
         .update({ is_visible: !currentVisibility })
         .eq('id', id);
       
       if (error) {
-        logError('Admin', error, { operation: 'toggleEventVisibility', eventId: id });
+        logError('Admin', error, { operation: 'toggleEventVisibility', eventId: id, tableName });
         throw error;
       }
       toast({
@@ -614,16 +684,23 @@ const Admin = () => {
     if (!confirm(confirmMessage)) return;
     
     try {
-      console.log('[Admin] Toggling year visibility:', year, visible);
-      // Use array contains filter to find events that include this year
-      // PostgreSQL array contains operator: @> (contains)
+      const { getEventsTableName } = await import('@/lib/yearEvents');
+      const tableName = getEventsTableName(year);
+      
+      if (import.meta.env.DEV) {
+        console.log('[Admin] Toggling year visibility:', year, visible, 'in table:', tableName);
+      }
+      
+      // Update all events in the yearly table
+      // Supabase requires a WHERE clause for safety
+      // We use .gte('created_at', '1970-01-01') which matches all rows since all timestamps are after 1970
       const { error } = await supabase
-        .from('events')
+        .from(tableName)
         .update({ is_visible: visible })
-        .filter('years', 'cs', `{${year}}`);
+        .gte('created_at', '1970-01-01');
       
       if (error) {
-        logError('Admin', error, { operation: 'toggleYearVisibility', year });
+        logError('Admin', error, { operation: 'toggleYearVisibility', year, tableName });
         throw error;
       }
       toast({
@@ -635,6 +712,43 @@ const Admin = () => {
       toast({
         title: t("error"),
         description: formatSupabaseError(error) || "Failed to update year visibility",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDuplicateEvent = async (event: DatabaseEvent, targetYear: number) => {
+    try {
+      const sourceYear = Array.isArray(event.years) && event.years.length > 0
+        ? event.years[0]
+        : new Date().getFullYear();
+      
+      if (sourceYear === targetYear) {
+        toast({
+          title: t("error"),
+          description: t("cannotDuplicateToSameYear") || "Cannot duplicate event to the same year",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const { duplicateEventToYearMCP } = await import('@/lib/mcpYearEvents');
+      
+      await duplicateEventToYearMCP(sourceYear, targetYear, event.id);
+      
+      toast({
+        title: t("eventDuplicatedSuccessfully") || "Event duplicated successfully",
+        description: `${t("duplicatedToYear") || "Duplicated to"} ${targetYear}`,
+      });
+      
+      setDuplicateDialogOpen(false);
+      setEventToDuplicate(null);
+      loadEvents();
+    } catch (error: any) {
+      logError('Admin', error, { operation: 'duplicateEvent', eventId: event.id, targetYear });
+      toast({
+        title: t("error"),
+        description: formatSupabaseError(error) || t("failedToDuplicateEvent") || "Failed to duplicate event",
         variant: "destructive",
       });
     }
@@ -1037,20 +1151,39 @@ const Admin = () => {
     }
   };
 
-  // Compute available years from events
-  // Extract all years from events array and deduplicate
-  const availableYears = [...new Set(
-    events
-      .flatMap(e => Array.isArray(e.years) ? e.years : [])
-      .filter(year => typeof year === 'number' && !isNaN(year) && year > 2000 && year < 2100)
-  )].sort((a, b) => b - a);
+  // Get available years from yearly tables
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  
+  useEffect(() => {
+    if (activeTab === "events") {
+      import('@/lib/yearEvents').then(({ getAvailableYears }) => {
+        getAvailableYears().then(years => {
+          setAvailableYears(years.sort((a, b) => b - a));
+        });
+      });
+    }
+  }, [activeTab]);
 
-  // Filter events based on selected year and debounced search query
-  const filteredEvents = events.filter(event => {
-    // Filter by year first - check if event's years array includes selected year
+  // Filter events based on selected year, visibility mode, and debounced search query
+  const filteredEvents = useMemo(() => events.filter(event => {
+    // Filter by visibility mode first
+    if (showHiddenMode) {
+      // In hidden mode, only show hidden events
+      if (event.is_visible !== false) {
+        return false;
+      }
+    } else {
+      // In normal mode, show all events (both visible and hidden)
+      // No filter needed here
+    }
+    
+    // Filter by year - check if event's years array includes selected year
+    // Events now belong to a single year (first year in years array)
     if (selectedYear !== "all") {
-      const eventYears = Array.isArray(event.years) ? event.years : [];
-      if (!eventYears.includes(selectedYear)) {
+      const eventYear = Array.isArray(event.years) && event.years.length > 0
+        ? event.years[0]
+        : null;
+      if (eventYear !== selectedYear) {
         return false;
       }
     }
@@ -1084,7 +1217,7 @@ const Admin = () => {
     }
     
     return false;
-  });
+  }), [events, showHiddenMode, selectedYear, debouncedSearchQuery]);
 
   // Group events by day
   const eventsByDay = filteredEvents.reduce((acc, event) => {
@@ -1425,6 +1558,11 @@ const Admin = () => {
                                 </div>
                                 <p className="text-xs md:text-sm text-muted-foreground mb-2 break-words">
                                   {event.time} • {event.venue} • {event.type}
+                                  {Array.isArray(event.years) && event.years.length > 0 && (
+                                    <span className="ml-2 px-2 py-0.5 rounded bg-muted text-xs font-medium">
+                                      {event.years[0]}
+                                    </span>
+                                  )}
                                 </p>
                                 {event.description && (
                                   <div className="text-xs md:text-sm text-muted-foreground mt-2">
@@ -1452,7 +1590,12 @@ const Admin = () => {
                                   variant={event.is_visible === false ? "default" : "outline"}
                                   size="sm"
                                   className="h-8 w-8 md:h-9 md:w-9 p-0"
-                                  onClick={() => handleToggleVisibility(event.id, event.is_visible !== false)}
+                                  onClick={() => {
+                                    const eventYear = Array.isArray(event.years) && event.years.length > 0
+                                      ? event.years[0]
+                                      : undefined;
+                                    handleToggleVisibility(event.id, event.is_visible !== false, eventYear);
+                                  }}
                                   title={event.is_visible === false ? t("makeVisible") : t("hideFromPublic")}
                                 >
                                   {event.is_visible === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
@@ -1488,11 +1631,29 @@ const Admin = () => {
                                     </div>
                                   </DialogContent>
                                 </Dialog>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 w-8 md:h-9 md:w-9 p-0"
+                                  onClick={() => {
+                                    setEventToDuplicate(event);
+                                    setTargetYear(new Date().getFullYear() + 1);
+                                    setDuplicateDialogOpen(true);
+                                  }}
+                                  title={t("duplicateEvent") || "Duplicate Event"}
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
                                 <Button 
                                   variant="destructive" 
                                   size="sm"
                                   className="h-8 w-8 md:h-9 md:w-9 p-0"
-                                  onClick={() => handleDeleteEvent(event.id)}
+                                  onClick={() => {
+                                    const eventYear = Array.isArray(event.years) && event.years.length > 0
+                                      ? event.years[0]
+                                      : undefined;
+                                    handleDeleteEvent(event.id, eventYear);
+                                  }}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -2625,6 +2786,78 @@ const Admin = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Duplicate Event Dialog */}
+      <Dialog open={duplicateDialogOpen} onOpenChange={setDuplicateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("duplicateEvent") || "Duplicate Event"}</DialogTitle>
+            <DialogDescription>
+              {eventToDuplicate && (
+                <>
+                  {t("duplicateEventDescription") || "Select the target year to duplicate this event to:"}
+                  <br />
+                  <strong>{eventToDuplicate.title}</strong>
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="targetYear">{t("selectTargetYear") || "Select Target Year"} *</Label>
+              <Select 
+                value={String(targetYear)} 
+                onValueChange={(value) => setTargetYear(parseInt(value, 10))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("selectTargetYear") || "Select Target Year"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableYears
+                    .filter(year => {
+                      const eventYear = Array.isArray(eventToDuplicate?.years) && eventToDuplicate.years.length > 0
+                        ? eventToDuplicate.years[0]
+                        : new Date().getFullYear();
+                      return year !== eventYear;
+                    })
+                    .map((year) => (
+                      <SelectItem key={year} value={String(year)}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  {/* Also show next year if not in availableYears */}
+                  {!availableYears.includes(new Date().getFullYear() + 1) && (
+                    <SelectItem value={String(new Date().getFullYear() + 1)}>
+                      {new Date().getFullYear() + 1}
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDuplicateDialogOpen(false);
+                setEventToDuplicate(null);
+              }}
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => {
+                if (eventToDuplicate) {
+                  handleDuplicateEvent(eventToDuplicate, targetYear);
+                }
+              }}
+            >
+              {t("duplicateToYear") || "Duplicate to Year"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       <Footer />
     </div>
@@ -2679,14 +2912,25 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
     venue: initialEvent?.venue || '',
     day: initialEvent?.day || '',
     type: initialEvent?.type || '',
-    years: Array.isArray(initialEvent?.years) && initialEvent.years.length > 0
-      ? initialEvent.years
-      : [new Date().getFullYear()],
+    year: Array.isArray(initialEvent?.years) && initialEvent.years.length > 0
+      ? initialEvent.years[0]
+      : new Date().getFullYear(),
     description_en: initialDescriptions.en,
     description_de: initialDescriptions.de,
     links: initialEvent?.links || {},
     is_visible: initialEvent?.is_visible ?? true
   });
+  
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  
+  // Load available years on mount
+  useEffect(() => {
+    import('@/lib/yearEvents').then(({ getAvailableYears }) => {
+      getAvailableYears().then(years => {
+        setAvailableYears(years.sort((a, b) => b - a));
+      });
+    });
+  }, []);
 
   const [linksArray, setLinksArray] = useState(initialLinks);
   const [newLink, setNewLink] = useState({ platform: '', url: '' });
@@ -2738,11 +2982,11 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate that at least one year is selected
-    if (formData.years.length === 0) {
+    // Validate that a year is selected
+    if (!formData.year || formData.year < 2020 || formData.year > 2100) {
       toast({
         title: t("error"),
-        description: "Please select at least one year",
+        description: "Please select a valid year",
         variant: "destructive",
       });
       return;
@@ -2760,8 +3004,9 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
       return acc;
     }, {} as Record<string, string>);
     
-    const { description_en, description_de, ...eventData } = formData;
-    onSave({ ...eventData, description, links: linksObject });
+    const { description_en, description_de, year, ...eventData } = formData;
+    // Convert year to years array for compatibility with DatabaseEvent interface
+    onSave({ ...eventData, description, links: linksObject, years: [year] });
   };
 
   return (
@@ -2864,40 +3109,33 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Years *</Label>
-          <div className="border rounded-md p-4">
-            <div className="flex gap-4">
-              {[2025, 2026, 2027].map((year) => (
-                <div key={year} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`year-${year}`}
-                    checked={formData.years.includes(year)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setFormData({
-                          ...formData,
-                          years: [...formData.years, year].sort((a, b) => a - b)
-                        });
-                      } else {
-                        setFormData({
-                          ...formData,
-                          years: formData.years.filter(y => y !== year)
-                        });
-                      }
-                    }}
-                  />
-                  <Label
-                    htmlFor={`year-${year}`}
-                    className="text-sm font-normal cursor-pointer"
-                  >
+          <Label htmlFor="year">{t("year") || "Year"} *</Label>
+          <Select 
+            value={String(formData.year)} 
+            onValueChange={(value) => setFormData({ ...formData, year: parseInt(value, 10) })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={t("selectYear") || "Select Year"} />
+            </SelectTrigger>
+            <SelectContent>
+              {availableYears.length > 0 ? (
+                availableYears.map((year) => (
+                  <SelectItem key={year} value={String(year)}>
                     {year}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-          {formData.years.length === 0 && (
-            <p className="text-sm text-destructive">At least one year must be selected</p>
+                  </SelectItem>
+                ))
+              ) : (
+                // Fallback to current year and next few years if availableYears not loaded yet
+                Array.from({ length: 5 }, (_, i) => new Date().getFullYear() + i - 2).map((year) => (
+                  <SelectItem key={year} value={String(year)}>
+                    {year}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+          {!formData.year && (
+            <p className="text-sm text-destructive">{t("pleaseSelectYear") || "Please select a year"}</p>
           )}
         </div>
         <div className="flex items-center space-x-2">
