@@ -399,3 +399,117 @@ export const getAllPurchases = async (): Promise<TicketPurchase[]> => {
   }
 };
 
+/**
+ * Create a new Soli-Contribution purchase (admin only).
+ * This function bypasses all capacity and universal limits, allowing admins to manually add contributions.
+ * 
+ * @param purchaseData - The Soli-Contribution data to create
+ * @returns Object with success flag and optional purchase or error
+ */
+export const createTicketPurchaseAdmin = async (
+  purchaseData: CreatePurchaseData
+): Promise<{ success: boolean; purchase?: TicketPurchase; error?: string }> => {
+  try {
+    const { data, error } = await supabase
+      .from('soli_contribution_purchases')
+      .insert({
+        user_id: null, // Manual entries don't have a user_id
+        contribution_type: purchaseData.contribution_type,
+        role: purchaseData.role,
+        price: purchaseData.price,
+        purchaser_name: purchaseData.purchaser_name,
+        purchaser_email: purchaseData.purchaser_email,
+        phone_number: purchaseData.phone_number || null,
+        payment_reference: purchaseData.payment_reference || null,
+        notes: purchaseData.notes || null,
+        status: purchaseData.status || 'confirmed',
+        checked: false, // New purchases appear in "Pending Soli-Contributions" tab
+      })
+      .select()
+      .single();
+
+    if (error) {
+      logError('TicketPurchases', error, { operation: 'createTicketPurchaseAdmin', purchaseData });
+      return {
+        success: false,
+        error: formatSupabaseError(error),
+      };
+    }
+
+    return {
+      success: true,
+      purchase: data,
+    };
+  } catch (error: any) {
+    logError('TicketPurchases', error, { operation: 'createTicketPurchaseAdmin', purchaseData });
+    return {
+      success: false,
+      error: formatSupabaseError(error),
+    };
+  }
+};
+
+/**
+ * Update an existing Soli-Contribution purchase (admin only).
+ * Allows updating contact fields and contribution meta (type, role, price).
+ * 
+ * @param purchaseId - The ID of the purchase to update
+ * @param updateData - Partial update data (contact + meta fields)
+ * @returns Object with success flag and optional purchase or error
+ */
+export const updateTicketPurchaseAdmin = async (
+  purchaseId: string,
+  updateData: Partial<{
+    contribution_type: 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal';
+    role: string;
+    price: number;
+    purchaser_name: string;
+    purchaser_email: string;
+    phone_number: string | null;
+    payment_reference: string | null;
+    notes: string | null;
+  }>
+): Promise<{ success: boolean; purchase?: TicketPurchase; error?: string }> => {
+  try {
+    // Filter out undefined values
+    const dataToUpdate = Object.entries(updateData).reduce((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as Record<string, any>);
+
+    if (Object.keys(dataToUpdate).length === 0) {
+      return {
+        success: false,
+        error: 'No fields to update',
+      };
+    }
+
+    const { data, error } = await supabase
+      .from('soli_contribution_purchases')
+      .update(dataToUpdate)
+      .eq('id', purchaseId)
+      .select()
+      .single();
+
+    if (error) {
+      logError('TicketPurchases', error, { operation: 'updateTicketPurchaseAdmin', purchaseId, updateData });
+      return {
+        success: false,
+        error: formatSupabaseError(error),
+      };
+    }
+
+    return {
+      success: true,
+      purchase: data,
+    };
+  } catch (error: any) {
+    logError('TicketPurchases', error, { operation: 'updateTicketPurchaseAdmin', purchaseId, updateData });
+    return {
+      success: false,
+      error: formatSupabaseError(error),
+    };
+  }
+};

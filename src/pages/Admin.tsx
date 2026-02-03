@@ -16,7 +16,7 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, X as XIcon } from 'lucide-react';
 import { getTicketSettings, updateTicketSettings, type TicketSettings } from '@/lib/ticketSettings';
-import { getAllPurchases, type TicketPurchase } from '@/lib/ticketPurchases';
+import { getAllPurchases, type TicketPurchase, createTicketPurchaseAdmin, updateTicketPurchaseAdmin } from '@/lib/ticketPurchases';
 import { 
   getAboutPageContent, 
   updateAboutPageContent, 
@@ -103,6 +103,10 @@ const Admin = () => {
   const [cancelledSearchQuery, setCancelledSearchQuery] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [purchaseToDelete, setPurchaseToDelete] = useState<string | null>(null);
+  
+  // Soli-Contribution Add/Edit State
+  const [isCreatePurchaseOpen, setIsCreatePurchaseOpen] = useState(false);
+  const [editingPurchase, setEditingPurchase] = useState<TicketPurchase | null>(null);
   
   // User Management State
   const [users, setUsers] = useState<UserWithAdminStatus[]>([]);
@@ -1847,7 +1851,8 @@ const Admin = () => {
         ) : activeTab === "tickets" ? (
           <div className="w-full space-y-4">
             {/* Sub-tabs for Tickets */}
-            <div className="flex gap-2 border-b border-border pb-2">
+            <div className="flex gap-2 border-b border-border pb-2 items-center justify-between">
+              <div className="flex gap-2">
               <Button
                 type="button"
                 variant={ticketSubTab === "settings" ? "default" : "ghost"}
@@ -1889,6 +1894,18 @@ const Admin = () => {
               >
                 {t("cancelledSoliContributions")} ({cancelledPurchases.length})
               </Button>
+              </div>
+              {ticketSubTab !== "settings" && (
+                <Button
+                  type="button"
+                  onClick={() => setIsCreatePurchaseOpen(true)}
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t("addSoliContribution")}
+                </Button>
+              )}
             </div>
 
             {ticketSubTab === "settings" ? (
@@ -2014,6 +2031,15 @@ const Admin = () => {
                                     />
                                     <span className="text-sm font-medium">{t("checked")}</span>
                                   </label>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setEditingPurchase(purchase)}
+                                    className="mt-2"
+                                  >
+                                    <Edit className="h-4 w-4 mr-1" />
+                                    {t("edit")}
+                                  </Button>
                                   {purchase.status === 'confirmed' && (
                                     <Button
                                       variant="destructive"
@@ -2154,6 +2180,15 @@ const Admin = () => {
                                       />
                                       <span className="text-sm font-medium">{t("checked")}</span>
                                     </label>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setEditingPurchase(purchase)}
+                                      className="mt-2"
+                                    >
+                                      <Edit className="h-4 w-4 mr-1" />
+                                      {t("edit")}
+                                    </Button>
                                     {purchase.status === 'confirmed' && (
                                       <Button
                                         variant="destructive"
@@ -2249,9 +2284,18 @@ const Admin = () => {
                                   </div>
                                   <div className="flex flex-col items-end gap-2">
                                     <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setEditingPurchase(purchase)}
+                                    >
+                                      <Edit className="h-4 w-4 mr-1" />
+                                      {t("edit")}
+                                    </Button>
+                                    <Button
                                       variant="default"
                                       size="sm"
                                       onClick={() => handleReactivatePurchase(purchase.id)}
+                                      className="mt-2"
                                     >
                                       {t("reactivate")}
                                     </Button>
@@ -2275,6 +2319,78 @@ const Admin = () => {
                   </CardContent>
                 </Card>
               )
+            )}
+
+            {/* Create/Edit Purchase Dialog */}
+            {(isCreatePurchaseOpen || editingPurchase) && (
+              <Dialog 
+                open={isCreatePurchaseOpen || !!editingPurchase} 
+                onOpenChange={(open) => {
+                  if (!open) {
+                    setIsCreatePurchaseOpen(false);
+                    setEditingPurchase(null);
+                  }
+                }}
+              >
+                <DialogContent className="max-w-2xl max-h-[90vh] mx-4 sm:mx-auto overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingPurchase ? t("editSoliContribution") : t("addSoliContribution")}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {editingPurchase 
+                        ? t("editSoliContributionDesc") || "Edit the details of this Soli-Contribution"
+                        : t("addSoliContributionDesc") || "Manually add a new Soli-Contribution"}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <AdminPurchaseForm
+                    purchase={editingPurchase}
+                    onSave={async (purchaseData) => {
+                      if (editingPurchase) {
+                        // Update existing purchase
+                        const result = await updateTicketPurchaseAdmin(editingPurchase.id, purchaseData);
+                        if (result.success && result.purchase) {
+                          setTicketPurchases(prev =>
+                            prev.map(p => p.id === editingPurchase.id ? result.purchase! : p)
+                          );
+                          toast({
+                            title: t("success"),
+                            description: t("adminUpdatePurchaseSuccess"),
+                          });
+                          setEditingPurchase(null);
+                        } else {
+                          toast({
+                            title: t("error"),
+                            description: result.error || t("failedToSavePurchase"),
+                            variant: "destructive",
+                          });
+                        }
+                      } else {
+                        // Create new purchase
+                        const result = await createTicketPurchaseAdmin(purchaseData);
+                        if (result.success && result.purchase) {
+                          setTicketPurchases(prev => [result.purchase!, ...prev]);
+                          toast({
+                            title: t("success"),
+                            description: t("adminCreatePurchaseSuccess"),
+                          });
+                          setIsCreatePurchaseOpen(false);
+                        } else {
+                          toast({
+                            title: t("error"),
+                            description: result.error || t("failedToSavePurchase"),
+                            variant: "destructive",
+                          });
+                        }
+                      }
+                    }}
+                    onCancel={() => {
+                      setIsCreatePurchaseOpen(false);
+                      setEditingPurchase(null);
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
             )}
           </div>
         ) : activeTab === "about" ? (
@@ -3044,6 +3160,237 @@ const FAQForm = ({ onSave, initialFAQ, allFAQs = [] }: FAQFormProps) => {
       <Button type="submit" className="w-full">
         {initialFAQ ? t("updateFAQ") : t("createFAQ")}
       </Button>
+    </form>
+  );
+};
+
+interface AdminPurchaseFormProps {
+  purchase?: TicketPurchase | null;
+  onSave: (data: {
+    contribution_type: 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal';
+    role: string;
+    price: number;
+    purchaser_name: string;
+    purchaser_email: string;
+    phone_number?: string | null;
+    payment_reference?: string | null;
+    notes?: string | null;
+  }) => Promise<void>;
+  onCancel: () => void;
+}
+
+const AdminPurchaseForm = ({ purchase, onSave, onCancel }: AdminPurchaseFormProps) => {
+  const { t } = useLanguage();
+  const [formData, setFormData] = useState({
+    contribution_type: (purchase?.contribution_type || 'earlyBird') as 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal',
+    role: purchase?.role || '',
+    price: purchase?.price || 0,
+    purchaser_name: purchase?.purchaser_name || '',
+    purchaser_email: purchase?.purchaser_email || '',
+    phone_number: purchase?.phone_number || '',
+    payment_reference: purchase?.payment_reference || '',
+    notes: purchase?.notes || '',
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  // Define roles for the select dropdown
+  const allRoles = [
+    { value: 'bar', label: t('bar') },
+    { value: 'kuechenhilfe', label: t('kuechenhilfe') },
+    { value: 'springerRunner', label: t('springerRunner') },
+    { value: 'springerToilet', label: t('springerToilet') },
+    { value: 'abbau', label: t('abbau') },
+    { value: 'aufbau', label: t('aufbau') },
+    { value: 'awareness', label: t('awareness') },
+    { value: 'tech', label: t('techSupport') },
+  ];
+
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.contribution_type) {
+      newErrors.contribution_type = t('validationError') || 'Contribution type is required';
+    }
+    if (!formData.role) {
+      newErrors.role = t('validationError') || 'Role is required';
+    }
+    if (!formData.price || formData.price <= 0) {
+      newErrors.price = t('validationError') || 'Price must be greater than 0';
+    }
+    if (!formData.purchaser_name.trim()) {
+      newErrors.purchaser_name = t('validationError') || 'Purchaser name is required';
+    }
+    if (!formData.purchaser_email.trim()) {
+      newErrors.purchaser_email = t('validationError') || 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.purchaser_email)) {
+      newErrors.purchaser_email = t('pleaseEnterValidEmail') || 'Please enter a valid email address';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validate()) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await onSave({
+        contribution_type: formData.contribution_type,
+        role: formData.role,
+        price: formData.price,
+        purchaser_name: formData.purchaser_name.trim(),
+        purchaser_email: formData.purchaser_email.trim(),
+        phone_number: formData.phone_number?.trim() || null,
+        payment_reference: formData.payment_reference?.trim() || null,
+        notes: formData.notes?.trim() || null,
+      });
+    } catch (error) {
+      console.error('Error saving purchase:', error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="contribution_type">{t("contributionType")} *</Label>
+        <Select
+          value={formData.contribution_type}
+          onValueChange={(value) => setFormData({ ...formData, contribution_type: value as typeof formData.contribution_type })}
+          required
+        >
+          <SelectTrigger id="contribution_type">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="earlyBird">{t("earlyBird")}</SelectItem>
+            <SelectItem value="normal">{t("normal")}</SelectItem>
+            <SelectItem value="reducedEarlyBird">{t("reducedTickets")} - {t("earlyBird")}</SelectItem>
+            <SelectItem value="reducedNormal">{t("reducedTickets")} - {t("normal")}</SelectItem>
+          </SelectContent>
+        </Select>
+        {errors.contribution_type && (
+          <p className="text-sm text-destructive">{errors.contribution_type}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="role">{t("role")} *</Label>
+        <Select
+          value={formData.role}
+          onValueChange={(value) => setFormData({ ...formData, role: value })}
+          required
+        >
+          <SelectTrigger id="role">
+            <SelectValue placeholder={t("selectRole")} />
+          </SelectTrigger>
+          <SelectContent>
+            {allRoles.map((role) => (
+              <SelectItem key={role.value} value={role.value}>
+                {role.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.role && (
+          <p className="text-sm text-destructive">{errors.role}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="price">{t("purchasePrice")} (€) *</Label>
+        <Input
+          id="price"
+          type="number"
+          step="0.01"
+          min="0"
+          value={formData.price}
+          onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+          required
+        />
+        {errors.price && (
+          <p className="text-sm text-destructive">{errors.price}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="purchaser_name">{t("purchaserName")} *</Label>
+        <Input
+          id="purchaser_name"
+          value={formData.purchaser_name}
+          onChange={(e) => setFormData({ ...formData, purchaser_name: e.target.value })}
+          required
+        />
+        {errors.purchaser_name && (
+          <p className="text-sm text-destructive">{errors.purchaser_name}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="purchaser_email">{t("purchaserEmail")} *</Label>
+        <Input
+          id="purchaser_email"
+          type="email"
+          value={formData.purchaser_email}
+          onChange={(e) => setFormData({ ...formData, purchaser_email: e.target.value })}
+          required
+        />
+        {errors.purchaser_email && (
+          <p className="text-sm text-destructive">{errors.purchaser_email}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="phone_number">{t("phoneNumber")} <span className="text-muted-foreground">({t("optional")})</span></Label>
+        <Input
+          id="phone_number"
+          type="tel"
+          value={formData.phone_number}
+          onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="payment_reference">{t("paymentReference")} <span className="text-muted-foreground">({t("optional")})</span></Label>
+        <Input
+          id="payment_reference"
+          value={formData.payment_reference}
+          onChange={(e) => setFormData({ ...formData, payment_reference: e.target.value })}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="notes">{t("notes")} <span className="text-muted-foreground">({t("optional")})</span></Label>
+        <Textarea
+          id="notes"
+          value={formData.notes}
+          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+          rows={3}
+        />
+      </div>
+
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
+          {t("cancel")}
+        </Button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              {t("processing")}
+            </>
+          ) : (
+            purchase ? t("save") : t("addSoliContribution")
+          )}
+        </Button>
+      </DialogFooter>
     </form>
   );
 };
