@@ -1,8 +1,10 @@
 import { Clock, MapPin, Music, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Event } from "@/components/EventCard";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useMemo } from "react";
+import { getCurrentYear } from "@/lib/yearEvents";
 
 interface ChronologicalTimetableProps {
   events: Event[];
@@ -10,7 +12,10 @@ interface ChronologicalTimetableProps {
   selectedVenues: string[];
   selectedEventTypes: string[];
   searchQuery: string;
+  selectedYear: number;
+  availableYears: number[];
   onEventClick: (event: Event) => void;
+  onYearChange: (year: number) => void;
 }
 
 
@@ -19,10 +24,28 @@ export const ChronologicalTimetable = ({
   selectedDay, 
   selectedVenues, 
   selectedEventTypes,
-  searchQuery, 
-  onEventClick 
+  searchQuery,
+  selectedYear,
+  availableYears,
+  onEventClick,
+  onYearChange
 }: ChronologicalTimetableProps) => {
   const { t, language } = useLanguage();
+  
+  // Calculate previous year dynamically
+  const previousYear = getCurrentYear() - 1;
+  
+  // Check if previous year is available
+  const isPreviousYearAvailable = availableYears.includes(previousYear);
+  
+  // Helper function to replace placeholders in translations
+  const translateWithPlaceholders = (key: string, placeholders: Record<string, string | number>) => {
+    let translation = t(key);
+    Object.entries(placeholders).forEach(([placeholder, value]) => {
+      translation = translation.replace(`{${placeholder}}`, String(value));
+    });
+    return translation;
+  };
 
   const venueConfig = {
     draussen: { 
@@ -113,8 +136,18 @@ export const ChronologicalTimetable = ({
 
   if (totalFilteredEvents === 0) {
     return (
-      <div className="text-center text-muted-foreground py-12">
-        <p>{t('noEvents')}</p>
+      <div className="text-center text-muted-foreground py-12 space-y-4">
+        <p>{t('noEventsUpcoming')}</p>
+        {isPreviousYearAvailable && previousYear !== selectedYear && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onYearChange(previousYear)}
+            className="mt-4"
+          >
+            {t('viewPreviousYear')}
+          </Button>
+        )}
       </div>
     );
   }

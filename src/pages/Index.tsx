@@ -371,7 +371,10 @@ const Index = () => {
             selectedVenues={selectedVenues}
             selectedEventTypes={selectedEventTypes}
             searchQuery={searchQuery}
+            selectedYear={selectedYear}
+            availableYears={availableYears}
             onEventClick={setSelectedEvent}
+            onYearChange={setSelectedYear}
           />
         ) : (
           <FestivalGrid
