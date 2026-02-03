@@ -249,23 +249,8 @@ export async function duplicateEventToYearMCP(
       throw fetchError || new Error('Source event not found');
     }
     
-    // Check if target table exists by attempting a query
-    // If it doesn't exist, we'll need to create it (this should be done via migration)
-    try {
-      const { error: checkError } = await supabase
-        .from(targetTableName)
-        .select('id')
-        .limit(1);
-      
-      if (checkError && checkError.code === '42P01') {
-        // Table doesn't exist - this should be handled by ensureYearlyTableExists
-        throw new Error(`Table ${targetTableName} does not exist. Please create it first.`);
-      }
-    } catch (checkErr: any) {
-      if (checkErr.message.includes('does not exist')) {
-        throw checkErr;
-      }
-    }
+    // Ensure target table exists before duplicating
+    await ensureYearlyTableExistsMCP(targetYear);
     
     // Copy event data (excluding id, created_at, updated_at)
     const { id, created_at, updated_at, ...eventData } = sourceEvent;
@@ -337,5 +322,55 @@ export async function getAvailableYearsMCP(): Promise<number[]> {
     logError('mcpYearEvents', error, { operation: 'getAvailableYearsMCP' });
     // Fallback to current year
     return [getCurrentYear()];
+  }
+}
+
+/**
+ * Ensure a yearly events table exists, creating it if necessary
+ * This function should be called via MCP tools (mcp_Supabase_apply_migration) when needed
+ * For client-side usage, this checks if the table exists and logs a warning if it doesn't
+ * 
+ * Note: Actual table creation should be done via MCP migration tools, not from client code
+ */
+export async function ensureYearlyTableExistsMCP(year: number): Promise<void> {
+  if (!isValidYear(year)) {
+    throw new Error(`Invalid year: ${year}`);
+  }
+
+  try {
+    const tableName = getEventsTableName(year);
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    // Check if table exists by attempting a simple query
+    const { error } = await supabase
+      .from(tableName)
+      .select('id')
+      .limit(1);
+    
+    if (error && error.code === '42P01') {
+      // Table doesn't exist
+      // In a production environment, this should trigger a migration via MCP
+      // For now, we'll throw an error asking the admin to create the table
+      const errorMessage = `Table ${tableName} does not exist. Please create it using the create_yearly_events_table function via database migration.`;
+      logError('mcpYearEvents', new Error(errorMessage), { 
+        operation: 'ensureYearlyTableExistsMCP', 
+        year, 
+        tableName 
+      });
+      throw new Error(errorMessage);
+    }
+    
+    // Table exists or other error (which we'll let propagate)
+    if (error && error.code !== '42P01') {
+      throw error;
+    }
+  } catch (error: any) {
+    // If it's our custom error, re-throw it
+    if (error.message && error.message.includes('does not exist')) {
+      throw error;
+    }
+    // Otherwise, log and re-throw
+    logError('mcpYearEvents', error, { operation: 'ensureYearlyTableExistsMCP', year });
+    throw error;
   }
 }
