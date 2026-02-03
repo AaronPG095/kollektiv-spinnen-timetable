@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { FestivalHeader } from "@/components/FestivalHeader";
 import { ChronologicalTimetable } from "@/components/ChronologicalTimetable";
 import FestivalGrid from "@/components/FestivalGrid";
@@ -14,10 +14,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Input } from "@/components/ui/input";
 import { Footer } from "@/components/Footer";
 import { useDebounce } from "@/hooks/useDebounce";
+import { getCurrentYear, getAvailableYears } from "@/lib/yearEvents";
 
 const Index = () => {
   const { t, language } = useLanguage();
-  const { events } = useEvents();
+  const [selectedYear, setSelectedYear] = useState<number>(getCurrentYear());
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const { events } = useEvents(selectedYear);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedDay, setSelectedDay] = useState("Alle");
@@ -25,6 +28,17 @@ const Index = () => {
   const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [view, setView] = useState<"grid" | "list">("list");
+
+  // Load available years on mount
+  useEffect(() => {
+    getAvailableYears().then(years => {
+      setAvailableYears(years);
+      // If current year is not in available years, use the first available year
+      if (years.length > 0 && !years.includes(selectedYear)) {
+        setSelectedYear(years[0]);
+      }
+    });
+  }, []);
 
   const handleVenueToggle = (venue: string) => {
     setSelectedVenues(prev => 
@@ -104,6 +118,7 @@ const Index = () => {
     setSelectedDay("Alle");
     setSelectedVenues([]);
     setSelectedEventTypes([]);
+    // Year filter is not cleared - it stays on current selection
   };
 
   return (
@@ -131,6 +146,29 @@ const Index = () => {
           {/* Desktop Filters */}
           <div className="hidden md:flex flex-col gap-4">
             <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-center">
+              {/* Year Filter */}
+              {availableYears.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 min-w-fit">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-muted-foreground">{t('year')}</span>
+                  </div>
+                  <div className="flex gap-1">
+                    {availableYears.map((year) => (
+                      <Button
+                        key={year}
+                        variant={selectedYear === year ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedYear(year)}
+                        className="transition-smooth"
+                      >
+                        {year === getCurrentYear() ? t('thisYear') : year.toString()}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               {/* Day Filter and Clear Filters */}
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
@@ -222,6 +260,29 @@ const Index = () => {
               </PopoverTrigger>
               <PopoverContent className="w-80 p-4" align="end">
                 <div className="space-y-4">
+                  
+                  {/* Year Filter in Mobile */}
+                  {availableYears.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">{t('year')}</span>
+                      </div>
+                      <div className="flex gap-1 flex-wrap">
+                        {availableYears.map((year) => (
+                          <Button
+                            key={year}
+                            variant={selectedYear === year ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setSelectedYear(year)}
+                            className="text-xs"
+                          >
+                            {year === getCurrentYear() ? t('thisYear') : year.toString()}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Day Filter in Mobile */}
                   <div>
