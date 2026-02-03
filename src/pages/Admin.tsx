@@ -1419,15 +1419,6 @@ const Admin = () => {
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Filter by Year:</span>
                 <div className="flex flex-wrap gap-1 bg-muted rounded-lg p-1 max-w-full">
-                  <Button
-                    key="all-years"
-                    variant={selectedYear === "all" ? "default" : "ghost"}
-                    onClick={() => setSelectedYear("all")}
-                    size="sm"
-                    className="text-sm whitespace-nowrap shrink-0"
-                  >
-                    All Years
-                  </Button>
                   {availableYears.map((year) => {
                     // Ensure year is a valid number and convert to string for display
                     const yearNum = typeof year === 'number' ? year : parseInt(String(year), 10);
