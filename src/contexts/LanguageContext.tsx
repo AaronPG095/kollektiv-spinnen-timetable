@@ -580,7 +580,7 @@ const translations = {
     // Empty States
     noEvents: 'No events found',
     noEventsDesc: 'Try adjusting your filters or search query',
-    noEventsUpcoming: 'The lineup for the next Kollektiv Spinnen are on the way! Check out last years lineup for now...',
+    noEventsUpcoming: 'The lineup for the next Kollektiv Spinnen is on the way! Check out last years lineup for now...',
     viewPreviousYear: 'View Previous Year',
     
     // Common
