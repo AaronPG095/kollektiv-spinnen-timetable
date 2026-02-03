@@ -215,7 +215,7 @@ export const ChronologicalTimetable = ({
                               {/* Time */}
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Clock className="h-3 w-3" />
-                                <span>{event.time}</span>
+                                <span>{event.startTime && event.endTime ? `${event.startTime} - ${event.endTime}` : event.time}</span>
                               </div>
                               
                               {/* Description */}

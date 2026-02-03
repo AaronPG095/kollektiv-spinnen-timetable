@@ -138,7 +138,8 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
 
     // First pass: calculate basic positioning
     const processedEvents = events.map(event => {
-      const [startTimeStr, endTimeStr] = (event.time || '19:00 - 20:00').split(' - ');
+      const startTimeStr = event.startTime || event.time?.split(' - ')[0] || '19:00';
+      const endTimeStr = event.endTime || event.time?.split(' - ')[1] || '20:00';
       const startParts = startTimeStr.trim().split(':');
       const endParts = endTimeStr.trim().split(':');
       
@@ -160,7 +161,8 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       
       // Ensure valid slot indices
       if (startSlotIndex === -1 || endSlotIndex === -1) {
-        console.warn(`Invalid time for event ${event.title}: ${event.time} on ${event.day}`);
+        const timeDisplay = event.startTime && event.endTime ? `${event.startTime} - ${event.endTime}` : event.time;
+        console.warn(`Invalid time for event ${event.title}: ${timeDisplay} on ${event.day}`);
         return null;
       }
       
@@ -937,7 +939,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                                     <div className={`text-white/80 mt-1 ${
                                       heightInPixels < 70 ? 'text-[10px]' : 'text-xs'
                                     }`}>
-                                      {event.time}
+                                      {event.startTime && event.endTime ? `${event.startTime} - ${event.endTime}` : event.time}
                                     </div>
                                   )}
                                 </div>

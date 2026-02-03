@@ -7,9 +7,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 export interface Event {
   id: string;
   title: string;
-  time: string;
-  startTime?: string;
-  endTime?: string;
+  time: string; // Auto-generated from startTime and endTime for display
+  startTime: string; // Required
+  endTime: string; // Required
   venue: "draussen" | "oben" | "unten";
   day: "Freitag" | "Samstag" | "Sonntag";
   type: "performance" | "dj" | "workshop" | "live" | "interaktiv";
@@ -107,7 +107,7 @@ export const EventCard = React.memo(({ event, onClick }: EventCardProps) => {
         {/* Time */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Clock className="h-3 w-3" />
-          <span>{event.time}</span>
+          <span>{event.startTime && event.endTime ? `${event.startTime} - ${event.endTime}` : event.time}</span>
         </div>
 
         {/* Venue */}

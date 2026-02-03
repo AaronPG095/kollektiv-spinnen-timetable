@@ -89,8 +89,8 @@ export const GridTimetable = ({
     return filteredEvents.find(event => {
       if (event.venue !== venueId) return false;
       
-      const [startTime] = event.time.split(' - ');
-      const [startHour, startMin = '0'] = startTime.split(':');
+      const startTimeStr = event.startTime || event.time?.split(' - ')[0] || '19:00';
+      const [startHour, startMin = '0'] = startTimeStr.split(':');
       
       // Calculate which time slot this event should start in
       const eventHour = parseInt(startHour);
@@ -113,9 +113,10 @@ export const GridTimetable = ({
 
   // Function to calculate event span in hours
   const getEventSpan = (event: Event) => {
-    const [startTime, endTime] = event.time.split(' - ');
-    const [startHour, startMin = '0'] = startTime.split(':');
-    const [endHour, endMin = '0'] = endTime.split(':');
+    const startTimeStr = event.startTime || event.time?.split(' - ')[0] || '19:00';
+    const endTimeStr = event.endTime || event.time?.split(' - ')[1] || '20:00';
+    const [startHour, startMin = '0'] = startTimeStr.split(':');
+    const [endHour, endMin = '0'] = endTimeStr.split(':');
     
     // Convert to minutes for precise calculation
     const startMinutes = parseInt(startHour) * 60 + parseInt(startMin);
@@ -133,9 +134,10 @@ export const GridTimetable = ({
 
   // Get precise positioning within the hour slot
   const getEventPosition = (event: Event) => {
-    const [startTime, endTime] = event.time.split(' - ');
-    const [startHour, startMin = '0'] = startTime.split(':');
-    const [endHour, endMin = '0'] = endTime.split(':');
+    const startTimeStr = event.startTime || event.time?.split(' - ')[0] || '19:00';
+    const endTimeStr = event.endTime || event.time?.split(' - ')[1] || '20:00';
+    const [startHour, startMin = '0'] = startTimeStr.split(':');
+    const [endHour, endMin = '0'] = endTimeStr.split(':');
     
     const startMinutes = parseInt(startMin);
     const endMinutes = parseInt(endMin);
@@ -270,9 +272,10 @@ export const GridTimetable = ({
                       <div className={`font-bold text-foreground line-clamp-2 leading-tight text-center px-1 ${
                         (() => {
                           // Calculate event duration in minutes
-                          const [startTime, endTime] = event.time.split(' - ');
-                          const [startHour, startMin = '0'] = startTime.split(':');
-                          const [endHour, endMin = '0'] = endTime.split(':');
+                          const startTimeStr = event.startTime || event.time?.split(' - ')[0] || '19:00';
+                          const endTimeStr = event.endTime || event.time?.split(' - ')[1] || '20:00';
+                          const [startHour, startMin = '0'] = startTimeStr.split(':');
+                          const [endHour, endMin = '0'] = endTimeStr.split(':');
                           
                           const startMinutes = parseInt(startHour) * 60 + parseInt(startMin);
                           let endMinutes = parseInt(endHour) * 60 + parseInt(endMin);

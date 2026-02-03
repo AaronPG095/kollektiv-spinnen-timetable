@@ -23,12 +23,12 @@ export type Database = {
           created_at: string
           day: string
           description: string | null
-          end_time: string | null
+          end_time: string
           id: string
           is_visible: boolean
           links: Json | null
-          start_time: string | null
-          time: string
+          start_time: string
+          time: string | null
           title: string
           type: string
           updated_at: string
@@ -39,12 +39,12 @@ export type Database = {
           created_at?: string
           day: string
           description?: string | null
-          end_time?: string | null
+          end_time: string
           id?: string
           is_visible?: boolean
           links?: Json | null
-          start_time?: string | null
-          time: string
+          start_time: string
+          time?: string | null
           title: string
           type: string
           updated_at?: string
@@ -55,12 +55,12 @@ export type Database = {
           created_at?: string
           day?: string
           description?: string | null
-          end_time?: string | null
+          end_time?: string
           id?: string
           is_visible?: boolean
           links?: Json | null
-          start_time?: string | null
-          time?: string
+          start_time?: string
+          time?: string | null
           title?: string
           type?: string
           updated_at?: string

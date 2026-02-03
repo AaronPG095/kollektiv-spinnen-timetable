@@ -83,9 +83,11 @@ export const GridTimetable = ({
   // Process events to calculate their grid positions
   const processedEvents = useMemo(() => {
     return filteredEvents.map(event => {
-      const [startTime, endTime] = event.time.split(' - ');
-      const [startHour, startMin = '0'] = startTime.split(':');
-      const [endHour, endMin = '0'] = endTime.split(':');
+      // Use startTime and endTime directly, fallback to parsing time if needed
+      const startTimeStr = event.startTime || event.time?.split(' - ')[0] || '19:00';
+      const endTimeStr = event.endTime || event.time?.split(' - ')[1] || '20:00';
+      const [startHour, startMin = '0'] = startTimeStr.split(':');
+      const [endHour, endMin = '0'] = endTimeStr.split(':');
       
       const startH = parseInt(startHour);
       const startM = parseInt(startMin);
@@ -296,7 +298,7 @@ export const GridTimetable = ({
                               {event.title}
                             </div>
                             <div className="text-[10px] text-muted-foreground mt-auto">
-                              {event.time}
+                              {event.startTime && event.endTime ? `${event.startTime} - ${event.endTime}` : event.time}
                             </div>
                           </div>
                         </div>

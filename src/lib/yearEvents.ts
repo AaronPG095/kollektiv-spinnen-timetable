@@ -129,20 +129,29 @@ export async function queryYearlyEvents(year: number, includeHidden: boolean = f
     }
     
     // Transform database events to match the Event interface
-    const transformedEvents: Event[] = data.map(event => ({
-      id: event.id,
-      title: event.title,
-      time: event.time,
-      startTime: event.start_time || event.time?.split(' - ')[0] || '',
-      endTime: event.end_time || event.time?.split(' - ')[1] || '',
-      venue: event.venue as "draussen" | "oben" | "unten",
-      day: event.day as "Freitag" | "Samstag" | "Sonntag",
-      type: event.type as "performance" | "dj" | "workshop" | "live" | "interaktiv",
-      description: event.description || '',
-      links: event.links ? JSON.parse(JSON.stringify(event.links)) : {},
-      is_visible: event.is_visible,
-      years: [year] // Single year since events are in yearly tables
-    }));
+    const transformedEvents: Event[] = data.map(event => {
+      // Ensure startTime and endTime are always available
+      const startTime = event.start_time || event.time?.split(' - ')[0] || '';
+      const endTime = event.end_time || event.time?.split(' - ')[1] || '';
+      
+      // Construct time field from start_time and end_time if time is null
+      const time = event.time || (startTime && endTime ? `${startTime} - ${endTime}` : '');
+      
+      return {
+        id: event.id,
+        title: event.title,
+        time: time,
+        startTime: startTime,
+        endTime: endTime,
+        venue: event.venue as "draussen" | "oben" | "unten",
+        day: event.day as "Freitag" | "Samstag" | "Sonntag",
+        type: event.type as "performance" | "dj" | "workshop" | "live" | "interaktiv",
+        description: event.description || '',
+        links: event.links ? JSON.parse(JSON.stringify(event.links)) : {},
+        is_visible: event.is_visible,
+        years: [year] // Single year since events are in yearly tables
+      };
+    });
     
     return transformedEvents;
   } catch (error: any) {

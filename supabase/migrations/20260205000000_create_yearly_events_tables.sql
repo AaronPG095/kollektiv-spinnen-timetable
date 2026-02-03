@@ -26,7 +26,7 @@ BEGIN
     CREATE TABLE IF NOT EXISTS public.%I (
       id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
       title TEXT NOT NULL,
-      time TEXT NOT NULL,
+      time TEXT,
       venue TEXT NOT NULL,
       day TEXT NOT NULL CHECK (day IN (''Freitag'', ''Samstag'', ''Sonntag'')),
       type TEXT NOT NULL,
@@ -34,8 +34,8 @@ BEGIN
       links JSONB DEFAULT ''{}'',
       created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
       updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-      start_time TEXT,
-      end_time TEXT,
+      start_time TEXT NOT NULL,
+      end_time TEXT NOT NULL,
       is_visible BOOLEAN NOT NULL DEFAULT true
     );
   ', table_name);

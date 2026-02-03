@@ -38,9 +38,9 @@ import { getCurrentYear } from '@/lib/yearEvents';
 interface DatabaseEvent {
   id: string;
   title: string;
-  time: string;
-  start_time: string | null;
-  end_time: string | null;
+  time: string | null; // Auto-generated from start_time and end_time
+  start_time: string; // Required
+  end_time: string; // Required
   venue: string;
   day: string;
   type: string;
@@ -541,6 +541,11 @@ const Admin = () => {
       
       // Remove years field from data (not stored in yearly tables)
       const { years, ...dataToSave } = eventData;
+      
+      // Ensure time field is constructed from start_time and end_time if missing
+      if (!dataToSave.time && dataToSave.start_time && dataToSave.end_time) {
+        dataToSave.time = `${dataToSave.start_time} - ${dataToSave.end_time}`;
+      }
       
       if (editingEvent) {
         if (import.meta.env.DEV) {
@@ -1233,8 +1238,8 @@ const Admin = () => {
   Object.keys(eventsByDay).forEach(day => {
     eventsByDay[day].sort((a, b) => {
       // Prefer start_time if available, otherwise parse from time field
-      const timeA = a.start_time || a.time.split(' - ')[0] || a.time;
-      const timeB = b.start_time || b.time.split(' - ')[0] || b.time;
+      const timeA = a.start_time || a.time?.split(' - ')[0] || a.time || '00:00';
+      const timeB = b.start_time || b.time?.split(' - ')[0] || b.time || '00:00';
       return timeA.localeCompare(timeB);
     });
   });
@@ -1549,7 +1554,7 @@ const Admin = () => {
                                   )}
                                 </div>
                                 <p className="text-xs md:text-sm text-muted-foreground mb-2 break-words">
-                                  {event.time} • {event.venue} • {event.type}
+                                  {event.startTime && event.endTime ? `${event.startTime} - ${event.endTime}` : event.time} • {event.venue} • {event.type}
                                   {Array.isArray(event.years) && event.years.length > 0 && (
                                     <span className="ml-2 px-2 py-0.5 rounded bg-muted text-xs font-medium">
                                       {event.years[0]}
@@ -2898,9 +2903,8 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
 
   const [formData, setFormData] = useState({
     title: initialEvent?.title || '',
-    time: initialEvent?.time || '',
-    start_time: initialEvent?.start_time || '',
-    end_time: initialEvent?.end_time || '',
+    start_time: initialEvent?.start_time || initialEvent?.time?.split(' - ')[0] || '',
+    end_time: initialEvent?.end_time || initialEvent?.time?.split(' - ')[1] || '',
     venue: initialEvent?.venue || '',
     day: initialEvent?.day || '',
     type: initialEvent?.type || '',
@@ -2984,6 +2988,16 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
       return;
     }
     
+    // Validate that start_time and end_time are provided
+    if (!formData.start_time || !formData.end_time) {
+      toast({
+        title: t("error"),
+        description: "Please provide both start time and end time",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Combine descriptions into JSON format
     const description = JSON.stringify({
       en: formData.description_en,
@@ -2996,9 +3010,12 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
       return acc;
     }, {} as Record<string, string>);
     
+    // Auto-generate time field from start_time and end_time
+    const time = `${formData.start_time} - ${formData.end_time}`;
+    
     const { description_en, description_de, year, ...eventData } = formData;
     // Convert year to years array for compatibility with DatabaseEvent interface
-    onSave({ ...eventData, description, links: linksObject, years: [year] });
+    onSave({ ...eventData, time, description, links: linksObject, years: [year] });
   };
 
   return (
@@ -3013,35 +3030,27 @@ const EventForm = ({ onSave, initialEvent }: EventFormProps) => {
             required
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="time">{t("eventTime")} *</Label>
-          <Input
-            id="time"
-            value={formData.time}
-            onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-            placeholder="19:00 - 20:00"
-            required
-          />
-        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="start_time">{t("startTime")}</Label>
+          <Label htmlFor="start_time">{t("startTime")} *</Label>
           <Input
             id="start_time"
             value={formData.start_time}
             onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
             placeholder="19:00"
+            required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="end_time">{t("endTime")}</Label>
+          <Label htmlFor="end_time">{t("endTime")} *</Label>
           <Input
             id="end_time"
             value={formData.end_time}
             onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
             placeholder="20:00"
+            required
           />
         </div>
       </div>

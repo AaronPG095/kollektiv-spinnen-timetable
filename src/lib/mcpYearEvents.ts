@@ -81,20 +81,29 @@ export async function queryYearlyEventsMCP(year: number, includeHidden: boolean 
  * Transform database events to Event interface
  */
 function transformEvents(data: any[], year: number): Event[] {
-  return data.map(event => ({
-    id: event.id,
-    title: event.title,
-    time: event.time,
-    startTime: event.start_time || event.time?.split(' - ')[0] || '',
-    endTime: event.end_time || event.time?.split(' - ')[1] || '',
-    venue: event.venue as "draussen" | "oben" | "unten",
-    day: event.day as "Freitag" | "Samstag" | "Sonntag",
-    type: event.type as "performance" | "dj" | "workshop" | "live" | "interaktiv",
-    description: event.description || '',
-    links: event.links ? JSON.parse(JSON.stringify(event.links)) : {},
-    is_visible: event.is_visible,
-    years: [year]
-  }));
+  return data.map(event => {
+    // Ensure startTime and endTime are always available
+    const startTime = event.start_time || event.time?.split(' - ')[0] || '';
+    const endTime = event.end_time || event.time?.split(' - ')[1] || '';
+    
+    // Construct time field from start_time and end_time if time is null
+    const time = event.time || (startTime && endTime ? `${startTime} - ${endTime}` : '');
+    
+    return {
+      id: event.id,
+      title: event.title,
+      time: time,
+      startTime: startTime,
+      endTime: endTime,
+      venue: event.venue as "draussen" | "oben" | "unten",
+      day: event.day as "Freitag" | "Samstag" | "Sonntag",
+      type: event.type as "performance" | "dj" | "workshop" | "live" | "interaktiv",
+      description: event.description || '',
+      links: event.links ? JSON.parse(JSON.stringify(event.links)) : {},
+      is_visible: event.is_visible,
+      years: [year]
+    };
+  });
 }
 
 /**
@@ -111,11 +120,14 @@ export async function insertYearlyEventMCP(year: number, event: Omit<Event, 'id'
     
     const { supabase } = await import('@/integrations/supabase/client');
     
+    // Construct time field from startTime and endTime if not provided
+    const time = event.time || (event.startTime && event.endTime ? `${event.startTime} - ${event.endTime}` : null);
+    
     const { data, error } = await supabase
       .from(tableName)
       .insert({
         title: event.title,
-        time: event.time,
+        time: time,
         start_time: event.startTime || null,
         end_time: event.endTime || null,
         venue: event.venue,
@@ -160,7 +172,6 @@ export async function updateYearlyEventMCP(
     
     const updateData: any = {};
     if (updates.title !== undefined) updateData.title = updates.title;
-    if (updates.time !== undefined) updateData.time = updates.time;
     if (updates.startTime !== undefined) updateData.start_time = updates.startTime;
     if (updates.endTime !== undefined) updateData.end_time = updates.endTime;
     if (updates.venue !== undefined) updateData.venue = updates.venue;
@@ -169,6 +180,19 @@ export async function updateYearlyEventMCP(
     if (updates.description !== undefined) updateData.description = updates.description;
     if (updates.links !== undefined) updateData.links = updates.links;
     if (updates.is_visible !== undefined) updateData.is_visible = updates.is_visible;
+    
+    // Construct time field from startTime and endTime if they're being updated
+    if (updates.startTime !== undefined || updates.endTime !== undefined) {
+      // If both are provided, construct time
+      const startTime = updates.startTime !== undefined ? updates.startTime : updateData.start_time;
+      const endTime = updates.endTime !== undefined ? updates.endTime : updateData.end_time;
+      if (startTime && endTime) {
+        updateData.time = `${startTime} - ${endTime}`;
+      }
+    } else if (updates.time !== undefined) {
+      // If time is explicitly provided, use it
+      updateData.time = updates.time;
+    }
     
     const { data, error } = await supabase
       .from(tableName)
