@@ -19,7 +19,8 @@ import { getCurrentYear, getAvailableYears } from "@/lib/yearEvents";
 const Index = () => {
   const { t, language } = useLanguage();
   const [selectedYear, setSelectedYear] = useState<number>(getCurrentYear());
-  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  // Initialize with current year so filter appears immediately
+  const [availableYears, setAvailableYears] = useState<number[]>([getCurrentYear()]);
   const { events } = useEvents(selectedYear);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -29,7 +30,7 @@ const Index = () => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [view, setView] = useState<"grid" | "list">("list");
 
-  // Load available years on mount
+  // Load available years on mount (updates the initial state with all available years)
   useEffect(() => {
     getAvailableYears().then(years => {
       setAvailableYears(years);
@@ -147,27 +148,25 @@ const Index = () => {
           <div className="hidden md:flex flex-col gap-4">
             <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-center">
               {/* Year Filter */}
-              {availableYears.length > 0 && (
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 min-w-fit">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-muted-foreground">{t('year')}</span>
-                  </div>
-                  <div className="flex gap-1">
-                    {availableYears.map((year) => (
-                      <Button
-                        key={year}
-                        variant={selectedYear === year ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedYear(year)}
-                        className="transition-smooth"
-                      >
-                        {year === getCurrentYear() ? t('thisYear') : year.toString()}
-                      </Button>
-                    ))}
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 min-w-fit">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">{t('year')}</span>
                 </div>
-              )}
+                <div className="flex gap-1">
+                  {availableYears.map((year) => (
+                    <Button
+                      key={year}
+                      variant={selectedYear === year ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedYear(year)}
+                      className="transition-smooth"
+                    >
+                      {year === getCurrentYear() ? t('thisYear') : year.toString()}
+                    </Button>
+                  ))}
+                </div>
+              </div>
               
               {/* Day Filter and Clear Filters */}
               <div className="flex items-center gap-6">
@@ -262,27 +261,25 @@ const Index = () => {
                 <div className="space-y-4">
                   
                   {/* Year Filter in Mobile */}
-                  {availableYears.length > 0 && (
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">{t('year')}</span>
-                      </div>
-                      <div className="flex gap-1 flex-wrap">
-                        {availableYears.map((year) => (
-                          <Button
-                            key={year}
-                            variant={selectedYear === year ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedYear(year)}
-                            className="text-xs"
-                          >
-                            {year === getCurrentYear() ? t('thisYear') : year.toString()}
-                          </Button>
-                        ))}
-                      </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">{t('year')}</span>
                     </div>
-                  )}
+                    <div className="flex gap-1 flex-wrap">
+                      {availableYears.map((year) => (
+                        <Button
+                          key={year}
+                          variant={selectedYear === year ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSelectedYear(year)}
+                          className="text-xs"
+                        >
+                          {year === getCurrentYear() ? t('thisYear') : year.toString()}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
                   
                   {/* Day Filter in Mobile */}
                   <div>

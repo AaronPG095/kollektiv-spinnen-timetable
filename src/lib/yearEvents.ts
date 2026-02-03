@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Event } from '@/components/EventCard';
 import { logError } from '@/lib/errorHandler';
+import { cache } from '@/lib/cache';
 
 /**
  * Get the table name for events of a given year
@@ -27,8 +28,21 @@ export function isValidYear(year: number): boolean {
 /**
  * Get all available years that have events tables
  * Queries the database to find which yearly tables exist and have data
+ * Uses caching and parallel queries for optimal performance
  */
 export async function getAvailableYears(): Promise<number[]> {
+  const CACHE_KEY = 'available-years';
+  const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+  
+  // Check cache first
+  const cached = cache.get<number[]>(CACHE_KEY);
+  if (cached) {
+    if (import.meta.env.DEV) {
+      console.log('[yearEvents] Using cached available years');
+    }
+    return cached;
+  }
+
   try {
     const currentYear = getCurrentYear();
     const yearsToCheck: number[] = [];
@@ -38,11 +52,8 @@ export async function getAvailableYears(): Promise<number[]> {
       yearsToCheck.push(year);
     }
     
-    const availableYears: number[] = [];
-    
-    // Check each year by attempting to query the table
-    // We'll use a simple count query to see if the table exists and has data
-    for (const year of yearsToCheck) {
+    // Check all years in parallel for better performance
+    const yearChecks = yearsToCheck.map(async (year) => {
       try {
         const tableName = getEventsTableName(year);
         const { count, error } = await supabase
@@ -50,26 +61,39 @@ export async function getAvailableYears(): Promise<number[]> {
           .select('*', { count: 'exact', head: true });
         
         if (!error && count !== null && count > 0) {
-          availableYears.push(year);
+          return year;
         }
+        return null;
       } catch (err) {
         // Table doesn't exist or other error, skip this year
         if (import.meta.env.DEV) {
           console.log(`[yearEvents] Table events_${year} not available:`, err);
         }
+        return null;
       }
-    }
+    });
+    
+    // Wait for all queries to complete in parallel
+    const results = await Promise.all(yearChecks);
+    
+    // Filter out null values and get available years
+    const availableYears = results.filter((year): year is number => year !== null);
     
     // If no years found, return at least current year
-    if (availableYears.length === 0) {
-      return [currentYear];
-    }
+    const finalYears = availableYears.length === 0 
+      ? [currentYear] 
+      : availableYears.sort((a, b) => b - a); // Sort descending (newest first)
     
-    return availableYears.sort((a, b) => b - a); // Sort descending (newest first)
+    // Cache the result
+    cache.set(CACHE_KEY, finalYears, CACHE_TTL);
+    
+    return finalYears;
   } catch (error) {
     logError('yearEvents', error, { operation: 'getAvailableYears' });
     // Fallback to current year
-    return [getCurrentYear()];
+    const fallback = [getCurrentYear()];
+    cache.set(CACHE_KEY, fallback, CACHE_TTL);
+    return fallback;
   }
 }
 
