@@ -14,17 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      // NOTE: Events are now stored in yearly tables (events_2025, events_2026, etc.)
+      // Each yearly table has the same schema as the events table below, but without the 'years' field.
+      // The 'years' field in the DatabaseEvent interface is for compatibility and is derived from the table name.
+      // To regenerate types after migration, run: npx supabase gen types typescript --project-id <project-id> > src/integrations/supabase/types.ts
       events: {
         Row: {
           created_at: string
           day: string
           description: string | null
-          end_time: string | null
+          end_time: string
           id: string
           is_visible: boolean
           links: Json | null
-          start_time: string | null
-          time: string
+          start_time: string
+          time: string | null
           title: string
           type: string
           updated_at: string
@@ -35,12 +39,12 @@ export type Database = {
           created_at?: string
           day: string
           description?: string | null
-          end_time?: string | null
+          end_time: string
           id?: string
           is_visible?: boolean
           links?: Json | null
-          start_time?: string | null
-          time: string
+          start_time: string
+          time?: string | null
           title: string
           type: string
           updated_at?: string
@@ -51,12 +55,12 @@ export type Database = {
           created_at?: string
           day?: string
           description?: string | null
-          end_time?: string | null
+          end_time?: string
           id?: string
           is_visible?: boolean
           links?: Json | null
-          start_time?: string | null
-          time?: string
+          start_time?: string
+          time?: string | null
           title?: string
           type?: string
           updated_at?: string
@@ -290,6 +294,7 @@ export type Database = {
           price: number
           purchaser_name: string
           purchaser_email: string
+          phone_number: string | null
           status: string
           payment_reference: string | null
           notes: string | null
@@ -305,6 +310,7 @@ export type Database = {
           price: number
           purchaser_name: string
           purchaser_email: string
+          phone_number?: string | null
           status?: string
           payment_reference?: string | null
           notes?: string | null
@@ -320,6 +326,7 @@ export type Database = {
           price?: number
           purchaser_name?: string
           purchaser_email?: string
+          phone_number?: string | null
           status?: string
           payment_reference?: string | null
           notes?: string | null

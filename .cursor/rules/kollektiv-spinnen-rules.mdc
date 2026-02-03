@@ -1,0 +1,14 @@
+---
+name: kollektiv-spinnen-rules
+description: This is a new rule
+---
+
+# Overview
+
+Insert overview text here. The agent will only see this should they choose to apply the rule.
+
+Ensure adherence to / compatibility with:
+- Website Translation System
+- Performance Focus
+- Testing
+- Use MCP for database interactions (Supabase)
