@@ -33,6 +33,7 @@ import { FestivalHeader } from '@/components/FestivalHeader';
 import { useDebounce } from '@/hooks/useDebounce';
 import { isValidUrl, sanitizeUrl } from '@/lib/validation';
 import { logError, formatSupabaseError } from '@/lib/errorHandler';
+import { getCurrentYear } from '@/lib/yearEvents';
 
 interface DatabaseEvent {
   id: string;
@@ -88,7 +89,7 @@ const Admin = () => {
   const [faqFilterLanguage, setFaqFilterLanguage] = useState<string>("all");
   const [faqFilterVisibility, setFaqFilterVisibility] = useState<string>("all");
   const [showHiddenMode, setShowHiddenMode] = useState(false);
-  const [selectedYear, setSelectedYear] = useState<number | "all">("all");
+  const [selectedYear, setSelectedYear] = useState<number | "all">(getCurrentYear());
   const [activeTab, setActiveTab] = useState<"events" | "faqs" | "tickets" | "about" | "users">("events");
   const [ticketSettings, setTicketSettings] = useState<TicketSettings | null>(null);
   const [ticketSettingsLoading, setTicketSettingsLoading] = useState(false);
