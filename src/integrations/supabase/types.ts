@@ -290,6 +290,7 @@ export type Database = {
           price: number
           purchaser_name: string
           purchaser_email: string
+          phone_number: string | null
           status: string
           payment_reference: string | null
           notes: string | null
@@ -305,6 +306,7 @@ export type Database = {
           price: number
           purchaser_name: string
           purchaser_email: string
+          phone_number?: string | null
           status?: string
           payment_reference?: string | null
           notes?: string | null
@@ -320,6 +322,7 @@ export type Database = {
           price?: number
           purchaser_name?: string
           purchaser_email?: string
+          phone_number?: string | null
           status?: string
           payment_reference?: string | null
           notes?: string | null
