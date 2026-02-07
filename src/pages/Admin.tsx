@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
@@ -98,6 +98,7 @@ const Admin = () => {
   const [ticketSubTab, setTicketSubTab] = useState<"settings" | "purchases" | "checked" | "cancelled">("settings");
   const [notes, setNotes] = useState<string>("");
   const [notesSaving, setNotesSaving] = useState(false);
+  const lastSavedNotesRef = useRef<string>("");
   const [aboutPageContent, setAboutPageContent] = useState<AboutPageContentType | null>(null);
   const [aboutPagePhotos, setAboutPagePhotos] = useState<AboutPagePhoto[]>([]);
   const [aboutPageLoading, setAboutPageLoading] = useState(false);
@@ -313,8 +314,12 @@ const Admin = () => {
       setTicketSettingsLoading(true);
       const settings = await getTicketSettings();
       setTicketSettings(settings);
-      // Sync notes when settings load
-      setNotes(settings.notes || "");
+      // Sync notes when settings load and initialize the ref
+      // Handle both null and undefined cases
+      const notesValue = settings.notes ?? "";
+      setNotes(notesValue);
+      lastSavedNotesRef.current = notesValue;
+      console.log('[Admin] Loaded ticket settings, notes:', notesValue || '(empty)');
     } catch (error: any) {
       logError('Admin', error, { operation: 'loadTicketSettings' });
         toast({
@@ -497,16 +502,22 @@ const Admin = () => {
   const handleSaveNotes = async (notesToSave: string) => {
     try {
       setNotesSaving(true);
+      console.log('[Admin] Saving notes:', notesToSave || '(empty)');
       const result = await updateTicketSettings({ notes: notesToSave || null });
       if (result.success) {
+        // Update the ref to track what we just saved
+        lastSavedNotesRef.current = notesToSave;
         // Update local state without showing toast (autosave is silent)
         if (ticketSettings) {
           setTicketSettings({ ...ticketSettings, notes: notesToSave || null });
         }
+        console.log('[Admin] Notes saved successfully');
       } else {
+        console.error('[Admin] Failed to save notes:', result.error);
         logError('Admin', new Error(result.error || 'Unknown error'), { operation: 'saveNotes' });
       }
     } catch (error: any) {
+      console.error('[Admin] Error saving notes:', error);
       logError('Admin', error, { operation: 'saveNotes' });
     } finally {
       setNotesSaving(false);
@@ -518,9 +529,9 @@ const Admin = () => {
   
   useEffect(() => {
     // Only save if notes have changed and we're on the tickets settings tab
-    if (activeTab === "tickets" && ticketSubTab === "settings" && debouncedNotes !== undefined) {
-      const currentNotes = ticketSettings?.notes || "";
-      if (debouncedNotes !== currentNotes) {
+    if (activeTab === "tickets" && ticketSubTab === "settings") {
+      // Compare with the last saved value to avoid unnecessary saves
+      if (debouncedNotes !== lastSavedNotesRef.current) {
         handleSaveNotes(debouncedNotes);
       }
     }
@@ -529,15 +540,17 @@ const Admin = () => {
 
   // Sync notes when ticketSettings changes (but only if user hasn't made local changes)
   useEffect(() => {
-    if (ticketSettings?.notes !== undefined) {
-      // Only sync if the notes haven't been locally modified
+    if (ticketSettings) {
       const currentNotes = ticketSettings.notes || "";
-      if (notes === "" || notes === currentNotes) {
+      // Only sync if notes haven't been modified locally
+      // This prevents overwriting user input while typing
+      if (notes === lastSavedNotesRef.current) {
         setNotes(currentNotes);
+        lastSavedNotesRef.current = currentNotes;
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticketSettings?.notes]);
+  }, [ticketSettings]);
 
   const loadAboutPageData = async () => {
     try {
