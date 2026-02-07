@@ -96,6 +96,8 @@ const Admin = () => {
   const [ticketPurchases, setTicketPurchases] = useState<TicketPurchase[]>([]);
   const [purchasesLoading, setPurchasesLoading] = useState(false);
   const [ticketSubTab, setTicketSubTab] = useState<"settings" | "purchases" | "checked" | "cancelled">("settings");
+  const [notes, setNotes] = useState<string>("");
+  const [notesSaving, setNotesSaving] = useState(false);
   const [aboutPageContent, setAboutPageContent] = useState<AboutPageContentType | null>(null);
   const [aboutPagePhotos, setAboutPagePhotos] = useState<AboutPagePhoto[]>([]);
   const [aboutPageLoading, setAboutPageLoading] = useState(false);
@@ -311,6 +313,8 @@ const Admin = () => {
       setTicketSettingsLoading(true);
       const settings = await getTicketSettings();
       setTicketSettings(settings);
+      // Sync notes when settings load
+      setNotes(settings.notes || "");
     } catch (error: any) {
       logError('Admin', error, { operation: 'loadTicketSettings' });
         toast({
@@ -489,6 +493,51 @@ const Admin = () => {
       });
     }
   };
+
+  const handleSaveNotes = async (notesToSave: string) => {
+    try {
+      setNotesSaving(true);
+      const result = await updateTicketSettings({ notes: notesToSave || null });
+      if (result.success) {
+        // Update local state without showing toast (autosave is silent)
+        if (ticketSettings) {
+          setTicketSettings({ ...ticketSettings, notes: notesToSave || null });
+        }
+      } else {
+        logError('Admin', new Error(result.error || 'Unknown error'), { operation: 'saveNotes' });
+      }
+    } catch (error: any) {
+      logError('Admin', error, { operation: 'saveNotes' });
+    } finally {
+      setNotesSaving(false);
+    }
+  };
+
+  // Autosave notes with debounce
+  const debouncedNotes = useDebounce(notes, 1000);
+  
+  useEffect(() => {
+    // Only save if notes have changed and we're on the tickets settings tab
+    if (activeTab === "tickets" && ticketSubTab === "settings" && debouncedNotes !== undefined) {
+      const currentNotes = ticketSettings?.notes || "";
+      if (debouncedNotes !== currentNotes) {
+        handleSaveNotes(debouncedNotes);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedNotes, activeTab, ticketSubTab]);
+
+  // Sync notes when ticketSettings changes (but only if user hasn't made local changes)
+  useEffect(() => {
+    if (ticketSettings?.notes !== undefined) {
+      // Only sync if the notes haven't been locally modified
+      const currentNotes = ticketSettings.notes || "";
+      if (notes === "" || notes === currentNotes) {
+        setNotes(currentNotes);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketSettings?.notes]);
 
   const loadAboutPageData = async () => {
     try {
@@ -1416,6 +1465,36 @@ const Admin = () => {
             ) : null}
           </div>
         </div>
+
+        {/* Notes Section - only show for tickets settings tab */}
+        {activeTab === "tickets" && ticketSubTab === "settings" && (
+          <Card className="mb-4 md:mb-6">
+            <CardContent className="p-4 md:p-6">
+              <div className="space-y-2">
+                <Label htmlFor="admin-notes" className="text-sm font-medium">
+                  {t("notes") || "Notes"}
+                  {notesSaving && (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      <Loader2 className="h-3 w-3 inline animate-spin mr-1" />
+                      {t("saving") || "Saving..."}
+                    </span>
+                  )}
+                </Label>
+                <Textarea
+                  id="admin-notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder={t("addNotes") || "Add your notes here... (autosaves)"}
+                  rows={6}
+                  className="min-h-[150px] resize-y"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t("notesAutosave") || "Notes are automatically saved as you type"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Year Filter and Search Bar - only show for events tab */}
         {activeTab === "events" && (
