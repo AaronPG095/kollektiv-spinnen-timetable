@@ -3749,15 +3749,25 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
 
   type RoleKey = (typeof standardRoles)[number]["key"] | (typeof reducedRoles)[number]["key"];
 
-  const limitFieldByRole: Record<RoleKey, keyof TicketSettings> = {
-    bar: "bar_limit",
-    kuechenhilfe: "kuechenhilfe_limit",
-    springerRunner: "springer_runner_limit",
-    springerToilet: "springer_toilet_limit",
-    abbau: "abbau_limit",
-    aufbau: "aufbau_limit",
-    awareness: "awareness_limit",
-    tech: "tech_limit",
+  const limitFieldEarlyByRole: Record<RoleKey, keyof TicketSettings> = {
+    bar: "bar_limit_early",
+    kuechenhilfe: "kuechenhilfe_limit_early",
+    springerRunner: "springer_runner_limit_early",
+    springerToilet: "springer_toilet_limit_early",
+    abbau: "abbau_limit_early",
+    aufbau: "aufbau_limit_early",
+    awareness: "awareness_limit_early",
+    tech: "tech_limit_early",
+  };
+  const limitFieldNormalByRole: Record<RoleKey, keyof TicketSettings> = {
+    bar: "bar_limit_normal",
+    kuechenhilfe: "kuechenhilfe_limit_normal",
+    springerRunner: "springer_runner_limit_normal",
+    springerToilet: "springer_toilet_limit_normal",
+    abbau: "abbau_limit_normal",
+    aufbau: "aufbau_limit_normal",
+    awareness: "awareness_limit_normal",
+    tech: "tech_limit_normal",
   };
 
   const priceFieldByRole: Record<RoleKey, { early: keyof TicketSettings; normal: keyof TicketSettings }> = {
@@ -3772,7 +3782,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
   };
 
   const [remainingByRole, setRemainingByRole] = useState<
-    Partial<Record<RoleKey, number | null>>
+    Partial<Record<RoleKey, { early: number | null; normal: number | null }>>
   >({});
 
   const [earlyBirdEnabled, setEarlyBirdEnabled] = useState(initialSettings?.early_bird_enabled ?? false);
@@ -3793,7 +3803,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     initialSettings?.paypal_payment_link || ""
   );
 
-  const [limitValues, setLimitValues] = useState<Record<RoleKey, string>>(() => {
+  const [limitValuesEarly, setLimitValuesEarly] = useState<Record<RoleKey, string>>(() => {
     const initial: Record<RoleKey, string> = {
       bar: "",
       kuechenhilfe: "",
@@ -3804,15 +3814,33 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
       awareness: "",
       tech: "",
     };
-
     if (initialSettings) {
       (Object.keys(initial) as RoleKey[]).forEach((role) => {
-        const field = limitFieldByRole[role];
+        const field = limitFieldEarlyByRole[role];
         const value = initialSettings[field];
         initial[role] = value !== null && value !== undefined ? value.toString() : "";
       });
     }
-
+    return initial;
+  });
+  const [limitValuesNormal, setLimitValuesNormal] = useState<Record<RoleKey, string>>(() => {
+    const initial: Record<RoleKey, string> = {
+      bar: "",
+      kuechenhilfe: "",
+      springerRunner: "",
+      springerToilet: "",
+      abbau: "",
+      aufbau: "",
+      awareness: "",
+      tech: "",
+    };
+    if (initialSettings) {
+      (Object.keys(initial) as RoleKey[]).forEach((role) => {
+        const field = limitFieldNormalByRole[role];
+        const value = initialSettings[field];
+        initial[role] = value !== null && value !== undefined ? value.toString() : "";
+      });
+    }
     return initial;
   });
 
@@ -3849,7 +3877,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     return initial;
   });
 
-  // Load remaining tickets per role based on current saved limits in the database
+  // Load remaining tickets per role and type (early / normal) from current saved limits
   useEffect(() => {
     let isMounted = true;
 
@@ -3858,62 +3886,23 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
 
       const { getRemainingTickets } = await import('@/lib/ticketPurchases');
 
-      const roles = Object.keys(limitFieldByRole) as RoleKey[];
+      const roles = Object.keys(limitFieldEarlyByRole) as RoleKey[];
       const entries = await Promise.all(
         roles.map(async (role) => {
-          const limit = initialSettings[limitFieldByRole[role]] as number | null | undefined;
+          const limitEarly = initialSettings[limitFieldEarlyByRole[role]] as number | null | undefined;
+          const limitNormal = initialSettings[limitFieldNormalByRole[role]] as number | null | undefined;
           try {
-            const remaining = await getRemainingTickets(role, limit);
+            const remaining = await getRemainingTickets(role, limitEarly, limitNormal);
             return [role, remaining] as const;
           } catch {
-            // On error, treat as unknown (null) so UI still renders
-            return [role, null] as const;
+            return [role, { early: null, normal: null }] as const;
           }
         })
       );
 
       if (!isMounted) return;
 
-      const next: Partial<Record<RoleKey, number | null>> = {};
-      entries.forEach(([role, remaining]) => {
-        next[role] = remaining;
-      });
-      setRemainingByRole(next);
-    }
-
-    loadRemainingTickets();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [initialSettings]);
-
-  // Load remaining tickets per role based on current saved limits in the database
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadRemainingTickets() {
-      if (!initialSettings) return;
-
-      const { getRemainingTickets } = await import('@/lib/ticketPurchases');
-
-      const roles = Object.keys(limitFieldByRole) as RoleKey[];
-      const entries = await Promise.all(
-        roles.map(async (role) => {
-          const limit = initialSettings[limitFieldByRole[role]] as number | null | undefined;
-          try {
-            const remaining = await getRemainingTickets(role, limit);
-            return [role, remaining] as const;
-          } catch {
-            // On error, treat as unknown (null) so UI still renders
-            return [role, null] as const;
-          }
-        })
-      );
-
-      if (!isMounted) return;
-
-      const next: Partial<Record<RoleKey, number | null>> = {};
+      const next: Partial<Record<RoleKey, { early: number | null; normal: number | null }>> = {};
       entries.forEach(([role, remaining]) => {
         next[role] = remaining;
       });
@@ -3947,23 +3936,22 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
           : ""
       );
 
-      // Update limit values
-      const newLimitValues: Record<RoleKey, string> = {
-        bar: "",
-        kuechenhilfe: "",
-        springerRunner: "",
-        springerToilet: "",
-        abbau: "",
-        aufbau: "",
-        awareness: "",
-        tech: "",
+      const newLimitValuesEarly: Record<RoleKey, string> = {
+        bar: "", kuechenhilfe: "", springerRunner: "", springerToilet: "",
+        abbau: "", aufbau: "", awareness: "", tech: "",
       };
-      (Object.keys(newLimitValues) as RoleKey[]).forEach((role) => {
-        const field = limitFieldByRole[role];
-        const value = initialSettings[field];
-        newLimitValues[role] = value !== null && value !== undefined ? value.toString() : "";
+      const newLimitValuesNormal: Record<RoleKey, string> = {
+        bar: "", kuechenhilfe: "", springerRunner: "", springerToilet: "",
+        abbau: "", aufbau: "", awareness: "", tech: "",
+      };
+      (Object.keys(newLimitValuesEarly) as RoleKey[]).forEach((role) => {
+        const earlyVal = initialSettings[limitFieldEarlyByRole[role]];
+        const normalVal = initialSettings[limitFieldNormalByRole[role]];
+        newLimitValuesEarly[role] = earlyVal !== null && earlyVal !== undefined ? earlyVal.toString() : "";
+        newLimitValuesNormal[role] = normalVal !== null && normalVal !== undefined ? normalVal.toString() : "";
       });
-      setLimitValues(newLimitValues);
+      setLimitValuesEarly(newLimitValuesEarly);
+      setLimitValuesNormal(newLimitValuesNormal);
 
       // Update price values
       const newPriceValues: Record<`${RoleKey}_early` | `${RoleKey}_normal`, string> = {
@@ -4014,24 +4002,20 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         : null,
     };
 
-    // Limits - include all fields explicitly (even if null)
-    (Object.keys(limitValues) as RoleKey[]).forEach((role) => {
-      const field = limitFieldByRole[role];
-      const raw = limitValues[role]?.trim() || "";
-      
-      if (raw === "") {
-        // Empty string means unlimited (null)
-        (settings as any)[field] = null;
-      } else {
+    // Limits by type (early / normal)
+    (Object.keys(limitValuesEarly) as RoleKey[]).forEach((role) => {
+      const earlyField = limitFieldEarlyByRole[role];
+      const normalField = limitFieldNormalByRole[role];
+      const rawEarly = limitValuesEarly[role]?.trim() || "";
+      const rawNormal = limitValuesNormal[role]?.trim() || "";
+      const parseLimit = (raw: string) => {
+        if (raw === "") return null;
         const parsed = parseInt(raw, 10);
-        if (!isNaN(parsed) && parsed >= 0) {
-          (settings as any)[field] = parsed;
-        } else {
-          // Invalid number, set to null to clear it
-          console.warn(`[TicketSettingsForm] Invalid limit value for ${role}: "${raw}", setting to null`);
-          (settings as any)[field] = null;
-        }
-      }
+        if (!isNaN(parsed) && parsed >= 0) return parsed;
+        return null;
+      };
+      (settings as any)[earlyField] = parseLimit(rawEarly);
+      (settings as any)[normalField] = parseLimit(rawNormal);
     });
 
     // Prices - include all fields explicitly (even if null)
@@ -4071,29 +4055,25 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
 
     // Log the aufbau limit specifically for debugging
     console.log('[TicketSettingsForm] Submitting settings:', {
-      aufbau_limit: settings.aufbau_limit,
-      aufbau_limit_raw: limitValues.aufbau,
-      allLimits: Object.entries(limitValues).reduce((acc, [role, value]) => {
-        acc[role] = { raw: value, parsed: (settings as any)[limitFieldByRole[role as RoleKey]] };
-        return acc;
-      }, {} as Record<string, { raw: string; parsed: any }>),
+      allLimitsEarly: limitValuesEarly,
+      allLimitsNormal: limitValuesNormal,
     });
 
     onSave(settings);
   };
 
-  // Calculate total of all role limits
+  // Calculate total of all role limits (early + normal per role)
   const roleLimitsTotal = useMemo(() => {
     const allRoles = [...standardRoles, ...reducedRoles];
     const values: number[] = [];
-    
+
     allRoles.forEach((role) => {
-      const value = limitValues[role.key]?.trim();
-      if (value) {
-        const parsed = parseInt(value, 10);
-        if (!isNaN(parsed) && parsed >= 0) {
-          values.push(parsed);
-        }
+      const earlyVal = limitValuesEarly[role.key]?.trim();
+      const normalVal = limitValuesNormal[role.key]?.trim();
+      const early = earlyVal ? parseInt(earlyVal, 10) : 0;
+      const normal = normalVal ? parseInt(normalVal, 10) : 0;
+      if (!isNaN(early) && early >= 0 && !isNaN(normal) && normal >= 0 && (early > 0 || normal > 0)) {
+        values.push(early + normal);
       }
     });
     
@@ -4104,7 +4084,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         ? `${values.join(' + ')} = ${values.reduce((sum, val) => sum + val, 0)}`
         : null
     };
-  }, [limitValues, standardRoles, reducedRoles]);
+  }, [limitValuesEarly, limitValuesNormal, standardRoles, reducedRoles]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -4215,29 +4195,46 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
               {standardRoles.map((role) => {
                 const remaining = remainingByRole[role.key];
                 return (
-                  <div key={role.key} className="space-y-1.5">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <Label htmlFor={`${role.key}_limit`}>
-                        {role.label} {t("limit")}
-                      </Label>
-                      {remaining !== undefined && (
-                        <span className="text-xs font-medium text-primary whitespace-nowrap">
-                          {remaining === null
-                            ? t("unlimited")
-                            : `${remaining} ${t("standardTickets_plural").toLowerCase()} ${t("remaining") ?? "remaining"}`}
-                        </span>
-                      )}
+                  <div key={role.key} className="space-y-3 p-3 rounded-lg border">
+                    <div className="font-medium">{role.label} {t("limit")}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`${role.key}_limit_early`}>{t("earlyBird")}</Label>
+                        {remaining !== undefined && remaining.early !== null && (
+                          <span className="text-xs font-medium text-primary block">
+                            {remaining.early} {t("remaining") ?? "remaining"}
+                          </span>
+                        )}
+                        <Input
+                          id={`${role.key}_limit_early`}
+                          type="number"
+                          min="0"
+                          value={limitValuesEarly[role.key]}
+                          onChange={(e) =>
+                            setLimitValuesEarly((prev) => ({ ...prev, [role.key]: e.target.value }))
+                          }
+                          placeholder={t("unlimited")}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`${role.key}_limit_normal`}>{t("normal")}</Label>
+                        {remaining !== undefined && remaining.normal !== null && (
+                          <span className="text-xs font-medium text-primary block">
+                            {remaining.normal} {t("remaining") ?? "remaining"}
+                          </span>
+                        )}
+                        <Input
+                          id={`${role.key}_limit_normal`}
+                          type="number"
+                          min="0"
+                          value={limitValuesNormal[role.key]}
+                          onChange={(e) =>
+                            setLimitValuesNormal((prev) => ({ ...prev, [role.key]: e.target.value }))
+                          }
+                          placeholder={t("unlimited")}
+                        />
+                      </div>
                     </div>
-                    <Input
-                      id={`${role.key}_limit`}
-                      type="number"
-                      min="0"
-                      value={limitValues[role.key]}
-                      onChange={(e) =>
-                        setLimitValues((prev) => ({ ...prev, [role.key]: e.target.value }))
-                      }
-                      placeholder={t("unlimited")}
-                    />
                   </div>
                 );
               })}
@@ -4250,29 +4247,46 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
               {reducedRoles.map((role) => {
                 const remaining = remainingByRole[role.key];
                 return (
-                  <div key={role.key} className="space-y-1.5">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <Label htmlFor={`${role.key}_limit`}>
-                        {role.label} {t("limit")}
-                      </Label>
-                      {remaining !== undefined && (
-                        <span className="text-xs font-medium text-primary whitespace-nowrap">
-                          {remaining === null
-                            ? t("unlimited")
-                            : `${remaining} ${t("reducedTickets_plural").toLowerCase()} ${t("remaining") ?? "remaining"}`}
-                        </span>
-                      )}
+                  <div key={role.key} className="space-y-3 p-3 rounded-lg border">
+                    <div className="font-medium">{role.label} {t("limit")}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`${role.key}_limit_early_reduced`}>{t("earlyBird")}</Label>
+                        {remaining !== undefined && remaining.early !== null && (
+                          <span className="text-xs font-medium text-primary block">
+                            {remaining.early} {t("remaining") ?? "remaining"}
+                          </span>
+                        )}
+                        <Input
+                          id={`${role.key}_limit_early_reduced`}
+                          type="number"
+                          min="0"
+                          value={limitValuesEarly[role.key]}
+                          onChange={(e) =>
+                            setLimitValuesEarly((prev) => ({ ...prev, [role.key]: e.target.value }))
+                          }
+                          placeholder={t("unlimited")}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`${role.key}_limit_normal_reduced`}>{t("normal")}</Label>
+                        {remaining !== undefined && remaining.normal !== null && (
+                          <span className="text-xs font-medium text-primary block">
+                            {remaining.normal} {t("remaining") ?? "remaining"}
+                          </span>
+                        )}
+                        <Input
+                          id={`${role.key}_limit_normal_reduced`}
+                          type="number"
+                          min="0"
+                          value={limitValuesNormal[role.key]}
+                          onChange={(e) =>
+                            setLimitValuesNormal((prev) => ({ ...prev, [role.key]: e.target.value }))
+                          }
+                          placeholder={t("unlimited")}
+                        />
+                      </div>
                     </div>
-                    <Input
-                      id={`${role.key}_limit`}
-                      type="number"
-                      min="0"
-                      value={limitValues[role.key]}
-                      onChange={(e) =>
-                        setLimitValues((prev) => ({ ...prev, [role.key]: e.target.value }))
-                      }
-                      placeholder={t("unlimited")}
-                    />
                   </div>
                 );
               })}

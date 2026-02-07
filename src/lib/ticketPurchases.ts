@@ -63,64 +63,141 @@ export const getRolePurchaseCount = async (role: string): Promise<number> => {
   }
 };
 
+export type ContributionType = 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal';
+
 /**
- * Check if a role has available contributions.
- * 
- * IMPORTANT: Role limits apply to ALL contribution types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
- * This function checks if the total count of confirmed Soli-Contributions for the role (across all contribution types)
- * is below the specified limit.
- * 
- * @param role - The role to check availability for
- * @param limit - The maximum number of contributions allowed for this role (null/undefined = unlimited)
- * @returns true if contributions are available, false if sold out
+ * Check if a role has available contributions for the given ticket type.
+ * Uses per-role early/normal limits; unused early-bird capacity is added to normal-bird.
+ *
+ * @param role - The role to check
+ * @param limitEarly - Early bird limit for this role (null = unlimited)
+ * @param limitNormal - Normal bird limit for this role (null = unlimited)
+ * @param contributionType - The ticket type being purchased
  */
 export const checkRoleAvailability = async (
   role: string,
-  limit: number | null | undefined
+  limitEarly: number | null | undefined,
+  limitNormal: number | null | undefined,
+  contributionType: ContributionType
 ): Promise<boolean> => {
-  // If no limit set, role is available
-  if (limit === null || limit === undefined) {
-    return true;
+  const isEarly = contributionType === 'earlyBird' || contributionType === 'reducedEarlyBird';
+
+  if (isEarly) {
+    if (limitEarly === null || limitEarly === undefined) return true;
+    if (limitEarly === 0) return false;
+    const count = await getRoleEarlyBirdPurchaseCount(role);
+    return count < limitEarly;
   }
 
-  // If limit is 0, role is sold out
-  if (limit === 0) {
-    return false;
-  }
-
-  // Get current confirmed Soli-Contributions count (counts all contribution types: earlyBird, normal, reducedEarlyBird, reducedNormal)
-  const purchaseCount = await getRolePurchaseCount(role);
-
-  // Check if there are remaining contributions
-  return purchaseCount < limit;
+  if (limitNormal === null || limitNormal === undefined) return true;
+  const earlyCount = await getRoleEarlyBirdPurchaseCount(role);
+  const effectiveNormal = limitNormal + Math.max(0, (limitEarly ?? 0) - earlyCount);
+  if (effectiveNormal === 0) return false;
+  const normalCount = await getRoleNormalBirdPurchaseCount(role);
+  return normalCount < effectiveNormal;
 };
 
+export interface RemainingByType {
+  early: number | null;
+  normal: number | null;
+}
+
 /**
- * Get remaining contributions for a role.
- * 
- * IMPORTANT: Role limits apply to ALL contribution types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
- * This function calculates how many more Soli-Contributions can be made for the role by subtracting the total
- * count of confirmed Soli-Contributions (across all contribution types) from the limit.
- * 
- * @param role - The role to check remaining contributions for
- * @param limit - The maximum number of contributions allowed for this role (null/undefined = unlimited)
- * @returns The number of remaining contributions, or null if unlimited
+ * Get remaining contributions for a role by type (early bird and normal bird).
+ * Normal-bird remaining includes unused early-bird capacity.
  */
 export const getRemainingTickets = async (
   role: string,
-  limit: number | null | undefined
+  limitEarly: number | null | undefined,
+  limitNormal: number | null | undefined
+): Promise<RemainingByType> => {
+  const earlyRemaining =
+    limitEarly != null
+      ? Math.max(0, limitEarly - (await getRoleEarlyBirdPurchaseCount(role)))
+      : null;
+  const earlyCount = await getRoleEarlyBirdPurchaseCount(role);
+  const effectiveNormal =
+    limitNormal != null ? limitNormal + Math.max(0, (limitEarly ?? 0) - earlyCount) : null;
+  const normalRemaining =
+    effectiveNormal != null
+      ? Math.max(0, effectiveNormal - (await getRoleNormalBirdPurchaseCount(role)))
+      : null;
+  return { early: earlyRemaining, normal: normalRemaining };
+};
+
+/**
+ * Get remaining early-bird tickets for a single role.
+ */
+export const getRemainingEarlyBirdTicketsForRole = async (
+  role: string,
+  limitEarly: number | null | undefined
 ): Promise<number | null> => {
-  // If no limit set, return null (unlimited)
-  if (limit === null || limit === undefined) {
-    return null;
+  if (limitEarly === null || limitEarly === undefined) return null;
+  const count = await getRoleEarlyBirdPurchaseCount(role);
+  return Math.max(0, limitEarly - count);
+};
+
+/**
+ * Get remaining normal-bird tickets for a single role (includes unused early-bird capacity).
+ */
+export const getRemainingNormalBirdTicketsForRole = async (
+  role: string,
+  limitNormal: number | null | undefined,
+  limitEarly: number | null | undefined
+): Promise<number | null> => {
+  if (limitNormal === null || limitNormal === undefined) return null;
+  const earlyCount = await getRoleEarlyBirdPurchaseCount(role);
+  const effectiveNormal = limitNormal + Math.max(0, (limitEarly ?? 0) - earlyCount);
+  const normalCount = await getRoleNormalBirdPurchaseCount(role);
+  return Math.max(0, effectiveNormal - normalCount);
+};
+
+/**
+ * Get the number of confirmed early-bird Soli-Contributions for a specific role.
+ */
+export const getRoleEarlyBirdPurchaseCount = async (role: string): Promise<number> => {
+  try {
+    const { count, error } = await supabase
+      .from('soli_contribution_purchases')
+      .select('*', { count: 'exact', head: true })
+      .eq('role', role)
+      .in('contribution_type', ['earlyBird', 'reducedEarlyBird'])
+      .eq('status', 'confirmed');
+
+    if (error) {
+      logError('TicketPurchases', error, { operation: 'getRoleEarlyBirdPurchaseCount', role });
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error) {
+    logError('TicketPurchases', error, { operation: 'getRoleEarlyBirdPurchaseCount', role });
+    return 0;
   }
+};
 
-  // Get current confirmed Soli-Contributions count (counts ALL contribution types: earlyBird, normal, reducedEarlyBird, reducedNormal)
-  const purchaseCount = await getRolePurchaseCount(role);
+/**
+ * Get the number of confirmed normal-bird Soli-Contributions for a specific role.
+ */
+export const getRoleNormalBirdPurchaseCount = async (role: string): Promise<number> => {
+  try {
+    const { count, error } = await supabase
+      .from('soli_contribution_purchases')
+      .select('*', { count: 'exact', head: true })
+      .eq('role', role)
+      .in('contribution_type', ['normal', 'reducedNormal'])
+      .eq('status', 'confirmed');
 
-  // Calculate remaining
-  const remaining = limit - purchaseCount;
-  return Math.max(0, remaining);
+    if (error) {
+      logError('TicketPurchases', error, { operation: 'getRoleNormalBirdPurchaseCount', role });
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error) {
+    logError('TicketPurchases', error, { operation: 'getRoleNormalBirdPurchaseCount', role });
+    return 0;
+  }
 };
 
 /**
@@ -209,27 +286,26 @@ export const getRemainingNormalTickets = async (
 
 /**
  * Validate that a Soli-Contribution can be created for a role without exceeding limits.
- * This provides server-side validation before creating a Soli-Contribution.
- * Note: Limits apply to ALL contribution types combined (Early Bird, Normal, Reduced Early Bird, Reduced Normal).
- * 
- * @param role - The role to validate
- * @param limit - The maximum number of contributions allowed for this role (null/undefined = unlimited)
- * @returns Object with isValid flag and optional error message
+ * Uses per-role early/normal limits and contribution type.
  */
 export const validatePurchaseLimit = async (
   role: string,
-  limit: number | null | undefined
+  limitEarly: number | null | undefined,
+  limitNormal: number | null | undefined,
+  contributionType: ContributionType
 ): Promise<{ isValid: boolean; error?: string }> => {
-  const isAvailable = await checkRoleAvailability(role, limit);
-  
+  const isAvailable = await checkRoleAvailability(role, limitEarly, limitNormal, contributionType);
+
   if (!isAvailable) {
-    const remaining = await getRemainingTickets(role, limit);
+    const { early, normal } = await getRemainingTickets(role, limitEarly, limitNormal);
+    const isEarly = contributionType === 'earlyBird' || contributionType === 'reducedEarlyBird';
+    const remaining = isEarly ? early : normal;
     return {
       isValid: false,
       error: `Role ${role} is sold out. ${remaining === 0 ? 'No Soli-Contributions remaining.' : `Only ${remaining} Soli-Contribution(s) remaining.`}`,
     };
   }
-  
+
   return { isValid: true };
 };
 
@@ -278,25 +354,38 @@ export const createTicketPurchase = async (
       }
     }
     
-    // Optional: Validate role limit before creating purchase
     if (validateLimit) {
-      // Map role to limit field
-      const limitFieldMap: Record<string, keyof typeof settings> = {
-        bar: 'bar_limit',
-        kuechenhilfe: 'kuechenhilfe_limit',
-        springerRunner: 'springer_runner_limit',
-        springerToilet: 'springer_toilet_limit',
-        abbau: 'abbau_limit',
-        aufbau: 'aufbau_limit',
-        awareness: 'awareness_limit',
-        tech: 'tech_limit',
+      const limitEarlyFieldMap: Record<string, keyof typeof settings> = {
+        bar: 'bar_limit_early',
+        kuechenhilfe: 'kuechenhilfe_limit_early',
+        springerRunner: 'springer_runner_limit_early',
+        springerToilet: 'springer_toilet_limit_early',
+        abbau: 'abbau_limit_early',
+        aufbau: 'aufbau_limit_early',
+        awareness: 'awareness_limit_early',
+        tech: 'tech_limit_early',
       };
-      
-      const limitField = limitFieldMap[purchaseData.role];
-      if (limitField) {
-        const limit = settings[limitField] as number | null | undefined;
-        const validation = await validatePurchaseLimit(purchaseData.role, limit);
-        
+      const limitNormalFieldMap: Record<string, keyof typeof settings> = {
+        bar: 'bar_limit_normal',
+        kuechenhilfe: 'kuechenhilfe_limit_normal',
+        springerRunner: 'springer_runner_limit_normal',
+        springerToilet: 'springer_toilet_limit_normal',
+        abbau: 'abbau_limit_normal',
+        aufbau: 'aufbau_limit_normal',
+        awareness: 'awareness_limit_normal',
+        tech: 'tech_limit_normal',
+      };
+      const earlyField = limitEarlyFieldMap[purchaseData.role];
+      const normalField = limitNormalFieldMap[purchaseData.role];
+      if (earlyField && normalField) {
+        const limitEarly = settings[earlyField] as number | null | undefined;
+        const limitNormal = settings[normalField] as number | null | undefined;
+        const validation = await validatePurchaseLimit(
+          purchaseData.role,
+          limitEarly,
+          limitNormal,
+          purchaseData.contribution_type
+        );
         if (!validation.isValid) {
           return {
             success: false,

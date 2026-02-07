@@ -190,6 +190,24 @@ export type Database = {
           awareness_limit: number | null
           schichtleitung_limit: number | null
           tech_limit: number | null
+          bar_limit_early: number | null
+          bar_limit_normal: number | null
+          kuechenhilfe_limit_early: number | null
+          kuechenhilfe_limit_normal: number | null
+          springer_runner_limit_early: number | null
+          springer_runner_limit_normal: number | null
+          springer_toilet_limit_early: number | null
+          springer_toilet_limit_normal: number | null
+          abbau_limit_early: number | null
+          abbau_limit_normal: number | null
+          aufbau_limit_early: number | null
+          aufbau_limit_normal: number | null
+          awareness_limit_early: number | null
+          awareness_limit_normal: number | null
+          schichtleitung_limit_early: number | null
+          schichtleitung_limit_normal: number | null
+          tech_limit_early: number | null
+          tech_limit_normal: number | null
           bar_price_early: number | null
           bar_price_normal: number | null
           kuechenhilfe_price_early: number | null
@@ -226,6 +244,24 @@ export type Database = {
           awareness_limit?: number | null
           schichtleitung_limit?: number | null
           tech_limit?: number | null
+          bar_limit_early?: number | null
+          bar_limit_normal?: number | null
+          kuechenhilfe_limit_early?: number | null
+          kuechenhilfe_limit_normal?: number | null
+          springer_runner_limit_early?: number | null
+          springer_runner_limit_normal?: number | null
+          springer_toilet_limit_early?: number | null
+          springer_toilet_limit_normal?: number | null
+          abbau_limit_early?: number | null
+          abbau_limit_normal?: number | null
+          aufbau_limit_early?: number | null
+          aufbau_limit_normal?: number | null
+          awareness_limit_early?: number | null
+          awareness_limit_normal?: number | null
+          schichtleitung_limit_early?: number | null
+          schichtleitung_limit_normal?: number | null
+          tech_limit_early?: number | null
+          tech_limit_normal?: number | null
           bar_price_early?: number | null
           bar_price_normal?: number | null
           kuechenhilfe_price_early?: number | null
@@ -262,6 +298,24 @@ export type Database = {
           awareness_limit?: number | null
           schichtleitung_limit?: number | null
           tech_limit?: number | null
+          bar_limit_early?: number | null
+          bar_limit_normal?: number | null
+          kuechenhilfe_limit_early?: number | null
+          kuechenhilfe_limit_normal?: number | null
+          springer_runner_limit_early?: number | null
+          springer_runner_limit_normal?: number | null
+          springer_toilet_limit_early?: number | null
+          springer_toilet_limit_normal?: number | null
+          abbau_limit_early?: number | null
+          abbau_limit_normal?: number | null
+          aufbau_limit_early?: number | null
+          aufbau_limit_normal?: number | null
+          awareness_limit_early?: number | null
+          awareness_limit_normal?: number | null
+          schichtleitung_limit_early?: number | null
+          schichtleitung_limit_normal?: number | null
+          tech_limit_early?: number | null
+          tech_limit_normal?: number | null
           bar_price_early?: number | null
           bar_price_normal?: number | null
           kuechenhilfe_price_early?: number | null
