@@ -8,7 +8,7 @@ export interface TicketSettings {
   early_bird_cutoff: string | null;
   early_bird_total_limit: number | null;
   normal_total_limit: number | null;
-  // Limits
+  // Limits (legacy single limit kept for backward compat; enforcement uses _early/_normal)
   bar_limit: number | null;
   kuechenhilfe_limit: number | null;
   springer_runner_limit: number | null;
@@ -18,6 +18,25 @@ export interface TicketSettings {
   awareness_limit: number | null;
   schichtleitung_limit: number | null;
   tech_limit: number | null;
+  // Limits by ticket type (Early Bird / Normal Bird)
+  bar_limit_early: number | null;
+  bar_limit_normal: number | null;
+  kuechenhilfe_limit_early: number | null;
+  kuechenhilfe_limit_normal: number | null;
+  springer_runner_limit_early: number | null;
+  springer_runner_limit_normal: number | null;
+  springer_toilet_limit_early: number | null;
+  springer_toilet_limit_normal: number | null;
+  abbau_limit_early: number | null;
+  abbau_limit_normal: number | null;
+  aufbau_limit_early: number | null;
+  aufbau_limit_normal: number | null;
+  awareness_limit_early: number | null;
+  awareness_limit_normal: number | null;
+  schichtleitung_limit_early: number | null;
+  schichtleitung_limit_normal: number | null;
+  tech_limit_early: number | null;
+  tech_limit_normal: number | null;
   // Prices
   bar_price_early: number | null;
   bar_price_normal: number | null;

@@ -27,19 +27,29 @@ const Tickets = () => {
   const [normalReducedRole, setNormalReducedRole] = useState<string>("");
   const [ticketSettings, setTicketSettings] = useState<TicketSettings | null>(null);
   const [roleAvailability, setRoleAvailability] = useState<Record<string, boolean>>({});
-  const [remainingTickets, setRemainingTickets] = useState<Record<string, number | null>>({});
+  const [remainingTickets, setRemainingTickets] = useState<Record<string, { early: number | null; normal: number | null }>>({});
   const [remainingEarlyBirdTickets, setRemainingEarlyBirdTickets] = useState<number | null>(null);
   const [remainingNormalTickets, setRemainingNormalTickets] = useState<number | null>(null);
 
-  const limitFieldByRole: Record<string, keyof TicketSettings> = {
-    bar: "bar_limit",
-    kuechenhilfe: "kuechenhilfe_limit",
-    springerRunner: "springer_runner_limit",
-    springerToilet: "springer_toilet_limit",
-    abbau: "abbau_limit",
-    aufbau: "aufbau_limit",
-    awareness: "awareness_limit",
-    tech: "tech_limit",
+  const limitFieldEarlyByRole: Record<string, keyof TicketSettings> = {
+    bar: "bar_limit_early",
+    kuechenhilfe: "kuechenhilfe_limit_early",
+    springerRunner: "springer_runner_limit_early",
+    springerToilet: "springer_toilet_limit_early",
+    abbau: "abbau_limit_early",
+    aufbau: "aufbau_limit_early",
+    awareness: "awareness_limit_early",
+    tech: "tech_limit_early",
+  };
+  const limitFieldNormalByRole: Record<string, keyof TicketSettings> = {
+    bar: "bar_limit_normal",
+    kuechenhilfe: "kuechenhilfe_limit_normal",
+    springerRunner: "springer_runner_limit_normal",
+    springerToilet: "springer_toilet_limit_normal",
+    abbau: "abbau_limit_normal",
+    aufbau: "aufbau_limit_normal",
+    awareness: "awareness_limit_normal",
+    tech: "tech_limit_normal",
   };
 
   const priceFieldByRole: Record<string, { early: keyof TicketSettings; normal: keyof TicketSettings }> = {
@@ -59,28 +69,24 @@ const Tickets = () => {
         const settings = await getTicketSettings();
         setTicketSettings(settings);
         
-        // Load availability for all roles
         if (settings) {
           const availability: Record<string, boolean> = {};
-          const remaining: Record<string, number | null> = {};
-          
-          // Define all roles here to avoid dependency issues
+          const remaining: Record<string, { early: number | null; normal: number | null }> = {};
           const allRoles = [
             'bar', 'kuechenhilfe', 'springerRunner', 'springerToilet',
             'abbau', 'aufbau', 'awareness', 'tech'
           ];
-          
+
           await Promise.all(
             allRoles.map(async (role) => {
-              const field = limitFieldByRole[role];
-              const limit = field ? (settings[field] as number | null | undefined) : null;
-              const isAvailable = await checkRoleAvailability(role, limit);
-              const remainingCount = await getRemainingTickets(role, limit);
-              availability[role] = isAvailable;
-              remaining[role] = remainingCount;
+              const limitEarly = settings[limitFieldEarlyByRole[role]] as number | null | undefined;
+              const limitNormal = settings[limitFieldNormalByRole[role]] as number | null | undefined;
+              const byType = await getRemainingTickets(role, limitEarly, limitNormal);
+              remaining[role] = byType;
+              availability[role] = (byType.early ?? 0) > 0 || (byType.normal ?? 0) > 0;
             })
           );
-          
+
           setRoleAvailability(availability);
           setRemainingTickets(remaining);
         }
@@ -222,8 +228,8 @@ const Tickets = () => {
     return roleAvailability[role];
   };
   
-  // Get remaining tickets for a role
-  const getRemainingForRole = (role: string): number | null => {
+  // Get remaining tickets for a role (early and normal)
+  const getRemainingForRole = (role: string): { early: number | null; normal: number | null } | null => {
     return remainingTickets[role] ?? null;
   };
 
@@ -468,7 +474,9 @@ const Tickets = () => {
                                     return `(${t("soldOut")})`;
                                   }
                                   if (isAdmin && remaining !== null) {
-                                    return ` (${remaining} ${t("remaining")})`;
+                                    const e = remaining.early ?? '∞';
+                                    const n = remaining.normal ?? '∞';
+                                    return ` (${e} ${t("earlyBird")} / ${n} ${t("normal")} ${t("remaining")})`;
                                   }
                                   return '';
                                 })()}
@@ -556,7 +564,9 @@ const Tickets = () => {
                                     return `(${t("soldOut")})`;
                                   }
                                   if (isAdmin && remaining !== null) {
-                                    return ` (${remaining} ${t("remaining")})`;
+                                    const e = remaining.early ?? '∞';
+                                    const n = remaining.normal ?? '∞';
+                                    return ` (${e} ${t("earlyBird")} / ${n} ${t("normal")} ${t("remaining")})`;
                                   }
                                   return '';
                                 })()}
@@ -689,7 +699,9 @@ const Tickets = () => {
                                     return `(${t("soldOut")})`;
                                   }
                                   if (isAdmin && remaining !== null) {
-                                    return ` (${remaining} ${t("remaining")})`;
+                                    const e = remaining.early ?? '∞';
+                                    const n = remaining.normal ?? '∞';
+                                    return ` (${e} ${t("earlyBird")} / ${n} ${t("normal")} ${t("remaining")})`;
                                   }
                                   return '';
                                 })()}
@@ -777,7 +789,9 @@ const Tickets = () => {
                                     return `(${t("soldOut")})`;
                                   }
                                   if (isAdmin && remaining !== null) {
-                                    return ` (${remaining} ${t("remaining")})`;
+                                    const e = remaining.early ?? '∞';
+                                    const n = remaining.normal ?? '∞';
+                                    return ` (${e} ${t("earlyBird")} / ${n} ${t("normal")} ${t("remaining")})`;
                                   }
                                   return '';
                                 })()}

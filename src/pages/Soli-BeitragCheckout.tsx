@@ -26,16 +26,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 const ROLE_CONFIG: Record<string, {
   priceEarly: keyof TicketSettings;
   priceNormal: keyof TicketSettings;
-  limit: keyof TicketSettings;
+  limitEarly: keyof TicketSettings;
+  limitNormal: keyof TicketSettings;
 }> = {
-  bar: { priceEarly: "bar_price_early", priceNormal: "bar_price_normal", limit: "bar_limit" },
-  kuechenhilfe: { priceEarly: "kuechenhilfe_price_early", priceNormal: "kuechenhilfe_price_normal", limit: "kuechenhilfe_limit" },
-  springerRunner: { priceEarly: "springer_runner_price_early", priceNormal: "springer_runner_price_normal", limit: "springer_runner_limit" },
-  springerToilet: { priceEarly: "springer_toilet_price_early", priceNormal: "springer_toilet_price_normal", limit: "springer_toilet_limit" },
-  abbau: { priceEarly: "abbau_price_early", priceNormal: "abbau_price_normal", limit: "abbau_limit" },
-  aufbau: { priceEarly: "aufbau_price_early", priceNormal: "aufbau_price_normal", limit: "aufbau_limit" },
-  awareness: { priceEarly: "awareness_price_early", priceNormal: "awareness_price_normal", limit: "awareness_limit" },
-  tech: { priceEarly: "tech_price_early", priceNormal: "tech_price_normal", limit: "tech_limit" },
+  bar: { priceEarly: "bar_price_early", priceNormal: "bar_price_normal", limitEarly: "bar_limit_early", limitNormal: "bar_limit_normal" },
+  kuechenhilfe: { priceEarly: "kuechenhilfe_price_early", priceNormal: "kuechenhilfe_price_normal", limitEarly: "kuechenhilfe_limit_early", limitNormal: "kuechenhilfe_limit_normal" },
+  springerRunner: { priceEarly: "springer_runner_price_early", priceNormal: "springer_runner_price_normal", limitEarly: "springer_runner_limit_early", limitNormal: "springer_runner_limit_normal" },
+  springerToilet: { priceEarly: "springer_toilet_price_early", priceNormal: "springer_toilet_price_normal", limitEarly: "springer_toilet_limit_early", limitNormal: "springer_toilet_limit_normal" },
+  abbau: { priceEarly: "abbau_price_early", priceNormal: "abbau_price_normal", limitEarly: "abbau_limit_early", limitNormal: "abbau_limit_normal" },
+  aufbau: { priceEarly: "aufbau_price_early", priceNormal: "aufbau_price_normal", limitEarly: "aufbau_limit_early", limitNormal: "aufbau_limit_normal" },
+  awareness: { priceEarly: "awareness_price_early", priceNormal: "awareness_price_normal", limitEarly: "awareness_limit_early", limitNormal: "awareness_limit_normal" },
+  tech: { priceEarly: "tech_price_early", priceNormal: "tech_price_normal", limitEarly: "tech_limit_early", limitNormal: "tech_limit_normal" },
 };
 
 interface FormErrors {
@@ -173,9 +174,9 @@ const TicketCheckout = () => {
             }
           }
           
-          // Check role-specific availability
-          const limit = settings[roleConfig.limit] as number | null | undefined;
-          const isAvailable = await checkRoleAvailability(role, limit);
+          const limitEarly = settings[roleConfig.limitEarly] as number | null | undefined;
+          const limitNormal = settings[roleConfig.limitNormal] as number | null | undefined;
+          const isAvailable = await checkRoleAvailability(role, limitEarly, limitNormal, type as "earlyBird" | "normal" | "reducedEarlyBird" | "reducedNormal");
           
           if (!isAvailable) {
             toast({
@@ -187,9 +188,9 @@ const TicketCheckout = () => {
             return;
           }
           
-          // Get remaining tickets for display
-          const remaining = await getRemainingTickets(role, limit);
-          setRemainingTickets(remaining);
+          const { early, normal } = await getRemainingTickets(role, limitEarly, limitNormal);
+          const isEarly = type === "earlyBird" || type === "reducedEarlyBird";
+          setRemainingTickets(isEarly ? early : normal);
         }
       } catch (error: any) {
         console.error('[TicketCheckout] Error loading ticket settings:', error);
