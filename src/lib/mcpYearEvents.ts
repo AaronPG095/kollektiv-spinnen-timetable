@@ -325,13 +325,41 @@ export async function getAvailableYearsMCP(): Promise<number[]> {
           .from(tableName)
           .select('*', { count: 'exact', head: true });
         
-        if (!error && count !== null && count > 0) {
+        // Check for specific error codes that indicate table doesn't exist
+        if (error) {
+          const errorCode = (error as any)?.code;
+          const errorMessage = error?.message || '';
+          
+          // These are expected errors for non-existent tables - silently skip
+          if (
+            errorCode === 'PGRST116' || 
+            errorCode === '42P01' ||
+            errorMessage.includes('does not exist') ||
+            errorMessage.includes('relation') ||
+            error?.status === 404
+          ) {
+            continue; // Skip this year silently
+          }
+          
+          // For other errors, log in dev mode only
+          if (import.meta.env.DEV) {
+            console.log(`[mcpYearEvents] Error checking table events_${year}:`, error);
+          }
+          continue;
+        }
+        
+        if (count !== null && count > 0) {
           availableYears.push(year);
         }
       } catch (err) {
-        // Table doesn't exist or other error, skip this year
+        // Table doesn't exist or other error, skip this year silently
+        // Only log unexpected errors in dev mode
         if (import.meta.env.DEV) {
-          console.log(`[mcpYearEvents] Table events_${year} not available:`, err);
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          // Only log if it's not a "table doesn't exist" type error
+          if (!errorMessage.includes('does not exist') && !errorMessage.includes('relation')) {
+            console.log(`[mcpYearEvents] Unexpected error checking events_${year}:`, err);
+          }
         }
       }
     }
