@@ -3749,6 +3749,23 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
 
   type RoleKey = (typeof standardRoles)[number]["key"] | (typeof reducedRoles)[number]["key"];
 
+  function formatDateTimeLocalFromIso(iso: string | null | undefined): string {
+    if (!iso) return "";
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
+
+    const pad = (value: number): string => (value < 10 ? `0${value}` : `${value}`);
+
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+
+    // datetime-local expects local time in "YYYY-MM-DDTHH:mm" without timezone
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
   const limitFieldEarlyByRole: Record<RoleKey, keyof TicketSettings> = {
     bar: "bar_limit_early",
     kuechenhilfe: "kuechenhilfe_limit_early",
@@ -3787,7 +3804,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
 
   const [earlyBirdEnabled, setEarlyBirdEnabled] = useState(initialSettings?.early_bird_enabled ?? false);
   const [earlyBirdCutoff, setEarlyBirdCutoff] = useState(
-    initialSettings?.early_bird_cutoff ? new Date(initialSettings.early_bird_cutoff).toISOString().slice(0, 16) : ""
+    formatDateTimeLocalFromIso(initialSettings?.early_bird_cutoff ?? null)
   );
   const [earlyBirdTotalLimit, setEarlyBirdTotalLimit] = useState(
     initialSettings?.early_bird_total_limit !== null && initialSettings?.early_bird_total_limit !== undefined
@@ -3920,11 +3937,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
   useEffect(() => {
     if (initialSettings) {
       setEarlyBirdEnabled(initialSettings.early_bird_enabled ?? false);
-      setEarlyBirdCutoff(
-        initialSettings.early_bird_cutoff 
-          ? new Date(initialSettings.early_bird_cutoff).toISOString().slice(0, 16) 
-          : ""
-      );
+      setEarlyBirdCutoff(formatDateTimeLocalFromIso(initialSettings.early_bird_cutoff ?? null));
       setEarlyBirdTotalLimit(
         initialSettings.early_bird_total_limit !== null && initialSettings.early_bird_total_limit !== undefined
           ? initialSettings.early_bird_total_limit.toString()
