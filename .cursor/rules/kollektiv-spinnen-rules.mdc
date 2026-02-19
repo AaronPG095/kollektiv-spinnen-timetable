@@ -1,6 +1,7 @@
 ---
-name: kollektiv-spinnen-rules
 description: This is a new rule
+globs: /KOLLEKTIV-SPINNEN-TIMETABLE
+alwaysApply: false
 ---
 
 # Overview
