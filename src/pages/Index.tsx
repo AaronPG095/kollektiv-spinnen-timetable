@@ -374,10 +374,12 @@ const Index = () => {
             onYearChange={setSelectedYear}
           />
         ) : (
-          <FestivalGrid
-            events={filteredEvents}
-            onEventClick={setSelectedEvent}
-          />
+          <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen px-4">
+            <FestivalGrid
+              events={filteredEvents}
+              onEventClick={setSelectedEvent}
+            />
+          </div>
         )}
       </main>
 

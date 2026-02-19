@@ -31,6 +31,10 @@ const venueLabels = {
 const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => {
   const { t } = useLanguage();
   const isMobile = useIsMobile();
+
+  // Responsive base row height: taller on mobile so 15–30 min events are readable
+  const baseRowHeight = isMobile ? 110 : 70;
+  const baseHeaderHeight = 60;
   
   // Zoom state with smooth interpolation
   const [displayZoom, setDisplayZoom] = useState(1);
@@ -443,8 +447,6 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       return;
     }
 
-    const baseRowHeight = 70;
-    const baseHeaderHeight = 60;
     const rowHeight = baseRowHeight * displayZoom;
     const headerHeight = baseHeaderHeight * displayZoom;
     const targetScrollTop = headerHeight + (targetSlotIndex * rowHeight) - (container.clientHeight / 3);
@@ -453,7 +455,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
       top: Math.max(0, targetScrollTop),
       behavior: smooth ? 'smooth' : 'auto'
     });
-  }, [displayZoom]);
+  }, [displayZoom, baseRowHeight, baseHeaderHeight]);
 
   // Scroll to current time
   const scrollToNow = useCallback(() => {
@@ -484,8 +486,6 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
     const container = scrollViewportRef.current || gridContainerRef.current;
     if (!container) return;
 
-    const baseRowHeight = 70;
-    const baseHeaderHeight = 60;
     const rowHeight = baseRowHeight * displayZoom;
     const headerHeight = baseHeaderHeight * displayZoom;
     const scrollTop = container.scrollTop;
@@ -503,7 +503,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         end: `${translateDay(endTime.day)} ${endTime.label}`
       });
     }
-  }, [displayZoom, timeSlots, translateDay]);
+  }, [displayZoom, timeSlots, translateDay, baseRowHeight, baseHeaderHeight]);
 
 
   // Handle pinch-to-zoom on touch devices with zoom-to-point
@@ -648,7 +648,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
         </svg>
       </div>
 
-      <div className="festival-grid relative overflow-hidden rounded-lg w-full max-w-[1400px] mx-auto flex flex-col items-center" style={{ backgroundColor: '#0B0E1F' }}>
+      <div className="festival-grid relative overflow-hidden rounded-lg w-full max-w-[1800px] mx-auto flex flex-col items-center" style={{ backgroundColor: '#0B0E1F' }}>
         {/* Zoom controls */}
         <div className="absolute top-2 right-2 z-40 flex gap-2">
           <button 
@@ -739,11 +739,10 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
           <div className="grid-container mx-auto" style={{ touchAction: 'pan-x pan-y' }}>
             {/* Calculate grid dimensions based on zoom */}
             {(() => {
-              const baseRowHeight = 70;
-              const baseHeaderHeight = 60;
               const baseDayColWidth = 100; // Increased from 80px
               const baseTimeColWidth = 80; // Increased from 60px
-              const baseVenueColMinWidth = 300; // Increased from 200px
+              // Wider venue columns on large screens so event names fit on one line
+              const baseVenueColMinWidth = isMobile ? 300 : 380;
               
               const scaledRowHeight = baseRowHeight * displayZoom;
               const scaledHeaderHeight = baseHeaderHeight * displayZoom;
@@ -873,7 +872,7 @@ const FestivalGrid: React.FC<FestivalGridProps> = ({ events, onEventClick }) => 
                           // Calculate actual height based on duration in minutes
                           // Scale pixelsPerMinute with zoom to match scaled grid row height
                           const durationInMinutes = event.duration;
-                          const pixelsPerMinute = (70 * displayZoom) / 60; // Scales with zoom: 70px * zoom per hour
+                          const pixelsPerMinute = (baseRowHeight * displayZoom) / 60; // Match scaled row height per hour
                           const heightInPixels = durationInMinutes * pixelsPerMinute;
                           
                           // Calculate responsive text sizing

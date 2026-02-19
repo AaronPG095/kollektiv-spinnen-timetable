@@ -3498,7 +3498,7 @@ const FAQForm = ({ onSave, initialFAQ, allFAQs = [] }: FAQFormProps) => {
 interface AdminPurchaseFormProps {
   purchase?: TicketPurchase | null;
   onSave: (data: {
-    contribution_type: 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal';
+    contribution_type: 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal' | 'fastBunny' | 'reducedFastBunny';
     role: string;
     price: number;
     purchaser_name: string;
@@ -3513,7 +3513,7 @@ interface AdminPurchaseFormProps {
 const AdminPurchaseForm = ({ purchase, onSave, onCancel }: AdminPurchaseFormProps) => {
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
-    contribution_type: (purchase?.contribution_type || 'earlyBird') as 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal',
+    contribution_type: (purchase?.contribution_type || 'earlyBird') as 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal' | 'fastBunny' | 'reducedFastBunny',
     role: purchase?.role || '',
     price: purchase?.price || 0,
     purchaser_name: purchase?.purchaser_name || '',
@@ -3602,8 +3602,10 @@ const AdminPurchaseForm = ({ purchase, onSave, onCancel }: AdminPurchaseFormProp
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="earlyBird">{t("earlyBird")}</SelectItem>
+            <SelectItem value="fastBunny">{t("fastBunny")}</SelectItem>
             <SelectItem value="normal">{t("normal")}</SelectItem>
             <SelectItem value="reducedEarlyBird">{t("reducedTickets")} - {t("earlyBird")}</SelectItem>
+            <SelectItem value="reducedFastBunny">{t("reducedTickets")} - {t("fastBunny")}</SelectItem>
             <SelectItem value="reducedNormal">{t("reducedTickets")} - {t("normal")}</SelectItem>
           </SelectContent>
         </Select>
@@ -3786,29 +3788,54 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     awareness: "awareness_limit_normal",
     tech: "tech_limit_normal",
   };
+  const limitFieldFastBunnyByRole: Record<RoleKey, keyof TicketSettings> = {
+    bar: "bar_limit_fast_bunny",
+    kuechenhilfe: "kuechenhilfe_limit_fast_bunny",
+    springerRunner: "springer_runner_limit_fast_bunny",
+    springerToilet: "springer_toilet_limit_fast_bunny",
+    abbau: "abbau_limit_fast_bunny",
+    aufbau: "aufbau_limit_fast_bunny",
+    awareness: "awareness_limit_fast_bunny",
+    tech: "tech_limit_fast_bunny",
+  };
 
-  const priceFieldByRole: Record<RoleKey, { early: keyof TicketSettings; normal: keyof TicketSettings }> = {
-    bar: { early: "bar_price_early", normal: "bar_price_normal" },
-    kuechenhilfe: { early: "kuechenhilfe_price_early", normal: "kuechenhilfe_price_normal" },
-    springerRunner: { early: "springer_runner_price_early", normal: "springer_runner_price_normal" },
-    springerToilet: { early: "springer_toilet_price_early", normal: "springer_toilet_price_normal" },
-    abbau: { early: "abbau_price_early", normal: "abbau_price_normal" },
-    aufbau: { early: "aufbau_price_early", normal: "aufbau_price_normal" },
-    awareness: { early: "awareness_price_early", normal: "awareness_price_normal" },
-    tech: { early: "tech_price_early", normal: "tech_price_normal" },
+  const priceFieldByRole: Record<RoleKey, { early: keyof TicketSettings; fastBunny: keyof TicketSettings; normal: keyof TicketSettings }> = {
+    bar: { early: "bar_price_early", fastBunny: "bar_price_fast_bunny", normal: "bar_price_normal" },
+    kuechenhilfe: { early: "kuechenhilfe_price_early", fastBunny: "kuechenhilfe_price_fast_bunny", normal: "kuechenhilfe_price_normal" },
+    springerRunner: { early: "springer_runner_price_early", fastBunny: "springer_runner_price_fast_bunny", normal: "springer_runner_price_normal" },
+    springerToilet: { early: "springer_toilet_price_early", fastBunny: "springer_toilet_price_fast_bunny", normal: "springer_toilet_price_normal" },
+    abbau: { early: "abbau_price_early", fastBunny: "abbau_price_fast_bunny", normal: "abbau_price_normal" },
+    aufbau: { early: "aufbau_price_early", fastBunny: "aufbau_price_fast_bunny", normal: "aufbau_price_normal" },
+    awareness: { early: "awareness_price_early", fastBunny: "awareness_price_fast_bunny", normal: "awareness_price_normal" },
+    tech: { early: "tech_price_early", fastBunny: "tech_price_fast_bunny", normal: "tech_price_normal" },
   };
 
   const [remainingByRole, setRemainingByRole] = useState<
-    Partial<Record<RoleKey, { early: number | null; normal: number | null }>>
+    Partial<Record<RoleKey, { early: number | null; fastBunny: number | null; normal: number | null }>>
   >({});
+
+  const [remainingUniversal, setRemainingUniversal] = useState<{
+    early: number | null;
+    fastBunny: number | null;
+    normal: number | null;
+  }>({ early: null, fastBunny: null, normal: null });
 
   const [earlyBirdEnabled, setEarlyBirdEnabled] = useState(initialSettings?.early_bird_enabled ?? false);
   const [earlyBirdCutoff, setEarlyBirdCutoff] = useState(
     formatDateTimeLocalFromIso(initialSettings?.early_bird_cutoff ?? null)
   );
+  const [fastBunnyEnabled, setFastBunnyEnabled] = useState(initialSettings?.fast_bunny_enabled ?? false);
+  const [fastBunnyCutoff, setFastBunnyCutoff] = useState(
+    formatDateTimeLocalFromIso(initialSettings?.fast_bunny_cutoff ?? null)
+  );
   const [earlyBirdTotalLimit, setEarlyBirdTotalLimit] = useState(
     initialSettings?.early_bird_total_limit !== null && initialSettings?.early_bird_total_limit !== undefined
       ? initialSettings.early_bird_total_limit.toString()
+      : ""
+  );
+  const [fastBunnyTotalLimit, setFastBunnyTotalLimit] = useState(
+    initialSettings?.fast_bunny_total_limit !== null && initialSettings?.fast_bunny_total_limit !== undefined
+      ? initialSettings.fast_bunny_total_limit.toString()
       : ""
   );
   const [normalTotalLimit, setNormalTotalLimit] = useState(
@@ -3860,24 +3887,52 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     }
     return initial;
   });
+  const [limitValuesFastBunny, setLimitValuesFastBunny] = useState<Record<RoleKey, string>>(() => {
+    const initial: Record<RoleKey, string> = {
+      bar: "",
+      kuechenhilfe: "",
+      springerRunner: "",
+      springerToilet: "",
+      abbau: "",
+      aufbau: "",
+      awareness: "",
+      tech: "",
+    };
+    if (initialSettings) {
+      (Object.keys(initial) as RoleKey[]).forEach((role) => {
+        const field = limitFieldFastBunnyByRole[role];
+        const value = initialSettings[field];
+        initial[role] = value !== null && value !== undefined ? value.toString() : "";
+      });
+    }
+    return initial;
+  });
 
-  const [priceValues, setPriceValues] = useState<Record<`${RoleKey}_early` | `${RoleKey}_normal`, string>>(() => {
-    const initial: Record<`${RoleKey}_early` | `${RoleKey}_normal`, string> = {
+  const [priceValues, setPriceValues] = useState<Record<`${RoleKey}_early` | `${RoleKey}_fast_bunny` | `${RoleKey}_normal`, string>>(() => {
+    const initial: Record<`${RoleKey}_early` | `${RoleKey}_fast_bunny` | `${RoleKey}_normal`, string> = {
       bar_early: "",
+      bar_fast_bunny: "",
       bar_normal: "",
       kuechenhilfe_early: "",
+      kuechenhilfe_fast_bunny: "",
       kuechenhilfe_normal: "",
       springerRunner_early: "",
+      springerRunner_fast_bunny: "",
       springerRunner_normal: "",
       springerToilet_early: "",
+      springerToilet_fast_bunny: "",
       springerToilet_normal: "",
       abbau_early: "",
+      abbau_fast_bunny: "",
       abbau_normal: "",
       aufbau_early: "",
+      aufbau_fast_bunny: "",
       aufbau_normal: "",
       awareness_early: "",
+      awareness_fast_bunny: "",
       awareness_normal: "",
       tech_early: "",
+      tech_fast_bunny: "",
       tech_normal: "",
     };
 
@@ -3885,8 +3940,10 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
       (Object.keys(priceFieldByRole) as RoleKey[]).forEach((role) => {
         const fields = priceFieldByRole[role];
         const earlyVal = initialSettings[fields.early];
+        const fastBunnyVal = initialSettings[fields.fastBunny];
         const normalVal = initialSettings[fields.normal];
         initial[`${role}_early`] = earlyVal !== null && earlyVal !== undefined ? earlyVal.toString() : "";
+        initial[`${role}_fast_bunny`] = fastBunnyVal !== null && fastBunnyVal !== undefined ? fastBunnyVal.toString() : "";
         initial[`${role}_normal`] = normalVal !== null && normalVal !== undefined ? normalVal.toString() : "";
       });
     }
@@ -3908,18 +3965,19 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         roles.map(async (role) => {
           const limitEarly = initialSettings[limitFieldEarlyByRole[role]] as number | null | undefined;
           const limitNormal = initialSettings[limitFieldNormalByRole[role]] as number | null | undefined;
+          const limitFastBunny = initialSettings[limitFieldFastBunnyByRole[role]] as number | null | undefined;
           try {
-            const remaining = await getRemainingTickets(role, limitEarly, limitNormal);
+            const remaining = await getRemainingTickets(role, limitEarly, limitNormal, limitFastBunny);
             return [role, remaining] as const;
           } catch {
-            return [role, { early: null, normal: null }] as const;
+            return [role, { early: null, fastBunny: null, normal: null }] as const;
           }
         })
       );
 
       if (!isMounted) return;
 
-      const next: Partial<Record<RoleKey, { early: number | null; normal: number | null }>> = {};
+      const next: Partial<Record<RoleKey, { early: number | null; fastBunny: number | null; normal: number | null }>> = {};
       entries.forEach(([role, remaining]) => {
         next[role] = remaining;
       });
@@ -3933,14 +3991,60 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     };
   }, [initialSettings]);
 
+  // Load remaining universal limits (Early Bird, Fast Bunny, Normal Bird)
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadRemainingUniversal() {
+      if (!initialSettings) return;
+
+      const {
+        getRemainingEarlyBirdTickets,
+        getRemainingFastBunnyTickets,
+        getRemainingNormalTickets,
+      } = await import('@/lib/ticketPurchases');
+
+      const earlyLimit = initialSettings.early_bird_total_limit ?? null;
+      const fastBunnyLimit = initialSettings.fast_bunny_total_limit ?? null;
+      const normalLimit = initialSettings.normal_total_limit ?? null;
+
+      try {
+        const [early, fastBunny, normal] = await Promise.all([
+          getRemainingEarlyBirdTickets(earlyLimit),
+          getRemainingFastBunnyTickets(fastBunnyLimit, earlyLimit),
+          getRemainingNormalTickets(normalLimit),
+        ]);
+
+        if (!isMounted) return;
+        setRemainingUniversal({ early, fastBunny, normal });
+      } catch {
+        if (!isMounted) return;
+        setRemainingUniversal({ early: null, fastBunny: null, normal: null });
+      }
+    }
+
+    loadRemainingUniversal();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialSettings]);
+
   // Sync form state when initialSettings changes (e.g., after loading)
   useEffect(() => {
     if (initialSettings) {
       setEarlyBirdEnabled(initialSettings.early_bird_enabled ?? false);
       setEarlyBirdCutoff(formatDateTimeLocalFromIso(initialSettings.early_bird_cutoff ?? null));
+      setFastBunnyEnabled(initialSettings.fast_bunny_enabled ?? false);
+      setFastBunnyCutoff(formatDateTimeLocalFromIso(initialSettings.fast_bunny_cutoff ?? null));
       setEarlyBirdTotalLimit(
         initialSettings.early_bird_total_limit !== null && initialSettings.early_bird_total_limit !== undefined
           ? initialSettings.early_bird_total_limit.toString()
+          : ""
+      );
+      setFastBunnyTotalLimit(
+        initialSettings.fast_bunny_total_limit !== null && initialSettings.fast_bunny_total_limit !== undefined
+          ? initialSettings.fast_bunny_total_limit.toString()
           : ""
       );
       setNormalTotalLimit(
@@ -3957,39 +4061,40 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         bar: "", kuechenhilfe: "", springerRunner: "", springerToilet: "",
         abbau: "", aufbau: "", awareness: "", tech: "",
       };
+      const newLimitValuesFastBunny: Record<RoleKey, string> = {
+        bar: "", kuechenhilfe: "", springerRunner: "", springerToilet: "",
+        abbau: "", aufbau: "", awareness: "", tech: "",
+      };
       (Object.keys(newLimitValuesEarly) as RoleKey[]).forEach((role) => {
         const earlyVal = initialSettings[limitFieldEarlyByRole[role]];
         const normalVal = initialSettings[limitFieldNormalByRole[role]];
+        const fastBunnyVal = initialSettings[limitFieldFastBunnyByRole[role]];
         newLimitValuesEarly[role] = earlyVal !== null && earlyVal !== undefined ? earlyVal.toString() : "";
         newLimitValuesNormal[role] = normalVal !== null && normalVal !== undefined ? normalVal.toString() : "";
+        newLimitValuesFastBunny[role] = fastBunnyVal !== null && fastBunnyVal !== undefined ? fastBunnyVal.toString() : "";
       });
       setLimitValuesEarly(newLimitValuesEarly);
       setLimitValuesNormal(newLimitValuesNormal);
+      setLimitValuesFastBunny(newLimitValuesFastBunny);
 
       // Update price values
-      const newPriceValues: Record<`${RoleKey}_early` | `${RoleKey}_normal`, string> = {
-        bar_early: "",
-        bar_normal: "",
-        kuechenhilfe_early: "",
-        kuechenhilfe_normal: "",
-        springerRunner_early: "",
-        springerRunner_normal: "",
-        springerToilet_early: "",
-        springerToilet_normal: "",
-        abbau_early: "",
-        abbau_normal: "",
-        aufbau_early: "",
-        aufbau_normal: "",
-        awareness_early: "",
-        awareness_normal: "",
-        tech_early: "",
-        tech_normal: "",
+      const newPriceValues: Record<`${RoleKey}_early` | `${RoleKey}_fast_bunny` | `${RoleKey}_normal`, string> = {
+        bar_early: "", bar_fast_bunny: "", bar_normal: "",
+        kuechenhilfe_early: "", kuechenhilfe_fast_bunny: "", kuechenhilfe_normal: "",
+        springerRunner_early: "", springerRunner_fast_bunny: "", springerRunner_normal: "",
+        springerToilet_early: "", springerToilet_fast_bunny: "", springerToilet_normal: "",
+        abbau_early: "", abbau_fast_bunny: "", abbau_normal: "",
+        aufbau_early: "", aufbau_fast_bunny: "", aufbau_normal: "",
+        awareness_early: "", awareness_fast_bunny: "", awareness_normal: "",
+        tech_early: "", tech_fast_bunny: "", tech_normal: "",
       };
       (Object.keys(priceFieldByRole) as RoleKey[]).forEach((role) => {
         const fields = priceFieldByRole[role];
         const earlyVal = initialSettings[fields.early];
+        const fastBunnyVal = initialSettings[fields.fastBunny];
         const normalVal = initialSettings[fields.normal];
         newPriceValues[`${role}_early`] = earlyVal !== null && earlyVal !== undefined ? earlyVal.toString() : "";
+        newPriceValues[`${role}_fast_bunny`] = fastBunnyVal !== null && fastBunnyVal !== undefined ? fastBunnyVal.toString() : "";
         newPriceValues[`${role}_normal`] = normalVal !== null && normalVal !== undefined ? normalVal.toString() : "";
       });
       setPriceValues(newPriceValues);
@@ -4001,13 +4106,21 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     const settings: Partial<TicketSettings> = {
       early_bird_enabled: earlyBirdEnabled,
       early_bird_cutoff: earlyBirdCutoff ? new Date(earlyBirdCutoff).toISOString() : null,
-      early_bird_total_limit: earlyBirdTotalLimit.trim() 
+      fast_bunny_enabled: fastBunnyEnabled,
+      fast_bunny_cutoff: fastBunnyCutoff ? new Date(fastBunnyCutoff).toISOString() : null,
+      early_bird_total_limit: earlyBirdTotalLimit.trim()
         ? (() => {
             const parsed = parseInt(earlyBirdTotalLimit.trim(), 10);
             return !isNaN(parsed) && parsed >= 0 ? parsed : null;
           })()
         : null,
-      normal_total_limit: normalTotalLimit.trim() 
+      fast_bunny_total_limit: fastBunnyTotalLimit.trim()
+        ? (() => {
+            const parsed = parseInt(fastBunnyTotalLimit.trim(), 10);
+            return !isNaN(parsed) && parsed >= 0 ? parsed : null;
+          })()
+        : null,
+      normal_total_limit: normalTotalLimit.trim()
         ? (() => {
             const parsed = parseInt(normalTotalLimit.trim(), 10);
             return !isNaN(parsed) && parsed >= 0 ? parsed : null;
@@ -4015,12 +4128,14 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         : null,
     };
 
-    // Limits by type (early / normal)
+    // Limits by type (early / fast bunny / normal)
     (Object.keys(limitValuesEarly) as RoleKey[]).forEach((role) => {
       const earlyField = limitFieldEarlyByRole[role];
       const normalField = limitFieldNormalByRole[role];
+      const fastBunnyField = limitFieldFastBunnyByRole[role];
       const rawEarly = limitValuesEarly[role]?.trim() || "";
       const rawNormal = limitValuesNormal[role]?.trim() || "";
+      const rawFastBunny = limitValuesFastBunny[role]?.trim() || "";
       const parseLimit = (raw: string) => {
         if (raw === "") return null;
         const parsed = parseInt(raw, 10);
@@ -4029,12 +4144,14 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
       };
       (settings as any)[earlyField] = parseLimit(rawEarly);
       (settings as any)[normalField] = parseLimit(rawNormal);
+      (settings as any)[fastBunnyField] = parseLimit(rawFastBunny);
     });
 
     // Prices - include all fields explicitly (even if null)
     (Object.keys(priceFieldByRole) as RoleKey[]).forEach((role) => {
       const fields = priceFieldByRole[role];
       const early = priceValues[`${role}_early`]?.trim() || "";
+      const fastBunny = priceValues[`${role}_fast_bunny`]?.trim() || "";
       const normal = priceValues[`${role}_normal`]?.trim() || "";
       
       if (early === "") {
@@ -4049,6 +4166,17 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         }
       }
       
+      if (fastBunny === "") {
+        (settings as any)[fields.fastBunny] = null;
+      } else {
+        const parsed = parseFloat(fastBunny);
+        if (!isNaN(parsed) && parsed >= 0) {
+          (settings as any)[fields.fastBunny] = parsed;
+        } else {
+          console.warn(`[TicketSettingsForm] Invalid fast bunny price for ${role}: "${fastBunny}", setting to null`);
+          (settings as any)[fields.fastBunny] = null;
+        }
+      }
       if (normal === "") {
         (settings as any)[fields.normal] = null;
       } else {
@@ -4075,29 +4203,52 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
     onSave(settings);
   };
 
-  // Calculate total of all role limits (early + normal per role)
+  // Calculate total of all role limits (early + fast bunny + normal per role)
   const roleLimitsTotal = useMemo(() => {
     const allRoles = [...standardRoles, ...reducedRoles];
     const values: number[] = [];
 
     allRoles.forEach((role) => {
       const earlyVal = limitValuesEarly[role.key]?.trim();
+      const fastBunnyVal = limitValuesFastBunny[role.key]?.trim();
       const normalVal = limitValuesNormal[role.key]?.trim();
       const early = earlyVal ? parseInt(earlyVal, 10) : 0;
+      const fastBunny = fastBunnyVal ? parseInt(fastBunnyVal, 10) : 0;
       const normal = normalVal ? parseInt(normalVal, 10) : 0;
-      if (!isNaN(early) && early >= 0 && !isNaN(normal) && normal >= 0 && (early > 0 || normal > 0)) {
-        values.push(early + normal);
+      if (!isNaN(early) && early >= 0 && !isNaN(fastBunny) && fastBunny >= 0 && !isNaN(normal) && normal >= 0 && (early > 0 || fastBunny > 0 || normal > 0)) {
+        values.push(early + fastBunny + normal);
       }
     });
     
     return {
       values,
       total: values.reduce((sum, val) => sum + val, 0),
-      display: values.length > 0 
+      display: values.length > 0
         ? `${values.join(' + ')} = ${values.reduce((sum, val) => sum + val, 0)}`
         : null
     };
-  }, [limitValuesEarly, limitValuesNormal, standardRoles, reducedRoles]);
+  }, [limitValuesEarly, limitValuesFastBunny, limitValuesNormal, standardRoles, reducedRoles]);
+
+  const getTotalForRole = (roleKey: RoleKey): string => {
+    const earlyVal = limitValuesEarly[roleKey]?.trim() ?? "";
+    const fastBunnyVal = limitValuesFastBunny[roleKey]?.trim() ?? "";
+    const normalVal = limitValuesNormal[roleKey]?.trim() ?? "";
+    const early = earlyVal === "" ? 0 : parseInt(earlyVal, 10) || 0;
+    const fastBunny = fastBunnyVal === "" ? 0 : parseInt(fastBunnyVal, 10) || 0;
+    const normal = normalVal === "" ? 0 : parseInt(normalVal, 10) || 0;
+    return String(early + fastBunny + normal);
+  };
+
+  const handleTotalChange = (roleKey: RoleKey, value: string) => {
+    const total = value.trim() === "" ? null : parseInt(value.trim(), 10);
+    if (total !== null && (isNaN(total) || total < 0)) return;
+    const earlyVal = limitValuesEarly[roleKey]?.trim() ?? "";
+    const fastBunnyVal = limitValuesFastBunny[roleKey]?.trim() ?? "";
+    const early = earlyVal === "" ? 0 : parseInt(earlyVal, 10) || 0;
+    const fastBunny = fastBunnyVal === "" ? 0 : parseInt(fastBunnyVal, 10) || 0;
+    const newNormal = total === null ? "" : String(Math.max(0, total - early - fastBunny));
+    setLimitValuesNormal((prev) => ({ ...prev, [roleKey]: newNormal }));
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -4111,7 +4262,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
           {t("universalTicketLimitsDesc")}
         </p>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Early-Bird Universal Limit */}
           <div className="space-y-2 p-4 bg-background rounded-lg border">
             <Label htmlFor="early_bird_total_limit" className="text-base font-semibold">
@@ -4126,11 +4277,38 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
               placeholder={t("unlimited")}
               className="text-lg"
             />
+            {remainingUniversal.early !== null && (
+              <span className="text-xs font-medium text-primary block">
+                {remainingUniversal.early} {t("remaining")}
+              </span>
+            )}
             <p className="text-xs text-muted-foreground">
               {t("earlyBirdTotalLimitDesc")}
             </p>
           </div>
-
+          {/* Fast Bunny Universal Limit */}
+          <div className="space-y-2 p-4 bg-background rounded-lg border">
+            <Label htmlFor="fast_bunny_total_limit" className="text-base font-semibold">
+              {t("fastBunnyTotalLimit")}
+            </Label>
+            <Input
+              id="fast_bunny_total_limit"
+              type="number"
+              min="0"
+              value={fastBunnyTotalLimit}
+              onChange={(e) => setFastBunnyTotalLimit(e.target.value)}
+              placeholder={t("unlimited")}
+              className="text-lg"
+            />
+            {remainingUniversal.fastBunny !== null && (
+              <span className="text-xs font-medium text-primary block">
+                {remainingUniversal.fastBunny} {t("remaining")}
+              </span>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {t("fastBunnyTotalLimitDesc")}
+            </p>
+          </div>
           {/* Normal Bird Universal Limit */}
           <div className="space-y-2 p-4 bg-background rounded-lg border">
             <Label htmlFor="normal_total_limit" className="text-base font-semibold">
@@ -4145,6 +4323,11 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
               placeholder={t("unlimited")}
               className="text-lg"
             />
+            {remainingUniversal.normal !== null && (
+              <span className="text-xs font-medium text-primary block">
+                {remainingUniversal.normal} {t("remaining")}
+              </span>
+            )}
             <p className="text-xs text-muted-foreground">
               {t("normalTotalLimitDesc")}
             </p>
@@ -4152,6 +4335,8 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         </div>
       </div>
 
+      {/* Early Bird & Fast Bunny Settings - side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Early Bird Settings */}
       <div className="space-y-4 p-4 border rounded-lg">
         <h3 className="text-lg font-semibold">{t("earlyBirdTicketSettings")}</h3>
@@ -4188,6 +4373,43 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         )}
       </div>
 
+      {/* Fast Bunny Settings */}
+      <div className="space-y-4 p-4 border rounded-lg">
+        <h3 className="text-lg font-semibold">{t("fastBunnyTicketSettings")}</h3>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label htmlFor="fast_bunny_enabled">{t("enableFastBunnyTickets")}</Label>
+            <p className="text-sm text-muted-foreground">
+              {t("enableFastBunnyTicketsDesc")}
+            </p>
+          </div>
+          <Switch
+            id="fast_bunny_enabled"
+            checked={fastBunnyEnabled}
+            onCheckedChange={setFastBunnyEnabled}
+          />
+        </div>
+
+        {fastBunnyEnabled && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fast_bunny_cutoff">{t("fastBunnyCutoffDate")}</Label>
+              <Input
+                id="fast_bunny_cutoff"
+                type="datetime-local"
+                value={fastBunnyCutoff}
+                onChange={(e) => setFastBunnyCutoff(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("fastBunnyCutoffDesc")}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+      </div>
+
       {/* Ticket Limits */}
       <div className="space-y-4 p-4 border rounded-lg">
         <div className="flex items-center justify-between mb-2">
@@ -4210,8 +4432,20 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                 return (
                   <div key={role.key} className="space-y-3 p-3 rounded-lg border">
                     <div className="font-medium">{role.label} {t("limit")}</div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
+                    <div className="space-y-1.5 mb-3">
+                      <Label htmlFor={`${role.key}_limit_total`}>{t("totalAvailable")}</Label>
+                      <Input
+                        id={`${role.key}_limit_total`}
+                        type="number"
+                        min="0"
+                        value={getTotalForRole(role.key)}
+                        onChange={(e) => handleTotalChange(role.key, e.target.value)}
+                        placeholder={t("unlimited")}
+                      />
+                      <p className="text-xs text-muted-foreground">{t("totalAvailableDesc")}</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-1.5 min-h-[4.5rem]">
                         <Label htmlFor={`${role.key}_limit_early`}>{t("earlyBird")}</Label>
                         {remaining !== undefined && remaining.early !== null && (
                           <span className="text-xs font-medium text-primary block">
@@ -4229,7 +4463,25 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                           placeholder={t("unlimited")}
                         />
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 min-h-[4.5rem]">
+                        <Label htmlFor={`${role.key}_limit_fast_bunny`}>{t("fastBunny")}</Label>
+                        {remaining !== undefined && remaining.fastBunny !== null && (
+                          <span className="text-xs font-medium text-primary block">
+                            {remaining.fastBunny} {t("remaining") ?? "remaining"}
+                          </span>
+                        )}
+                        <Input
+                          id={`${role.key}_limit_fast_bunny`}
+                          type="number"
+                          min="0"
+                          value={limitValuesFastBunny[role.key]}
+                          onChange={(e) =>
+                            setLimitValuesFastBunny((prev) => ({ ...prev, [role.key]: e.target.value }))
+                          }
+                          placeholder={t("unlimited")}
+                        />
+                      </div>
+                      <div className="space-y-1.5 min-h-[4.5rem]">
                         <Label htmlFor={`${role.key}_limit_normal`}>{t("normal")}</Label>
                         {remaining !== undefined && remaining.normal !== null && (
                           <span className="text-xs font-medium text-primary block">
@@ -4262,8 +4514,20 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                 return (
                   <div key={role.key} className="space-y-3 p-3 rounded-lg border">
                     <div className="font-medium">{role.label} {t("limit")}</div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
+                    <div className="space-y-1.5 mb-3">
+                      <Label htmlFor={`${role.key}_limit_total_reduced`}>{t("totalAvailable")}</Label>
+                      <Input
+                        id={`${role.key}_limit_total_reduced`}
+                        type="number"
+                        min="0"
+                        value={getTotalForRole(role.key)}
+                        onChange={(e) => handleTotalChange(role.key, e.target.value)}
+                        placeholder={t("unlimited")}
+                      />
+                      <p className="text-xs text-muted-foreground">{t("totalAvailableDesc")}</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-1.5 min-h-[4.5rem]">
                         <Label htmlFor={`${role.key}_limit_early_reduced`}>{t("earlyBird")}</Label>
                         {remaining !== undefined && remaining.early !== null && (
                           <span className="text-xs font-medium text-primary block">
@@ -4281,7 +4545,25 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                           placeholder={t("unlimited")}
                         />
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 min-h-[4.5rem]">
+                        <Label htmlFor={`${role.key}_limit_fast_bunny_reduced`}>{t("fastBunny")}</Label>
+                        {remaining !== undefined && remaining.fastBunny !== null && (
+                          <span className="text-xs font-medium text-primary block">
+                            {remaining.fastBunny} {t("remaining") ?? "remaining"}
+                          </span>
+                        )}
+                        <Input
+                          id={`${role.key}_limit_fast_bunny_reduced`}
+                          type="number"
+                          min="0"
+                          value={limitValuesFastBunny[role.key]}
+                          onChange={(e) =>
+                            setLimitValuesFastBunny((prev) => ({ ...prev, [role.key]: e.target.value }))
+                          }
+                          placeholder={t("unlimited")}
+                        />
+                      </div>
+                      <div className="space-y-1.5 min-h-[4.5rem]">
                         <Label htmlFor={`${role.key}_limit_normal_reduced`}>{t("normal")}</Label>
                         {remaining !== undefined && remaining.normal !== null && (
                           <span className="text-xs font-medium text-primary block">
@@ -4322,7 +4604,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
               {standardRoles.map((role) => (
                 <div key={role.key} className="space-y-3 p-3 rounded-lg border">
                   <div className="font-medium">{role.label}</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="space-y-2">
                       <Label htmlFor={`${role.key}_price_early`}>{t("earlyBirdPrice")}</Label>
                       <Input
@@ -4335,6 +4617,20 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                           setPriceValues((prev) => ({ ...prev, [`${role.key}_early`]: e.target.value }))
                         }
                         placeholder="100.00"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`${role.key}_price_fast_bunny`}>{t("fastBunnyPrice")}</Label>
+                      <Input
+                        id={`${role.key}_price_fast_bunny`}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={priceValues[`${role.key}_fast_bunny`]}
+                        onChange={(e) =>
+                          setPriceValues((prev) => ({ ...prev, [`${role.key}_fast_bunny`]: e.target.value }))
+                        }
+                        placeholder="110.00"
                       />
                     </div>
                     <div className="space-y-2">
@@ -4363,11 +4659,11 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
               {reducedRoles.map((role) => (
                 <div key={role.key} className="space-y-3 p-3 rounded-lg border">
                   <div className="font-medium">{role.label}</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor={`${role.key}_price_early`}>{t("earlyBirdPrice")}</Label>
+                      <Label htmlFor={`${role.key}_price_early_reduced`}>{t("earlyBirdPrice")}</Label>
                       <Input
-                        id={`${role.key}_price_early`}
+                        id={`${role.key}_price_early_reduced`}
                         type="number"
                         step="0.01"
                         min="0"
@@ -4379,9 +4675,23 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor={`${role.key}_price_normal`}>{t("normalPrice")}</Label>
+                      <Label htmlFor={`${role.key}_price_fast_bunny_reduced`}>{t("fastBunnyPrice")}</Label>
                       <Input
-                        id={`${role.key}_price_normal`}
+                        id={`${role.key}_price_fast_bunny_reduced`}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={priceValues[`${role.key}_fast_bunny`]}
+                        onChange={(e) =>
+                          setPriceValues((prev) => ({ ...prev, [`${role.key}_fast_bunny`]: e.target.value }))
+                        }
+                        placeholder="110.00"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`${role.key}_price_normal_reduced`}>{t("normalPrice")}</Label>
+                      <Input
+                        id={`${role.key}_price_normal_reduced`}
                         type="number"
                         step="0.01"
                         min="0"

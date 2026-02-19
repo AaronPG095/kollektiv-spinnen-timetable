@@ -16,7 +16,8 @@ import {
   createTicketPurchase, 
   getRemainingTickets,
   getRemainingEarlyBirdTickets,
-  getRemainingNormalTickets 
+  getRemainingNormalTickets,
+  getRemainingFastBunnyTickets 
 } from "@/lib/ticketPurchases";
 import { validateAndSanitizeName, validateAndSanitizeEmail, validateAndSanitizePhone, sanitizeString, validatePayPalUrl } from "@/lib/validation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -25,18 +26,20 @@ import { Checkbox } from "@/components/ui/checkbox";
 // Role configuration mapping
 const ROLE_CONFIG: Record<string, {
   priceEarly: keyof TicketSettings;
+  priceFastBunny: keyof TicketSettings;
   priceNormal: keyof TicketSettings;
   limitEarly: keyof TicketSettings;
+  limitFastBunny: keyof TicketSettings;
   limitNormal: keyof TicketSettings;
 }> = {
-  bar: { priceEarly: "bar_price_early", priceNormal: "bar_price_normal", limitEarly: "bar_limit_early", limitNormal: "bar_limit_normal" },
-  kuechenhilfe: { priceEarly: "kuechenhilfe_price_early", priceNormal: "kuechenhilfe_price_normal", limitEarly: "kuechenhilfe_limit_early", limitNormal: "kuechenhilfe_limit_normal" },
-  springerRunner: { priceEarly: "springer_runner_price_early", priceNormal: "springer_runner_price_normal", limitEarly: "springer_runner_limit_early", limitNormal: "springer_runner_limit_normal" },
-  springerToilet: { priceEarly: "springer_toilet_price_early", priceNormal: "springer_toilet_price_normal", limitEarly: "springer_toilet_limit_early", limitNormal: "springer_toilet_limit_normal" },
-  abbau: { priceEarly: "abbau_price_early", priceNormal: "abbau_price_normal", limitEarly: "abbau_limit_early", limitNormal: "abbau_limit_normal" },
-  aufbau: { priceEarly: "aufbau_price_early", priceNormal: "aufbau_price_normal", limitEarly: "aufbau_limit_early", limitNormal: "aufbau_limit_normal" },
-  awareness: { priceEarly: "awareness_price_early", priceNormal: "awareness_price_normal", limitEarly: "awareness_limit_early", limitNormal: "awareness_limit_normal" },
-  tech: { priceEarly: "tech_price_early", priceNormal: "tech_price_normal", limitEarly: "tech_limit_early", limitNormal: "tech_limit_normal" },
+  bar: { priceEarly: "bar_price_early", priceFastBunny: "bar_price_fast_bunny", priceNormal: "bar_price_normal", limitEarly: "bar_limit_early", limitFastBunny: "bar_limit_fast_bunny", limitNormal: "bar_limit_normal" },
+  kuechenhilfe: { priceEarly: "kuechenhilfe_price_early", priceFastBunny: "kuechenhilfe_price_fast_bunny", priceNormal: "kuechenhilfe_price_normal", limitEarly: "kuechenhilfe_limit_early", limitFastBunny: "kuechenhilfe_limit_fast_bunny", limitNormal: "kuechenhilfe_limit_normal" },
+  springerRunner: { priceEarly: "springer_runner_price_early", priceFastBunny: "springer_runner_price_fast_bunny", priceNormal: "springer_runner_price_normal", limitEarly: "springer_runner_limit_early", limitFastBunny: "springer_runner_limit_fast_bunny", limitNormal: "springer_runner_limit_normal" },
+  springerToilet: { priceEarly: "springer_toilet_price_early", priceFastBunny: "springer_toilet_price_fast_bunny", priceNormal: "springer_toilet_price_normal", limitEarly: "springer_toilet_limit_early", limitFastBunny: "springer_toilet_limit_fast_bunny", limitNormal: "springer_toilet_limit_normal" },
+  abbau: { priceEarly: "abbau_price_early", priceFastBunny: "abbau_price_fast_bunny", priceNormal: "abbau_price_normal", limitEarly: "abbau_limit_early", limitFastBunny: "abbau_limit_fast_bunny", limitNormal: "abbau_limit_normal" },
+  aufbau: { priceEarly: "aufbau_price_early", priceFastBunny: "aufbau_price_fast_bunny", priceNormal: "aufbau_price_normal", limitEarly: "aufbau_limit_early", limitFastBunny: "aufbau_limit_fast_bunny", limitNormal: "aufbau_limit_normal" },
+  awareness: { priceEarly: "awareness_price_early", priceFastBunny: "awareness_price_fast_bunny", priceNormal: "awareness_price_normal", limitEarly: "awareness_limit_early", limitFastBunny: "awareness_limit_fast_bunny", limitNormal: "awareness_limit_normal" },
+  tech: { priceEarly: "tech_price_early", priceFastBunny: "tech_price_fast_bunny", priceNormal: "tech_price_normal", limitEarly: "tech_limit_early", limitFastBunny: "tech_limit_fast_bunny", limitNormal: "tech_limit_normal" },
 };
 
 interface FormErrors {
@@ -111,9 +114,21 @@ const TicketCheckout = () => {
     ? paypalUrlValidation.sanitized 
     : null;
   
+  const VALID_TYPES = ["earlyBird", "reducedEarlyBird", "fastBunny", "reducedFastBunny", "normal", "reducedNormal"] as const;
+
   useEffect(() => {
     const loadData = async () => {
       if (!type || !role) {
+        toast({
+          title: t("error"),
+          description: t("missingTicketInformation"),
+          variant: "destructive",
+        });
+        navigate("/soli-beitrag");
+        return;
+      }
+
+      if (!VALID_TYPES.includes(type as typeof VALID_TYPES[number])) {
         toast({
           title: t("error"),
           description: t("missingTicketInformation"),
@@ -159,6 +174,24 @@ const TicketCheckout = () => {
             }
           }
           
+          // Check fast bunny ticket total limit (or shared pool with Early Bird) if this is a fast bunny ticket
+          const isFastBunny = type === "fastBunny" || type === "reducedFastBunny";
+          if (isFastBunny && (settings.fast_bunny_total_limit != null || settings.early_bird_total_limit != null)) {
+            const remainingFastBunny = await getRemainingFastBunnyTickets(
+              settings.fast_bunny_total_limit ?? null,
+              settings.early_bird_total_limit ?? null
+            );
+            if (remainingFastBunny !== null && remainingFastBunny <= 0) {
+              toast({
+                title: t("soldOut"),
+                description: t("soldOutDesc"),
+                variant: "destructive",
+              });
+              navigate("/soli-beitrag");
+              return;
+            }
+          }
+
           // Check normal-bird ticket total limit if this is a normal-bird ticket
           const isNormal = type === "normal" || type === "reducedNormal";
           if (isNormal && settings.normal_total_limit !== null && settings.normal_total_limit !== undefined) {
@@ -173,11 +206,12 @@ const TicketCheckout = () => {
               return;
             }
           }
-          
+
           const limitEarly = settings[roleConfig.limitEarly] as number | null | undefined;
           const limitNormal = settings[roleConfig.limitNormal] as number | null | undefined;
-          const isAvailable = await checkRoleAvailability(role, limitEarly, limitNormal, type as "earlyBird" | "normal" | "reducedEarlyBird" | "reducedNormal");
-          
+          const limitFastBunny = settings[roleConfig.limitFastBunny] as number | null | undefined;
+          const isAvailable = await checkRoleAvailability(role, limitEarly, limitNormal, type as "earlyBird" | "normal" | "reducedEarlyBird" | "reducedNormal" | "fastBunny" | "reducedFastBunny", limitFastBunny);
+
           if (!isAvailable) {
             toast({
               title: t("soldOut"),
@@ -187,10 +221,10 @@ const TicketCheckout = () => {
             navigate("/soli-beitrag");
             return;
           }
-          
-          const { early, normal } = await getRemainingTickets(role, limitEarly, limitNormal);
+
+          const { early, fastBunny, normal } = await getRemainingTickets(role, limitEarly, limitNormal, limitFastBunny);
           const isEarly = type === "earlyBird" || type === "reducedEarlyBird";
-          setRemainingTickets(isEarly ? early : normal);
+          setRemainingTickets(isEarly ? early : isFastBunny ? fastBunny : normal);
         }
       } catch (error: any) {
         console.error('[TicketCheckout] Error loading ticket settings:', error);
@@ -210,15 +244,16 @@ const TicketCheckout = () => {
   
   const getPrice = (): number => {
     if (!ticketSettings || !role) return 0;
-    
+
     const roleConfig = ROLE_CONFIG[role];
     if (!roleConfig) return 0;
-    
+
     const isEarlyBird = type === "earlyBird" || type === "reducedEarlyBird";
-    const priceField = isEarlyBird ? roleConfig.priceEarly : roleConfig.priceNormal;
+    const isFastBunny = type === "fastBunny" || type === "reducedFastBunny";
+    const priceField = isEarlyBird ? roleConfig.priceEarly : isFastBunny ? roleConfig.priceFastBunny : roleConfig.priceNormal;
     const price = ticketSettings[priceField] as number | null | undefined;
-    
-    return price ?? (isEarlyBird ? 100 : 120);
+
+    return price ?? (isEarlyBird ? 100 : isFastBunny ? 110 : 120);
   };
 
   const generateReferenceCode = (firstName: string, lastName: string, role: string, ticketType: string): string => {
@@ -228,8 +263,10 @@ const TicketCheckout = () => {
     const year = today.getFullYear();
     const dateStr = `${day}${month}${year}`;
     
-    // Map ticket type to EB or NM
-    const ticketTypeCode = (ticketType === 'earlyBird' || ticketType === 'reducedEarlyBird') ? 'EB' : 'NM';
+    // Map ticket type to EB, SH or NM
+    const ticketTypeCode =
+      (ticketType === 'earlyBird' || ticketType === 'reducedEarlyBird') ? 'EB' :
+      (ticketType === 'fastBunny' || ticketType === 'reducedFastBunny') ? 'SH' : 'NM';
     
     // Get German translation of role and format for reference code
     const roleGerman = t(role); // e.g., "Bar", "Küchenhilfe", "Springer-Runner"
@@ -468,7 +505,7 @@ const TicketCheckout = () => {
 
       const price = getPrice();
       const result = await createTicketPurchase({
-        contribution_type: type as 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal',
+        contribution_type: type as 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal' | 'fastBunny' | 'reducedFastBunny',
         role,
         price,
         purchaser_name: `${firstNameValidation.sanitized} ${lastNameValidation.sanitized}`.trim(),
@@ -576,8 +613,10 @@ const TicketCheckout = () => {
                         <span className="text-muted-foreground font-medium">{t("ticketType")}:</span>
                         <span className="text-right font-medium">
                           {completedPurchaseData.type === "earlyBird" ? t("earlyBird") :
+                           completedPurchaseData.type === "fastBunny" ? t("fastBunny") :
                            completedPurchaseData.type === "normal" ? t("normal") :
                            completedPurchaseData.type === "reducedEarlyBird" ? `${t("reducedTickets")} - ${t("earlyBird")}` :
+                           completedPurchaseData.type === "reducedFastBunny" ? `${t("reducedTickets")} - ${t("fastBunny")}` :
                            `${t("reducedTickets")} - ${t("normal")}`}
                         </span>
                       </div>
@@ -656,8 +695,10 @@ const TicketCheckout = () => {
                       <span className="text-muted-foreground">{t("ticketType")}:</span>
                       <span className="font-medium">
                         {type === "earlyBird" ? t("earlyBird") :
+                         type === "fastBunny" ? t("fastBunny") :
                          type === "normal" ? t("normal") :
                          type === "reducedEarlyBird" ? `${t("reducedTickets")} - ${t("earlyBird")}` :
+                         type === "reducedFastBunny" ? `${t("reducedTickets")} - ${t("fastBunny")}` :
                          `${t("reducedTickets")} - ${t("normal")}`}
                       </span>
                     </div>
