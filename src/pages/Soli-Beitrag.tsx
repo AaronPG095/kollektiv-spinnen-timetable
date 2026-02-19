@@ -15,20 +15,23 @@ import {
 import { Footer } from "@/components/Footer";
 import { X } from "lucide-react";
 import { getTicketSettings, type TicketSettings } from "@/lib/ticketSettings";
-import { checkRoleAvailability, getRemainingTickets, getRemainingEarlyBirdTickets, getRemainingNormalTickets } from "@/lib/ticketPurchases";
+import { checkRoleAvailability, getRemainingTickets, getRemainingEarlyBirdTickets, getRemainingNormalTickets, getRemainingFastBunnyTickets } from "@/lib/ticketPurchases";
 
 const Tickets = () => {
   const { t } = useLanguage();
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [earlyBirdRole, setEarlyBirdRole] = useState<string>("");
+  const [fastBunnyRole, setFastBunnyRole] = useState<string>("");
   const [normalRole, setNormalRole] = useState<string>("");
   const [earlyBirdReducedRole, setEarlyBirdReducedRole] = useState<string>("");
+  const [fastBunnyReducedRole, setFastBunnyReducedRole] = useState<string>("");
   const [normalReducedRole, setNormalReducedRole] = useState<string>("");
   const [ticketSettings, setTicketSettings] = useState<TicketSettings | null>(null);
   const [roleAvailability, setRoleAvailability] = useState<Record<string, boolean>>({});
-  const [remainingTickets, setRemainingTickets] = useState<Record<string, { early: number | null; normal: number | null }>>({});
+  const [remainingTickets, setRemainingTickets] = useState<Record<string, { early: number | null; fastBunny: number | null; normal: number | null }>>({});
   const [remainingEarlyBirdTickets, setRemainingEarlyBirdTickets] = useState<number | null>(null);
+  const [remainingFastBunnyTickets, setRemainingFastBunnyTickets] = useState<number | null>(null);
   const [remainingNormalTickets, setRemainingNormalTickets] = useState<number | null>(null);
 
   const limitFieldEarlyByRole: Record<string, keyof TicketSettings> = {
@@ -51,16 +54,26 @@ const Tickets = () => {
     awareness: "awareness_limit_normal",
     tech: "tech_limit_normal",
   };
+  const limitFieldFastBunnyByRole: Record<string, keyof TicketSettings> = {
+    bar: "bar_limit_fast_bunny",
+    kuechenhilfe: "kuechenhilfe_limit_fast_bunny",
+    springerRunner: "springer_runner_limit_fast_bunny",
+    springerToilet: "springer_toilet_limit_fast_bunny",
+    abbau: "abbau_limit_fast_bunny",
+    aufbau: "aufbau_limit_fast_bunny",
+    awareness: "awareness_limit_fast_bunny",
+    tech: "tech_limit_fast_bunny",
+  };
 
-  const priceFieldByRole: Record<string, { early: keyof TicketSettings; normal: keyof TicketSettings }> = {
-    bar: { early: "bar_price_early", normal: "bar_price_normal" },
-    kuechenhilfe: { early: "kuechenhilfe_price_early", normal: "kuechenhilfe_price_normal" },
-    springerRunner: { early: "springer_runner_price_early", normal: "springer_runner_price_normal" },
-    springerToilet: { early: "springer_toilet_price_early", normal: "springer_toilet_price_normal" },
-    abbau: { early: "abbau_price_early", normal: "abbau_price_normal" },
-    aufbau: { early: "aufbau_price_early", normal: "aufbau_price_normal" },
-    awareness: { early: "awareness_price_early", normal: "awareness_price_normal" },
-    tech: { early: "tech_price_early", normal: "tech_price_normal" },
+  const priceFieldByRole: Record<string, { early: keyof TicketSettings; fastBunny: keyof TicketSettings; normal: keyof TicketSettings }> = {
+    bar: { early: "bar_price_early", fastBunny: "bar_price_fast_bunny", normal: "bar_price_normal" },
+    kuechenhilfe: { early: "kuechenhilfe_price_early", fastBunny: "kuechenhilfe_price_fast_bunny", normal: "kuechenhilfe_price_normal" },
+    springerRunner: { early: "springer_runner_price_early", fastBunny: "springer_runner_price_fast_bunny", normal: "springer_runner_price_normal" },
+    springerToilet: { early: "springer_toilet_price_early", fastBunny: "springer_toilet_price_fast_bunny", normal: "springer_toilet_price_normal" },
+    abbau: { early: "abbau_price_early", fastBunny: "abbau_price_fast_bunny", normal: "abbau_price_normal" },
+    aufbau: { early: "aufbau_price_early", fastBunny: "aufbau_price_fast_bunny", normal: "aufbau_price_normal" },
+    awareness: { early: "awareness_price_early", fastBunny: "awareness_price_fast_bunny", normal: "awareness_price_normal" },
+    tech: { early: "tech_price_early", fastBunny: "tech_price_fast_bunny", normal: "tech_price_normal" },
   };
 
   useEffect(() => {
@@ -71,7 +84,7 @@ const Tickets = () => {
         
         if (settings) {
           const availability: Record<string, boolean> = {};
-          const remaining: Record<string, { early: number | null; normal: number | null }> = {};
+          const remaining: Record<string, { early: number | null; fastBunny: number | null; normal: number | null }> = {};
           const allRoles = [
             'bar', 'kuechenhilfe', 'springerRunner', 'springerToilet',
             'abbau', 'aufbau', 'awareness', 'tech'
@@ -81,16 +94,17 @@ const Tickets = () => {
             allRoles.map(async (role) => {
               const limitEarly = settings[limitFieldEarlyByRole[role]] as number | null | undefined;
               const limitNormal = settings[limitFieldNormalByRole[role]] as number | null | undefined;
-              const byType = await getRemainingTickets(role, limitEarly, limitNormal);
+              const limitFastBunny = settings[limitFieldFastBunnyByRole[role]] as number | null | undefined;
+              const byType = await getRemainingTickets(role, limitEarly, limitNormal, limitFastBunny);
               remaining[role] = byType;
-              availability[role] = (byType.early ?? 0) > 0 || (byType.normal ?? 0) > 0;
+              availability[role] = (byType.early ?? 0) > 0 || (byType.fastBunny ?? 0) > 0 || (byType.normal ?? 0) > 0;
             })
           );
 
           setRoleAvailability(availability);
           setRemainingTickets(remaining);
         }
-        
+
         // Load remaining early-bird tickets (separate from role availability)
         if (settings?.early_bird_total_limit !== null && settings?.early_bird_total_limit !== undefined) {
           const earlyBirdRemaining = await getRemainingEarlyBirdTickets(settings.early_bird_total_limit);
@@ -98,7 +112,18 @@ const Tickets = () => {
         } else {
           setRemainingEarlyBirdTickets(null);
         }
-        
+
+        // Load remaining fast-bunny tickets (uses shared pool with Early Bird when fast_bunny_total_limit is null)
+        if (settings?.fast_bunny_total_limit != null || settings?.early_bird_total_limit != null) {
+          const fastBunnyRemaining = await getRemainingFastBunnyTickets(
+            settings.fast_bunny_total_limit ?? null,
+            settings.early_bird_total_limit ?? null
+          );
+          setRemainingFastBunnyTickets(fastBunnyRemaining);
+        } else {
+          setRemainingFastBunnyTickets(null);
+        }
+
         // Load remaining normal-bird tickets (separate from role availability)
         if (settings?.normal_total_limit !== null && settings?.normal_total_limit !== undefined) {
           const normalRemaining = await getRemainingNormalTickets(settings.normal_total_limit);
@@ -187,6 +212,26 @@ const Tickets = () => {
     return true;
   };
 
+  // Check if fast bunny tickets are available (includes shared pool with Early Bird when fast_bunny_total_limit is null)
+  const isFastBunnyAvailable = (): boolean => {
+    if (!ticketSettings?.fast_bunny_enabled) return false;
+
+    if (ticketSettings.fast_bunny_cutoff) {
+      if (new Date(ticketSettings.fast_bunny_cutoff) <= new Date()) {
+        return false;
+      }
+    }
+
+    if (ticketSettings.fast_bunny_total_limit != null || ticketSettings.early_bird_total_limit != null) {
+      if (remainingFastBunnyTickets !== null) {
+        return remainingFastBunnyTickets > 0;
+      }
+      return true;
+    }
+
+    return true;
+  };
+
   // Check if normal-bird tickets are available
   const isNormalAvailable = (): boolean => {
     // Check total limit
@@ -203,17 +248,16 @@ const Tickets = () => {
   };
 
   // Get price for a role and ticket type
-  const getPrice = (role: string, isEarlyBird: boolean): string => {
+  const getPrice = (role: string, type: 'early' | 'fastBunny' | 'normal'): string => {
     const fields = priceFieldByRole[role];
     if (ticketSettings && fields) {
-      const price = ticketSettings[isEarlyBird ? fields.early : fields.normal] as number | null | undefined;
+      const priceField = type === 'early' ? fields.early : type === 'fastBunny' ? fields.fastBunny : fields.normal;
+      const price = ticketSettings[priceField] as number | null | undefined;
       if (price !== null && price !== undefined) {
         return `${price.toFixed(2)}€`;
       }
     }
-
-    // Fallback to defaults if not configured
-    return isEarlyBird ? "100€" : "120€";
+    return type === 'early' ? "100€" : type === 'fastBunny' ? "110€" : "120€";
   };
 
   // Check if a role is available (using real inventory tracking)
@@ -228,8 +272,8 @@ const Tickets = () => {
     return roleAvailability[role];
   };
   
-  // Get remaining tickets for a role (early and normal)
-  const getRemainingForRole = (role: string): { early: number | null; normal: number | null } | null => {
+  // Get remaining tickets for a role (early, fast bunny, normal)
+  const getRemainingForRole = (role: string): { early: number | null; fastBunny: number | null; normal: number | null } | null => {
     return remainingTickets[role] ?? null;
   };
 
@@ -243,7 +287,7 @@ const Tickets = () => {
 
   // Check if any dropdown has a selection
   const hasAnySelection = () => {
-    return !!(earlyBirdRole || normalRole || earlyBirdReducedRole || normalReducedRole);
+    return !!(earlyBirdRole || fastBunnyRole || normalRole || earlyBirdReducedRole || fastBunnyReducedRole || normalReducedRole);
   };
 
   // Check if a specific dropdown should be disabled
@@ -271,27 +315,51 @@ const Tickets = () => {
 
   // Functions to clear all other dropdowns
   const clearAllExceptEarlyBird = () => {
+    setFastBunnyRole("");
     setNormalRole("");
     setEarlyBirdReducedRole("");
+    setFastBunnyReducedRole("");
+    setNormalReducedRole("");
+  };
+
+  const clearAllExceptFastBunny = () => {
+    setEarlyBirdRole("");
+    setNormalRole("");
+    setEarlyBirdReducedRole("");
+    setFastBunnyReducedRole("");
     setNormalReducedRole("");
   };
 
   const clearAllExceptNormal = () => {
     setEarlyBirdRole("");
+    setFastBunnyRole("");
     setEarlyBirdReducedRole("");
+    setFastBunnyReducedRole("");
     setNormalReducedRole("");
   };
 
   const clearAllExceptEarlyBirdReduced = () => {
     setEarlyBirdRole("");
+    setFastBunnyRole("");
     setNormalRole("");
+    setFastBunnyReducedRole("");
+    setNormalReducedRole("");
+  };
+
+  const clearAllExceptFastBunnyReduced = () => {
+    setEarlyBirdRole("");
+    setFastBunnyRole("");
+    setNormalRole("");
+    setEarlyBirdReducedRole("");
     setNormalReducedRole("");
   };
 
   const clearAllExceptNormalReduced = () => {
     setEarlyBirdRole("");
+    setFastBunnyRole("");
     setNormalRole("");
     setEarlyBirdReducedRole("");
+    setFastBunnyReducedRole("");
   };
 
   return (
@@ -340,9 +408,12 @@ const Tickets = () => {
                 </p>
                 <div className="mt-3 text-sm text-muted-foreground space-y-1">
                   {isEarlyBirdAvailable() && (
-                    <p>{getPrice("bar", true)} - {t("forTheEarlyBirdVariant")}</p>
+                    <p>{getPrice("bar", "early")} - {t("forTheEarlyBirdVariant")}</p>
                   )}
-                  <p>{getPrice("bar", false)} - {t("forTheNormalVariant")}</p>
+                  {isFastBunnyAvailable() && (
+                    <p>{getPrice("bar", "fastBunny")} - {t("forTheFastBunnyVariant")}</p>
+                  )}
+                  <p>{getPrice("bar", "normal")} - {t("forTheNormalVariant")}</p>
                 </div>
               </div>
 
@@ -443,7 +514,7 @@ const Tickets = () => {
                     </div>
                     {earlyBirdRole && (
                       <span className="text-sm font-medium text-muted-foreground">
-                        {getPrice(earlyBirdRole, true)}
+                        {getPrice(earlyBirdRole, "early")}
                       </span>
                     )}
                   </div>
@@ -475,8 +546,9 @@ const Tickets = () => {
                                   }
                                   if (isAdmin && remaining !== null) {
                                     const e = remaining.early ?? '∞';
+                                    const f = remaining.fastBunny ?? '∞';
                                     const n = remaining.normal ?? '∞';
-                                    return ` (${e} ${t("earlyBird")} / ${n} ${t("normal")} ${t("remaining")})`;
+                                    return ` (${e} ${t("earlyBird")} / ${f} ${t("fastBunny")} / ${n} ${t("normal")} ${t("remaining")})`;
                                   }
                                   return '';
                                 })()}
@@ -517,6 +589,97 @@ const Tickets = () => {
                 </div>
               )}
 
+              {/* Fast Bunny */}
+              {isFastBunnyAvailable() && (
+                <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {t("fastBunny")}
+                      </h3>
+                      {isAdmin && remainingFastBunnyTickets !== null && (
+                        <span className="text-sm text-muted-foreground">
+                          ({remainingFastBunnyTickets} {t("remaining")})
+                        </span>
+                      )}
+                    </div>
+                    {fastBunnyRole && (
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {getPrice(fastBunnyRole, "fastBunny")}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1 relative">
+                      <Select
+                        key={`fastBunny-${fastBunnyRole || 'empty'}`}
+                        {...(fastBunnyRole ? { value: fastBunnyRole } : {})}
+                        onValueChange={(value) => handleRoleChange(setFastBunnyRole, value, clearAllExceptFastBunny)}
+                        disabled={isDisabled(fastBunnyRole)}
+                      >
+                        <SelectTrigger className="flex-1 pr-8" disabled={isDisabled(fastBunnyRole)}>
+                          <SelectValue placeholder={t("selectRole") || "Select a role..."} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {standardRoles.map((role) => {
+                            const isAvailable = isRoleAvailable(role.value);
+                            const remaining = getRemainingForRole(role.value);
+                            return (
+                              <SelectItem
+                                key={role.value}
+                                value={role.value}
+                                disabled={!isAvailable}
+                                className={!isAvailable ? "text-muted-foreground opacity-50" : ""}
+                              >
+                                {role.label} {(() => {
+                                  if (!isAvailable) {
+                                    return `(${t("soldOut")})`;
+                                  }
+                                  if (isAdmin && remaining !== null) {
+                                    const e = remaining.early ?? '∞';
+                                    const f = remaining.fastBunny ?? '∞';
+                                    const n = remaining.normal ?? '∞';
+                                    return ` (${e} ${t("earlyBird")} / ${f} ${t("fastBunny")} / ${n} ${t("normal")} ${t("remaining")})`;
+                                  }
+                                  return '';
+                                })()}
+                              </SelectItem>
+                            );
+                          })}
+                          {fastBunnyRole && (
+                            <SelectItem value="__clear__" className="text-muted-foreground">
+                              {t("clearSelection")}
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      {fastBunnyRole && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleClearSelection(setFastBunnyRole);
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-festival-light/20 rounded-full z-10"
+                          title={t("clearSelection")}
+                        >
+                          <X className="h-5 w-5 text-festival-light hover:text-festival-medium" />
+                        </Button>
+                      )}
+                    </div>
+                    <Button
+                      onClick={() => handleChooseTicket("fastBunny", fastBunnyRole)}
+                      disabled={!fastBunnyRole || !isRoleAvailable(fastBunnyRole)}
+                      className="w-full sm:w-auto"
+                    >
+                      {t("chooseThisTicket")}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Normal */}
               {isNormalAvailable() && (
                 <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
@@ -533,7 +696,7 @@ const Tickets = () => {
                     </div>
                     {normalRole && (
                       <span className="text-sm font-medium text-muted-foreground">
-                        {getPrice(normalRole, false)}
+                        {getPrice(normalRole, "normal")}
                       </span>
                     )}
                   </div>
@@ -565,8 +728,9 @@ const Tickets = () => {
                                   }
                                   if (isAdmin && remaining !== null) {
                                     const e = remaining.early ?? '∞';
+                                    const f = remaining.fastBunny ?? '∞';
                                     const n = remaining.normal ?? '∞';
-                                    return ` (${e} ${t("earlyBird")} / ${n} ${t("normal")} ${t("remaining")})`;
+                                    return ` (${e} ${t("earlyBird")} / ${f} ${t("fastBunny")} / ${n} ${t("normal")} ${t("remaining")})`;
                                   }
                                   return '';
                                 })()}
@@ -668,7 +832,7 @@ const Tickets = () => {
                     </div>
                     {earlyBirdReducedRole && (
                       <span className="text-sm font-medium text-muted-foreground">
-                        {getPrice(earlyBirdReducedRole, true)}
+                        {getPrice(earlyBirdReducedRole, "early")}
                       </span>
                     )}
                   </div>
@@ -700,8 +864,9 @@ const Tickets = () => {
                                   }
                                   if (isAdmin && remaining !== null) {
                                     const e = remaining.early ?? '∞';
+                                    const f = remaining.fastBunny ?? '∞';
                                     const n = remaining.normal ?? '∞';
-                                    return ` (${e} ${t("earlyBird")} / ${n} ${t("normal")} ${t("remaining")})`;
+                                    return ` (${e} ${t("earlyBird")} / ${f} ${t("fastBunny")} / ${n} ${t("normal")} ${t("remaining")})`;
                                   }
                                   return '';
                                 })()}
@@ -742,6 +907,97 @@ const Tickets = () => {
                 </div>
               )}
 
+              {/* Fast Bunny (Reduced) */}
+              {isFastBunnyAvailable() && (
+                <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {t("fastBunny")}
+                      </h3>
+                      {isAdmin && remainingFastBunnyTickets !== null && (
+                        <span className="text-sm text-muted-foreground">
+                          ({remainingFastBunnyTickets} {t("remaining")})
+                        </span>
+                      )}
+                    </div>
+                    {fastBunnyReducedRole && (
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {getPrice(fastBunnyReducedRole, "fastBunny")}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1 relative">
+                      <Select
+                        key={`fastBunnyReduced-${fastBunnyReducedRole || 'empty'}`}
+                        {...(fastBunnyReducedRole ? { value: fastBunnyReducedRole } : {})}
+                        onValueChange={(value) => handleRoleChange(setFastBunnyReducedRole, value, clearAllExceptFastBunnyReduced)}
+                        disabled={isDisabled(fastBunnyReducedRole)}
+                      >
+                        <SelectTrigger className="flex-1 pr-8" disabled={isDisabled(fastBunnyReducedRole)}>
+                          <SelectValue placeholder={t("selectRole") || "Select a role..."} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {reducedRoles.map((role) => {
+                            const isAvailable = isRoleAvailable(role.value);
+                            const remaining = getRemainingForRole(role.value);
+                            return (
+                              <SelectItem
+                                key={role.value}
+                                value={role.value}
+                                disabled={!isAvailable}
+                                className={!isAvailable ? "text-muted-foreground opacity-50" : ""}
+                              >
+                                {role.label} {(() => {
+                                  if (!isAvailable) {
+                                    return `(${t("soldOut")})`;
+                                  }
+                                  if (isAdmin && remaining !== null) {
+                                    const e = remaining.early ?? '∞';
+                                    const f = remaining.fastBunny ?? '∞';
+                                    const n = remaining.normal ?? '∞';
+                                    return ` (${e} ${t("earlyBird")} / ${f} ${t("fastBunny")} / ${n} ${t("normal")} ${t("remaining")})`;
+                                  }
+                                  return '';
+                                })()}
+                              </SelectItem>
+                            );
+                          })}
+                          {fastBunnyReducedRole && (
+                            <SelectItem value="__clear__" className="text-muted-foreground">
+                              {t("clearSelection")}
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      {fastBunnyReducedRole && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleClearSelection(setFastBunnyReducedRole);
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-festival-light/20 rounded-full z-10"
+                          title={t("clearSelection")}
+                        >
+                          <X className="h-5 w-5 text-festival-light hover:text-festival-medium" />
+                        </Button>
+                      )}
+                    </div>
+                    <Button
+                      onClick={() => handleChooseTicket("reducedFastBunny", fastBunnyReducedRole)}
+                      disabled={!fastBunnyReducedRole || !isRoleAvailable(fastBunnyReducedRole)}
+                      className="w-full sm:w-auto"
+                    >
+                      {t("chooseThisTicket")}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Normal */}
               {isNormalAvailable() && (
                 <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-border/30">
@@ -758,7 +1014,7 @@ const Tickets = () => {
                     </div>
                     {normalReducedRole && (
                       <span className="text-sm font-medium text-muted-foreground">
-                        {getPrice(normalReducedRole, false)}
+                        {getPrice(normalReducedRole, "normal")}
                       </span>
                     )}
                   </div>
@@ -790,8 +1046,9 @@ const Tickets = () => {
                                   }
                                   if (isAdmin && remaining !== null) {
                                     const e = remaining.early ?? '∞';
+                                    const f = remaining.fastBunny ?? '∞';
                                     const n = remaining.normal ?? '∞';
-                                    return ` (${e} ${t("earlyBird")} / ${n} ${t("normal")} ${t("remaining")})`;
+                                    return ` (${e} ${t("earlyBird")} / ${f} ${t("fastBunny")} / ${n} ${t("normal")} ${t("remaining")})`;
                                   }
                                   return '';
                                 })()}

@@ -7,6 +7,9 @@ export interface TicketSettings {
   early_bird_enabled: boolean;
   early_bird_cutoff: string | null;
   early_bird_total_limit: number | null;
+  fast_bunny_enabled: boolean;
+  fast_bunny_cutoff: string | null;
+  fast_bunny_total_limit: number | null;
   normal_total_limit: number | null;
   // Limits (legacy single limit kept for backward compat; enforcement uses _early/_normal)
   bar_limit: number | null;
@@ -37,6 +40,15 @@ export interface TicketSettings {
   schichtleitung_limit_normal: number | null;
   tech_limit_early: number | null;
   tech_limit_normal: number | null;
+  bar_limit_fast_bunny: number | null;
+  kuechenhilfe_limit_fast_bunny: number | null;
+  springer_runner_limit_fast_bunny: number | null;
+  springer_toilet_limit_fast_bunny: number | null;
+  abbau_limit_fast_bunny: number | null;
+  aufbau_limit_fast_bunny: number | null;
+  awareness_limit_fast_bunny: number | null;
+  schichtleitung_limit_fast_bunny: number | null;
+  tech_limit_fast_bunny: number | null;
   // Prices
   bar_price_early: number | null;
   bar_price_normal: number | null;
@@ -56,6 +68,15 @@ export interface TicketSettings {
   schichtleitung_price_normal: number | null;
   tech_price_early: number | null;
   tech_price_normal: number | null;
+  bar_price_fast_bunny: number | null;
+  kuechenhilfe_price_fast_bunny: number | null;
+  springer_runner_price_fast_bunny: number | null;
+  springer_toilet_price_fast_bunny: number | null;
+  abbau_price_fast_bunny: number | null;
+  aufbau_price_fast_bunny: number | null;
+  awareness_price_fast_bunny: number | null;
+  schichtleitung_price_fast_bunny: number | null;
+  tech_price_fast_bunny: number | null;
   paypal_payment_link: string | null;
   notes: string | null;
   created_at: string;

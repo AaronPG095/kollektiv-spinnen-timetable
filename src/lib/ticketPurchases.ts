@@ -4,7 +4,7 @@ import { formatSupabaseError, logError } from '@/lib/errorHandler';
 export interface TicketPurchase {
   id: string;
   user_id: string | null;
-  contribution_type: 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal';
+  contribution_type: 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal' | 'fastBunny' | 'reducedFastBunny';
   role: string;
   price: number;
   purchaser_name: string;
@@ -19,7 +19,7 @@ export interface TicketPurchase {
 }
 
 export interface CreatePurchaseData {
-  contribution_type: 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal';
+  contribution_type: 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal' | 'fastBunny' | 'reducedFastBunny';
   role: string;
   price: number;
   purchaser_name: string;
@@ -63,24 +63,27 @@ export const getRolePurchaseCount = async (role: string): Promise<number> => {
   }
 };
 
-export type ContributionType = 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal';
+export type ContributionType = 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal' | 'fastBunny' | 'reducedFastBunny';
 
 /**
  * Check if a role has available contributions for the given ticket type.
- * Uses per-role early/normal limits; unused early-bird capacity is added to normal-bird.
+ * Uses per-role early/fast-bunny/normal limits; unused early and fast-bunny capacity rolls over to normal-bird.
  *
  * @param role - The role to check
  * @param limitEarly - Early bird limit for this role (null = unlimited)
  * @param limitNormal - Normal bird limit for this role (null = unlimited)
  * @param contributionType - The ticket type being purchased
+ * @param limitFastBunny - Fast bunny limit for this role (null = unlimited)
  */
 export const checkRoleAvailability = async (
   role: string,
   limitEarly: number | null | undefined,
   limitNormal: number | null | undefined,
-  contributionType: ContributionType
+  contributionType: ContributionType,
+  limitFastBunny?: number | null
 ): Promise<boolean> => {
   const isEarly = contributionType === 'earlyBird' || contributionType === 'reducedEarlyBird';
+  const isFastBunny = contributionType === 'fastBunny' || contributionType === 'reducedFastBunny';
 
   if (isEarly) {
     if (limitEarly === null || limitEarly === undefined) return true;
@@ -89,9 +92,26 @@ export const checkRoleAvailability = async (
     return count < limitEarly;
   }
 
+  if (isFastBunny) {
+    const count = await getRoleFastBunnyPurchaseCount(role);
+    if (limitFastBunny != null) {
+      if (limitFastBunny === 0) return false;
+      return count < limitFastBunny;
+    }
+    if (limitEarly == null) return true;
+    const earlyCount = await getRoleEarlyBirdPurchaseCount(role);
+    const availableForFastBunny = Math.max(0, limitEarly - earlyCount);
+    return count < availableForFastBunny;
+  }
+
   if (limitNormal === null || limitNormal === undefined) return true;
   const earlyCount = await getRoleEarlyBirdPurchaseCount(role);
-  const effectiveNormal = limitNormal + Math.max(0, (limitEarly ?? 0) - earlyCount);
+  const fastBunnyCount = await getRoleFastBunnyPurchaseCount(role);
+  const effectiveFBLimit = limitFastBunny ?? limitEarly;
+  const effectiveNormal =
+    limitNormal +
+    Math.max(0, (limitEarly ?? 0) - earlyCount) +
+    Math.max(0, (effectiveFBLimit ?? 0) - fastBunnyCount);
   if (effectiveNormal === 0) return false;
   const normalCount = await getRoleNormalBirdPurchaseCount(role);
   return normalCount < effectiveNormal;
@@ -99,30 +119,45 @@ export const checkRoleAvailability = async (
 
 export interface RemainingByType {
   early: number | null;
+  fastBunny: number | null;
   normal: number | null;
 }
 
 /**
- * Get remaining contributions for a role by type (early bird and normal bird).
- * Normal-bird remaining includes unused early-bird capacity.
+ * Get remaining contributions for a role by type (early bird, fast bunny, and normal bird).
+ * Normal-bird remaining includes unused early-bird and fast-bunny capacity.
  */
 export const getRemainingTickets = async (
   role: string,
   limitEarly: number | null | undefined,
-  limitNormal: number | null | undefined
+  limitNormal: number | null | undefined,
+  limitFastBunny?: number | null
 ): Promise<RemainingByType> => {
-  const earlyRemaining =
-    limitEarly != null
-      ? Math.max(0, limitEarly - (await getRoleEarlyBirdPurchaseCount(role)))
-      : null;
   const earlyCount = await getRoleEarlyBirdPurchaseCount(role);
+  const fastBunnyCount = await getRoleFastBunnyPurchaseCount(role);
+
+  const earlyRemaining =
+    limitEarly != null ? Math.max(0, limitEarly - earlyCount) : null;
+  // When shared pool (limitFastBunny null): leftover from Early Bird = limitEarly - earlyCount - fastBunnyCount
+  // When own limit: effectiveFBLimit - fastBunnyCount
+  const fastBunnyRemaining =
+    limitFastBunny != null
+      ? Math.max(0, limitFastBunny - fastBunnyCount)
+      : limitEarly != null
+        ? Math.max(0, limitEarly - earlyCount - fastBunnyCount)
+        : null;
+  // Rollover: when shared pool, combined unused = limitEarly - earlyCount - fastBunnyCount
+  const unusedForRollover =
+    limitFastBunny != null
+      ? Math.max(0, (limitEarly ?? 0) - earlyCount) + Math.max(0, limitFastBunny - fastBunnyCount)
+      : Math.max(0, (limitEarly ?? 0) - earlyCount - fastBunnyCount);
   const effectiveNormal =
-    limitNormal != null ? limitNormal + Math.max(0, (limitEarly ?? 0) - earlyCount) : null;
+    limitNormal != null ? limitNormal + unusedForRollover : null;
   const normalRemaining =
     effectiveNormal != null
       ? Math.max(0, effectiveNormal - (await getRoleNormalBirdPurchaseCount(role)))
       : null;
-  return { early: earlyRemaining, normal: normalRemaining };
+  return { early: earlyRemaining, fastBunny: fastBunnyRemaining, normal: normalRemaining };
 };
 
 /**
@@ -138,16 +173,21 @@ export const getRemainingEarlyBirdTicketsForRole = async (
 };
 
 /**
- * Get remaining normal-bird tickets for a single role (includes unused early-bird capacity).
+ * Get remaining normal-bird tickets for a single role (includes unused early-bird and fast-bunny capacity).
  */
 export const getRemainingNormalBirdTicketsForRole = async (
   role: string,
   limitNormal: number | null | undefined,
-  limitEarly: number | null | undefined
+  limitEarly: number | null | undefined,
+  limitFastBunny?: number | null
 ): Promise<number | null> => {
   if (limitNormal === null || limitNormal === undefined) return null;
   const earlyCount = await getRoleEarlyBirdPurchaseCount(role);
-  const effectiveNormal = limitNormal + Math.max(0, (limitEarly ?? 0) - earlyCount);
+  const fastBunnyCount = await getRoleFastBunnyPurchaseCount(role);
+  const effectiveNormal =
+    limitNormal +
+    Math.max(0, (limitEarly ?? 0) - earlyCount) +
+    Math.max(0, (limitFastBunny ?? 0) - fastBunnyCount);
   const normalCount = await getRoleNormalBirdPurchaseCount(role);
   return Math.max(0, effectiveNormal - normalCount);
 };
@@ -201,6 +241,30 @@ export const getRoleNormalBirdPurchaseCount = async (role: string): Promise<numb
 };
 
 /**
+ * Get the number of confirmed fast-bunny Soli-Contributions for a specific role.
+ */
+export const getRoleFastBunnyPurchaseCount = async (role: string): Promise<number> => {
+  try {
+    const { count, error } = await supabase
+      .from('soli_contribution_purchases')
+      .select('*', { count: 'exact', head: true })
+      .eq('role', role)
+      .in('contribution_type', ['fastBunny', 'reducedFastBunny'])
+      .eq('status', 'confirmed');
+
+    if (error) {
+      logError('TicketPurchases', error, { operation: 'getRoleFastBunnyPurchaseCount', role });
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error) {
+    logError('TicketPurchases', error, { operation: 'getRoleFastBunnyPurchaseCount', role });
+    return 0;
+  }
+};
+
+/**
  * Get the number of confirmed early-bird Soli-Contributions (across all roles)
  */
 export const getEarlyBirdPurchaseCount = async (): Promise<number> => {
@@ -224,22 +288,57 @@ export const getEarlyBirdPurchaseCount = async (): Promise<number> => {
 };
 
 /**
+ * Get the number of confirmed fast-bunny Soli-Contributions (across all roles)
+ */
+export const getFastBunnyPurchaseCount = async (): Promise<number> => {
+  try {
+    const { count, error } = await supabase
+      .from('soli_contribution_purchases')
+      .select('*', { count: 'exact', head: true })
+      .in('contribution_type', ['fastBunny', 'reducedFastBunny'])
+      .eq('status', 'confirmed');
+
+    if (error) {
+      logError('TicketPurchases', error, { operation: 'getFastBunnyPurchaseCount' });
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error) {
+    logError('TicketPurchases', error, { operation: 'getFastBunnyPurchaseCount' });
+    return 0;
+  }
+};
+
+/**
+ * Get remaining fast-bunny Soli-Contributions.
+ * When totalLimit is null and earlyBirdTotalLimit is set, uses shared pool (leftover Early Bird tickets).
+ */
+export const getRemainingFastBunnyTickets = async (
+  totalLimit: number | null | undefined,
+  earlyBirdTotalLimit?: number | null
+): Promise<number | null> => {
+  if (totalLimit != null) {
+    const purchaseCount = await getFastBunnyPurchaseCount();
+    return Math.max(0, totalLimit - purchaseCount);
+  }
+  if (earlyBirdTotalLimit != null) {
+    const earlyCount = await getEarlyBirdPurchaseCount();
+    const fbCount = await getFastBunnyPurchaseCount();
+    return Math.max(0, earlyBirdTotalLimit - earlyCount - fbCount);
+  }
+  return null;
+};
+
+/**
  * Get remaining early-bird Soli-Contributions
  */
 export const getRemainingEarlyBirdTickets = async (
   totalLimit: number | null | undefined
 ): Promise<number | null> => {
-  // If no limit set, return null (unlimited)
-  if (totalLimit === null || totalLimit === undefined) {
-    return null;
-  }
-
-  // Get current early-bird confirmed Soli-Contributions count
+  if (totalLimit === null || totalLimit === undefined) return null;
   const purchaseCount = await getEarlyBirdPurchaseCount();
-
-  // Calculate remaining
-  const remaining = totalLimit - purchaseCount;
-  return Math.max(0, remaining);
+  return Math.max(0, totalLimit - purchaseCount);
 };
 
 /**
@@ -286,20 +385,33 @@ export const getRemainingNormalTickets = async (
 
 /**
  * Validate that a Soli-Contribution can be created for a role without exceeding limits.
- * Uses per-role early/normal limits and contribution type.
+ * Uses per-role early/fast-bunny/normal limits and contribution type.
  */
 export const validatePurchaseLimit = async (
   role: string,
   limitEarly: number | null | undefined,
   limitNormal: number | null | undefined,
-  contributionType: ContributionType
+  contributionType: ContributionType,
+  limitFastBunny?: number | null
 ): Promise<{ isValid: boolean; error?: string }> => {
-  const isAvailable = await checkRoleAvailability(role, limitEarly, limitNormal, contributionType);
+  const isAvailable = await checkRoleAvailability(
+    role,
+    limitEarly,
+    limitNormal,
+    contributionType,
+    limitFastBunny
+  );
 
   if (!isAvailable) {
-    const { early, normal } = await getRemainingTickets(role, limitEarly, limitNormal);
+    const { early, fastBunny, normal } = await getRemainingTickets(
+      role,
+      limitEarly,
+      limitNormal,
+      limitFastBunny
+    );
     const isEarly = contributionType === 'earlyBird' || contributionType === 'reducedEarlyBird';
-    const remaining = isEarly ? early : normal;
+    const isFastBunny = contributionType === 'fastBunny' || contributionType === 'reducedFastBunny';
+    const remaining = isEarly ? early : isFastBunny ? fastBunny : normal;
     return {
       isValid: false,
       error: `Role ${role} is sold out. ${remaining === 0 ? 'No Soli-Contributions remaining.' : `Only ${remaining} Soli-Contribution(s) remaining.`}`,
@@ -332,8 +444,9 @@ export const createTicketPurchase = async (
     
     // Check universal limits based on ticket type
     const isEarlyBird = purchaseData.contribution_type === 'earlyBird' || purchaseData.contribution_type === 'reducedEarlyBird';
+    const isFastBunny = purchaseData.contribution_type === 'fastBunny' || purchaseData.contribution_type === 'reducedFastBunny';
     const isNormal = purchaseData.contribution_type === 'normal' || purchaseData.contribution_type === 'reducedNormal';
-    
+
     if (isEarlyBird && settings.early_bird_total_limit !== null && settings.early_bird_total_limit !== undefined) {
       const remaining = await getRemainingEarlyBirdTickets(settings.early_bird_total_limit);
       if (remaining !== null && remaining <= 0) {
@@ -343,7 +456,20 @@ export const createTicketPurchase = async (
         };
       }
     }
-    
+
+    if (isFastBunny && (settings.fast_bunny_total_limit != null || settings.early_bird_total_limit != null)) {
+      const remaining = await getRemainingFastBunnyTickets(
+        settings.fast_bunny_total_limit ?? null,
+        settings.early_bird_total_limit ?? null
+      );
+      if (remaining !== null && remaining <= 0) {
+        return {
+          success: false,
+          error: 'Fast Bunny tickets are sold out. The universal limit has been reached.',
+        };
+      }
+    }
+
     if (isNormal && settings.normal_total_limit !== null && settings.normal_total_limit !== undefined) {
       const remaining = await getRemainingNormalTickets(settings.normal_total_limit);
       if (remaining !== null && remaining <= 0) {
@@ -375,16 +501,31 @@ export const createTicketPurchase = async (
         awareness: 'awareness_limit_normal',
         tech: 'tech_limit_normal',
       };
+      const limitFastBunnyFieldMap: Record<string, keyof typeof settings> = {
+        bar: 'bar_limit_fast_bunny',
+        kuechenhilfe: 'kuechenhilfe_limit_fast_bunny',
+        springerRunner: 'springer_runner_limit_fast_bunny',
+        springerToilet: 'springer_toilet_limit_fast_bunny',
+        abbau: 'abbau_limit_fast_bunny',
+        aufbau: 'aufbau_limit_fast_bunny',
+        awareness: 'awareness_limit_fast_bunny',
+        tech: 'tech_limit_fast_bunny',
+      };
       const earlyField = limitEarlyFieldMap[purchaseData.role];
       const normalField = limitNormalFieldMap[purchaseData.role];
+      const fastBunnyField = limitFastBunnyFieldMap[purchaseData.role];
       if (earlyField && normalField) {
         const limitEarly = settings[earlyField] as number | null | undefined;
         const limitNormal = settings[normalField] as number | null | undefined;
+        const limitFastBunny = fastBunnyField
+          ? (settings[fastBunnyField] as number | null | undefined)
+          : undefined;
         const validation = await validatePurchaseLimit(
           purchaseData.role,
           limitEarly,
           limitNormal,
-          purchaseData.contribution_type
+          purchaseData.contribution_type,
+          limitFastBunny
         );
         if (!validation.isValid) {
           return {
@@ -549,7 +690,7 @@ export const createTicketPurchaseAdmin = async (
 export const updateTicketPurchaseAdmin = async (
   purchaseId: string,
   updateData: Partial<{
-    contribution_type: 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal';
+    contribution_type: 'earlyBird' | 'normal' | 'reducedEarlyBird' | 'reducedNormal' | 'fastBunny' | 'reducedFastBunny';
     role: string;
     price: number;
     purchaser_name: string;
