@@ -4434,6 +4434,14 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                     <div className="font-medium">{role.label} {t("limit")}</div>
                     <div className="space-y-1.5 mb-3">
                       <Label htmlFor={`${role.key}_limit_total`}>{t("totalAvailable")}</Label>
+                      {remaining !== undefined &&
+                        remaining.early !== null &&
+                        remaining.fastBunny !== null &&
+                        remaining.normal !== null && (
+                          <span className="text-xs font-medium text-primary block">
+                            {remaining.early + remaining.fastBunny + remaining.normal} {t("remaining")}
+                          </span>
+                        )}
                       <Input
                         id={`${role.key}_limit_total`}
                         type="number"
@@ -4516,6 +4524,14 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                     <div className="font-medium">{role.label} {t("limit")}</div>
                     <div className="space-y-1.5 mb-3">
                       <Label htmlFor={`${role.key}_limit_total_reduced`}>{t("totalAvailable")}</Label>
+                      {remaining !== undefined &&
+                        remaining.early !== null &&
+                        remaining.fastBunny !== null &&
+                        remaining.normal !== null && (
+                          <span className="text-xs font-medium text-primary block">
+                            {remaining.early + remaining.fastBunny + remaining.normal} {t("remaining")}
+                          </span>
+                        )}
                       <Input
                         id={`${role.key}_limit_total_reduced`}
                         type="number"
