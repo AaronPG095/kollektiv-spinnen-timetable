@@ -89,6 +89,11 @@ export const checkRoleAvailability = async (
     if (limitEarly === null || limitEarly === undefined) return true;
     if (limitEarly === 0) return false;
     const count = await getRoleEarlyBirdPurchaseCount(role);
+    // When shared pool (limitFastBunny null): EB + FB draw from same pool
+    if (limitFastBunny == null) {
+      const fbCount = await getRoleFastBunnyPurchaseCount(role);
+      return count + fbCount < limitEarly;
+    }
     return count < limitEarly;
   }
 
@@ -107,11 +112,11 @@ export const checkRoleAvailability = async (
   if (limitNormal === null || limitNormal === undefined) return true;
   const earlyCount = await getRoleEarlyBirdPurchaseCount(role);
   const fastBunnyCount = await getRoleFastBunnyPurchaseCount(role);
-  const effectiveFBLimit = limitFastBunny ?? limitEarly;
-  const effectiveNormal =
-    limitNormal +
-    Math.max(0, (limitEarly ?? 0) - earlyCount) +
-    Math.max(0, (effectiveFBLimit ?? 0) - fastBunnyCount);
+  const unusedForRollover =
+    limitFastBunny != null
+      ? Math.max(0, (limitEarly ?? 0) - earlyCount) + Math.max(0, limitFastBunny - fastBunnyCount)
+      : Math.max(0, (limitEarly ?? 0) - earlyCount - fastBunnyCount);
+  const effectiveNormal = limitNormal + unusedForRollover;
   if (effectiveNormal === 0) return false;
   const normalCount = await getRoleNormalBirdPurchaseCount(role);
   return normalCount < effectiveNormal;
@@ -121,6 +126,8 @@ export interface RemainingByType {
   early: number | null;
   fastBunny: number | null;
   normal: number | null;
+  /** Total remaining; when shared pool (EB+FB), does not double-count. */
+  total: number | null;
 }
 
 /**
@@ -136,10 +143,15 @@ export const getRemainingTickets = async (
   const earlyCount = await getRoleEarlyBirdPurchaseCount(role);
   const fastBunnyCount = await getRoleFastBunnyPurchaseCount(role);
 
+  // When shared pool (limitFastBunny null): both EB and FB draw from same pool, so remaining = limitEarly - earlyCount - fastBunnyCount
   const earlyRemaining =
-    limitEarly != null ? Math.max(0, limitEarly - earlyCount) : null;
-  // When shared pool (limitFastBunny null): leftover from Early Bird = limitEarly - earlyCount - fastBunnyCount
-  // When own limit: effectiveFBLimit - fastBunnyCount
+    limitFastBunny != null
+      ? limitEarly != null
+        ? Math.max(0, limitEarly - earlyCount)
+        : null
+      : limitEarly != null
+        ? Math.max(0, limitEarly - earlyCount - fastBunnyCount)
+        : null;
   const fastBunnyRemaining =
     limitFastBunny != null
       ? Math.max(0, limitFastBunny - fastBunnyCount)
@@ -153,11 +165,28 @@ export const getRemainingTickets = async (
       : Math.max(0, (limitEarly ?? 0) - earlyCount - fastBunnyCount);
   const effectiveNormal =
     limitNormal != null ? limitNormal + unusedForRollover : null;
+  const normalCount = await getRoleNormalBirdPurchaseCount(role);
   const normalRemaining =
     effectiveNormal != null
-      ? Math.max(0, effectiveNormal - (await getRoleNormalBirdPurchaseCount(role)))
+      ? Math.max(0, effectiveNormal - normalCount)
       : null;
-  return { early: earlyRemaining, fastBunny: fastBunnyRemaining, normal: normalRemaining };
+  // Total = total capacity - total sold. Rollover is embedded in effectiveNormal, so summing
+  // early+normal would double-count. Use: (limitEarly [+ limitFB if separate] + limitNormal) - sold.
+  const totalCapacity =
+    limitFastBunny != null
+      ? (limitEarly ?? 0) + limitFastBunny + (limitNormal ?? 0)
+      : (limitEarly ?? 0) + (limitNormal ?? 0);
+  const totalSold = earlyCount + fastBunnyCount + normalCount;
+  const total =
+    totalCapacity > 0
+      ? Math.max(0, totalCapacity - totalSold)
+      : null;
+  return {
+    early: earlyRemaining,
+    fastBunny: fastBunnyRemaining,
+    normal: normalRemaining,
+    total,
+  };
 };
 
 /**
@@ -184,10 +213,11 @@ export const getRemainingNormalBirdTicketsForRole = async (
   if (limitNormal === null || limitNormal === undefined) return null;
   const earlyCount = await getRoleEarlyBirdPurchaseCount(role);
   const fastBunnyCount = await getRoleFastBunnyPurchaseCount(role);
-  const effectiveNormal =
-    limitNormal +
-    Math.max(0, (limitEarly ?? 0) - earlyCount) +
-    Math.max(0, (limitFastBunny ?? 0) - fastBunnyCount);
+  const unusedForRollover =
+    limitFastBunny != null
+      ? Math.max(0, (limitEarly ?? 0) - earlyCount) + Math.max(0, limitFastBunny - fastBunnyCount)
+      : Math.max(0, (limitEarly ?? 0) - earlyCount - fastBunnyCount);
+  const effectiveNormal = limitNormal + unusedForRollover;
   const normalCount = await getRoleNormalBirdPurchaseCount(role);
   return Math.max(0, effectiveNormal - normalCount);
 };

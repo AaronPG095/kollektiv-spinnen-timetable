@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,9 @@ import {
   type AboutPagePhoto 
 } from '@/lib/aboutPage';
 import { Loader2, Plus, Edit, Trash2, LogOut, Search, Eye, EyeOff, HelpCircle, ArrowUpDown, Calendar, Ticket, Info, Check, X, XCircle, Users as UsersIcon, Shield, ShieldOff, Copy } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Footer } from '@/components/Footer';
 import { FestivalHeader } from '@/components/FestivalHeader';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -90,7 +93,22 @@ const Admin = () => {
   const [faqFilterVisibility, setFaqFilterVisibility] = useState<string>("all");
   const [showHiddenMode, setShowHiddenMode] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | "all">(getCurrentYear());
-  const [activeTab, setActiveTab] = useState<"events" | "faqs" | "tickets" | "about" | "users">("events");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab') as "events" | "faqs" | "tickets" | "about" | "users" | null;
+  const validTabs = ["events", "faqs", "tickets", "about", "users"] as const;
+  const [activeTab, setActiveTabState] = useState<"events" | "faqs" | "tickets" | "about" | "users">(
+    tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "tickets"
+  );
+  const setActiveTab = (tab: "events" | "faqs" | "tickets" | "about" | "users") => {
+    setActiveTabState(tab);
+    setSearchParams({ tab }, { replace: true });
+  };
+  useEffect(() => {
+    const urlTab = searchParams.get('tab') as typeof activeTab | null;
+    if (urlTab && validTabs.includes(urlTab) && urlTab !== activeTab) {
+      setActiveTabState(urlTab);
+    }
+  }, [searchParams]);
   const [ticketSettings, setTicketSettings] = useState<TicketSettings | null>(null);
   const [ticketSettingsLoading, setTicketSettingsLoading] = useState(false);
   const [ticketPurchases, setTicketPurchases] = useState<TicketPurchase[]>([]);
@@ -1349,15 +1367,20 @@ const Admin = () => {
               {t("adminDashboard")}
             </h1>
             {/* Tab Navigation - Centered */}
-            <div className="flex gap-1 bg-muted rounded-lg p-1 w-full sm:w-fit overflow-x-auto">
+            <div className="flex gap-1 bg-muted rounded-lg p-1 w-full sm:w-fit overflow-hidden flex-wrap sm:flex-nowrap">
               <Button
-                variant={activeTab === "about" ? "default" : "ghost"}
-                onClick={() => setActiveTab("about")}
+                variant={activeTab === "tickets" ? "default" : "ghost"}
+                onClick={() => setActiveTab("tickets")}
                 className="gap-2 text-sm py-2 px-3"
                 size="sm"
               >
-                <Info className="h-3 w-3" />
-                {t("aboutUs")}
+                <Ticket className="h-3 w-3" />
+                {t("tickets")}
+                {uncheckedPurchases.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1 text-xs">
+                    {uncheckedPurchases.length}
+                  </Badge>
+                )}
               </Button>
               <Button
                 variant={activeTab === "events" ? "default" : "ghost"}
@@ -1378,13 +1401,13 @@ const Admin = () => {
                 {t("faqs")}
               </Button>
               <Button
-                variant={activeTab === "tickets" ? "default" : "ghost"}
-                onClick={() => setActiveTab("tickets")}
+                variant={activeTab === "about" ? "default" : "ghost"}
+                onClick={() => setActiveTab("about")}
                 className="gap-2 text-sm py-2 px-3"
                 size="sm"
               >
-                <Ticket className="h-3 w-3" />
-                {t("tickets")}
+                <Info className="h-3 w-3" />
+                {t("aboutUs")}
               </Button>
               <Button
                 variant={activeTab === "users" ? "default" : "ghost"}
@@ -1409,7 +1432,7 @@ const Admin = () => {
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-3 md:gap-4">
           <h2 className="text-base sm:text-lg md:text-xl font-semibold">
-            {activeTab === "events" ? t("eventsManagement") : activeTab === "faqs" ? t("faqManagement") : activeTab === "tickets" ? t("ticketSettings") : activeTab === "users" ? t("userManagement") : t("aboutUsManagement")}
+            {activeTab === "events" ? t("eventsManagement") : activeTab === "faqs" ? t("faqManagement") : activeTab === "tickets" ? `${t("tickets")} > ${ticketSubTab === "settings" ? t("ticketSettings") : ticketSubTab === "purchases" ? t("pendingSoliContributions") : ticketSubTab === "checked" ? t("checkedSoliContributions") : t("cancelledSoliContributions")}` : activeTab === "users" ? t("userManagement") : t("aboutUsManagement")}
           </h2>
           <div className="flex gap-2 sm:gap-3">
             {activeTab === "events" ? (
@@ -2100,50 +2123,54 @@ const Admin = () => {
           </div>
         ) : activeTab === "tickets" ? (
           <div className="w-full space-y-4">
-            {/* Sub-tabs for Tickets */}
-            <div className="flex gap-2 border-b border-border pb-2 items-center justify-between">
-              <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={ticketSubTab === "settings" ? "default" : "ghost"}
-                onClick={() => setTicketSubTab("settings")}
-                size="sm"
-              >
-                {t("ticketSettings")}
-              </Button>
-              <Button
-                type="button"
-                variant={ticketSubTab === "purchases" ? "default" : "ghost"}
-                onClick={() => {
-                  setTicketSubTab("purchases");
-                  loadTicketPurchases();
-                }}
-                size="sm"
-              >
-                {t("pendingSoliContributions")} ({uncheckedPurchases.length})
-              </Button>
-              <Button
-                type="button"
-                variant={ticketSubTab === "checked" ? "default" : "ghost"}
-                onClick={() => {
-                  setTicketSubTab("checked");
-                  loadTicketPurchases();
-                }}
-                size="sm"
-              >
-                {t("checkedSoliContributions")} ({checkedConfirmedPurchases.length})
-              </Button>
-              <Button
-                type="button"
-                variant={ticketSubTab === "cancelled" ? "default" : "ghost"}
-                onClick={() => {
-                  setTicketSubTab("cancelled");
-                  loadTicketPurchases();
-                }}
-                size="sm"
-              >
-                {t("cancelledSoliContributions")} ({cancelledPurchases.length})
-              </Button>
+            {/* Sub-tabs for Tickets - pill-style secondary nav */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+              <div className="flex gap-1 bg-muted rounded-lg p-1 w-fit">
+                <Button
+                  type="button"
+                  variant={ticketSubTab === "settings" ? "default" : "ghost"}
+                  onClick={() => setTicketSubTab("settings")}
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  {t("ticketSettings")}
+                </Button>
+                <Button
+                  type="button"
+                  variant={ticketSubTab === "purchases" ? "default" : "ghost"}
+                  onClick={() => {
+                    setTicketSubTab("purchases");
+                    loadTicketPurchases();
+                  }}
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  {t("pendingSoliContributions")} ({uncheckedPurchases.length})
+                </Button>
+                <Button
+                  type="button"
+                  variant={ticketSubTab === "checked" ? "default" : "ghost"}
+                  onClick={() => {
+                    setTicketSubTab("checked");
+                    loadTicketPurchases();
+                  }}
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  {t("checkedSoliContributions")} ({checkedConfirmedPurchases.length})
+                </Button>
+                <Button
+                  type="button"
+                  variant={ticketSubTab === "cancelled" ? "default" : "ghost"}
+                  onClick={() => {
+                    setTicketSubTab("cancelled");
+                    loadTicketPurchases();
+                  }}
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  {t("cancelledSoliContributions")} ({cancelledPurchases.length})
+                </Button>
               </div>
               {ticketSubTab !== "settings" && (
                 <Button
@@ -3811,7 +3838,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
   };
 
   const [remainingByRole, setRemainingByRole] = useState<
-    Partial<Record<RoleKey, { early: number | null; fastBunny: number | null; normal: number | null }>>
+    Partial<Record<RoleKey, { early: number | null; fastBunny: number | null; normal: number | null; total: number | null }>>
   >({});
 
   const [remainingUniversal, setRemainingUniversal] = useState<{
@@ -3970,14 +3997,14 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
             const remaining = await getRemainingTickets(role, limitEarly, limitNormal, limitFastBunny);
             return [role, remaining] as const;
           } catch {
-            return [role, { early: null, fastBunny: null, normal: null }] as const;
+            return [role, { early: null, fastBunny: null, normal: null, total: null }] as const;
           }
         })
       );
 
       if (!isMounted) return;
 
-      const next: Partial<Record<RoleKey, { early: number | null; fastBunny: number | null; normal: number | null }>> = {};
+      const next: Partial<Record<RoleKey, { early: number | null; fastBunny: number | null; normal: number | null; total: number | null }>> = {};
       entries.forEach(([role, remaining]) => {
         next[role] = remaining;
       });
@@ -4251,197 +4278,226 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Universal Ticket Limits - Prominent Section */}
-      <div className="space-y-4 p-6 border-2 rounded-lg bg-primary/5 border-primary/20">
-        <div className="flex items-center gap-2 mb-2">
-          <h3 className="text-xl font-bold">{t("universalTicketLimits")}</h3>
-          <Info className="h-5 w-5 text-muted-foreground" />
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          {t("universalTicketLimitsDesc")}
-        </p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Early-Bird Universal Limit */}
-          <div className="space-y-2 p-4 bg-background rounded-lg border">
-            <Label htmlFor="early_bird_total_limit" className="text-base font-semibold">
-              {t("earlyBirdTotalLimit")}
-            </Label>
-            <Input
-              id="early_bird_total_limit"
-              type="number"
-              min="0"
-              value={earlyBirdTotalLimit}
-              onChange={(e) => setEarlyBirdTotalLimit(e.target.value)}
-              placeholder={t("unlimited")}
-              className="text-lg"
-            />
-            {remainingUniversal.early !== null && (
-              <span className="text-xs font-medium text-primary block">
-                {remainingUniversal.early} {t("remaining")}
-              </span>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {t("earlyBirdTotalLimitDesc")}
-            </p>
-          </div>
-          {/* Fast Bunny Universal Limit */}
-          <div className="space-y-2 p-4 bg-background rounded-lg border">
-            <Label htmlFor="fast_bunny_total_limit" className="text-base font-semibold">
-              {t("fastBunnyTotalLimit")}
-            </Label>
-            <Input
-              id="fast_bunny_total_limit"
-              type="number"
-              min="0"
-              value={fastBunnyTotalLimit}
-              onChange={(e) => setFastBunnyTotalLimit(e.target.value)}
-              placeholder={t("unlimited")}
-              className="text-lg"
-            />
-            {remainingUniversal.fastBunny !== null && (
-              <span className="text-xs font-medium text-primary block">
-                {remainingUniversal.fastBunny} {t("remaining")}
-              </span>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {t("fastBunnyTotalLimitDesc")}
-            </p>
-          </div>
-          {/* Normal Bird Universal Limit */}
-          <div className="space-y-2 p-4 bg-background rounded-lg border">
-            <Label htmlFor="normal_total_limit" className="text-base font-semibold">
-              {t("normalTotalLimit")}
-            </Label>
-            <Input
-              id="normal_total_limit"
-              type="number"
-              min="0"
-              value={normalTotalLimit}
-              onChange={(e) => setNormalTotalLimit(e.target.value)}
-              placeholder={t("unlimited")}
-              className="text-lg"
-            />
-            {remainingUniversal.normal !== null && (
-              <span className="text-xs font-medium text-primary block">
-                {remainingUniversal.normal} {t("remaining")}
-              </span>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {t("normalTotalLimitDesc")}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Early Bird & Fast Bunny Settings - side by side */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Early Bird Settings */}
-      <div className="space-y-4 p-4 border rounded-lg">
-        <h3 className="text-lg font-semibold">{t("earlyBirdTicketSettings")}</h3>
-        
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="early_bird_enabled">{t("enableEarlyBirdTickets")}</Label>
-            <p className="text-sm text-muted-foreground">
-              {t("enableEarlyBirdTicketsDesc")}
-            </p>
-          </div>
-          <Switch
-            id="early_bird_enabled"
-            checked={earlyBirdEnabled}
-            onCheckedChange={setEarlyBirdEnabled}
-          />
-        </div>
-
-        {earlyBirdEnabled && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="early_bird_cutoff">{t("earlyBirdCutoffDate")}</Label>
-              <Input
-                id="early_bird_cutoff"
-                type="datetime-local"
-                value={earlyBirdCutoff}
-                onChange={(e) => setEarlyBirdCutoff(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t("earlyBirdCutoffDesc")}
+    <form onSubmit={handleSubmit} className="space-y-6 pb-20 md:pb-0">
+      <Accordion type="multiple" defaultValue={["universal-limits"]} className="space-y-2">
+        {/* Universal Ticket Limits - Prominent Section (default open) */}
+        <AccordionItem value="universal-limits" className="border-2 rounded-lg bg-primary/5 border-primary/20 overflow-hidden [&[data-state=open]]:border-primary/30">
+          <AccordionTrigger className="px-6 py-4 hover:no-underline [&[data-state=open]]:border-b">
+            <div className="flex items-center gap-2 flex-1">
+              <span className="text-base sm:text-lg font-semibold">{t("universalTicketLimits")}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex p-1 -m-1 rounded hover:bg-muted"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-xs">
+                  <p>{t("universalTicketLimitsDesc")}</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="px-6 pb-6 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {t("universalTicketLimitsDesc")}
               </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Early-Bird Universal Limit */}
+                <div className="space-y-2 p-4 bg-background rounded-lg border">
+                  <Label htmlFor="early_bird_total_limit" className="text-base font-semibold">
+                    {t("earlyBirdTotalLimit")}
+                  </Label>
+                  <Input
+                    id="early_bird_total_limit"
+                    type="number"
+                    min="0"
+                    value={earlyBirdTotalLimit}
+                    onChange={(e) => setEarlyBirdTotalLimit(e.target.value)}
+                    placeholder={t("unlimited")}
+                    className="text-base md:text-lg min-h-[44px]"
+                  />
+                  {remainingUniversal.early !== null && (
+                    <Badge variant="secondary" className="text-xs font-medium">
+                      {remainingUniversal.early} {t("remaining")}
+                    </Badge>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {t("earlyBirdTotalLimitDesc")}
+                  </p>
+                </div>
+                {/* Fast Bunny Universal Limit */}
+                <div className="space-y-2 p-4 bg-background rounded-lg border">
+                  <Label htmlFor="fast_bunny_total_limit" className="text-base font-semibold">
+                    {t("fastBunnyTotalLimit")}
+                  </Label>
+                  <Input
+                    id="fast_bunny_total_limit"
+                    type="number"
+                    min="0"
+                    value={fastBunnyTotalLimit}
+                    onChange={(e) => setFastBunnyTotalLimit(e.target.value)}
+                    placeholder={t("unlimited")}
+                    className="text-base md:text-lg min-h-[44px]"
+                  />
+                  {remainingUniversal.fastBunny !== null && (
+                    <Badge variant="secondary" className="text-xs font-medium">
+                      {remainingUniversal.fastBunny} {t("remaining")}
+                    </Badge>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {t("fastBunnyTotalLimitDesc")}
+                  </p>
+                </div>
+                {/* Normal Bird Universal Limit */}
+                <div className="space-y-2 p-4 bg-background rounded-lg border">
+                  <Label htmlFor="normal_total_limit" className="text-base font-semibold">
+                    {t("normalTotalLimit")}
+                  </Label>
+                  <Input
+                    id="normal_total_limit"
+                    type="number"
+                    min="0"
+                    value={normalTotalLimit}
+                    onChange={(e) => setNormalTotalLimit(e.target.value)}
+                    placeholder={t("unlimited")}
+                    className="text-base md:text-lg min-h-[44px]"
+                  />
+                  {remainingUniversal.normal !== null && (
+                    <Badge variant="secondary" className="text-xs font-medium">
+                      {remainingUniversal.normal} {t("remaining")}
+                    </Badge>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {t("normalTotalLimitDesc")}
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* Fast Bunny Settings */}
-      <div className="space-y-4 p-4 border rounded-lg">
-        <h3 className="text-lg font-semibold">{t("fastBunnyTicketSettings")}</h3>
+        {/* Early Bird & Fast Bunny Settings */}
+        <AccordionItem value="early-fast-bunny" className="border rounded-lg overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 sm:px-6 sm:py-4 hover:no-underline">
+            <span className="text-base sm:text-lg font-semibold">{t("earlyBirdTicketSettings")} & {t("fastBunnyTicketSettings")}</span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="px-4 pb-4 sm:px-6 sm:pb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Early Bird Settings */}
+                <div className="space-y-4 p-4 border rounded-lg">
+                  <h4 className="text-base font-semibold">{t("earlyBirdTicketSettings")}</h4>
+                  <div className="flex items-center justify-between gap-4 min-h-[44px]">
+                    <div className="space-y-0.5 flex-1">
+                      <Label htmlFor="early_bird_enabled">{t("enableEarlyBirdTickets")}</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {t("enableEarlyBirdTicketsDesc")}
+                      </p>
+                    </div>
+                    <Switch
+                      id="early_bird_enabled"
+                      checked={earlyBirdEnabled}
+                      onCheckedChange={setEarlyBirdEnabled}
+                      className="shrink-0"
+                    />
+                  </div>
+                  {earlyBirdEnabled && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="early_bird_cutoff">{t("earlyBirdCutoffDate")}</Label>
+                        <Input
+                          id="early_bird_cutoff"
+                          type="datetime-local"
+                          value={earlyBirdCutoff}
+                          onChange={(e) => setEarlyBirdCutoff(e.target.value)}
+                          className="min-h-[44px] text-base"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {t("earlyBirdCutoffDesc")}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* Fast Bunny Settings */}
+                <div className="space-y-4 p-4 border rounded-lg">
+                  <h4 className="text-base font-semibold">{t("fastBunnyTicketSettings")}</h4>
+                  <div className="flex items-center justify-between gap-4 min-h-[44px]">
+                    <div className="space-y-0.5 flex-1">
+                      <Label htmlFor="fast_bunny_enabled">{t("enableFastBunnyTickets")}</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {t("enableFastBunnyTicketsDesc")}
+                      </p>
+                    </div>
+                    <Switch
+                      id="fast_bunny_enabled"
+                      checked={fastBunnyEnabled}
+                      onCheckedChange={setFastBunnyEnabled}
+                      className="shrink-0"
+                    />
+                  </div>
+                  {fastBunnyEnabled && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="fast_bunny_cutoff">{t("fastBunnyCutoffDate")}</Label>
+                        <Input
+                          id="fast_bunny_cutoff"
+                          type="datetime-local"
+                          value={fastBunnyCutoff}
+                          onChange={(e) => setFastBunnyCutoff(e.target.value)}
+                          className="min-h-[44px] text-base"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {t("fastBunnyCutoffDesc")}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="fast_bunny_enabled">{t("enableFastBunnyTickets")}</Label>
-            <p className="text-sm text-muted-foreground">
-              {t("enableFastBunnyTicketsDesc")}
-            </p>
-          </div>
-          <Switch
-            id="fast_bunny_enabled"
-            checked={fastBunnyEnabled}
-            onCheckedChange={setFastBunnyEnabled}
-          />
-        </div>
-
-        {fastBunnyEnabled && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fast_bunny_cutoff">{t("fastBunnyCutoffDate")}</Label>
-              <Input
-                id="fast_bunny_cutoff"
-                type="datetime-local"
-                value={fastBunnyCutoff}
-                onChange={(e) => setFastBunnyCutoff(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t("fastBunnyCutoffDesc")}
+          {/* Ticket Limits */}
+        <AccordionItem value="ticket-limits" className="border rounded-lg overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 sm:px-6 sm:py-4 hover:no-underline">
+            <div className="flex flex-wrap items-center gap-2 text-left">
+              <span className="text-base sm:text-lg font-semibold">{t("ticketAvailabilityLimits")}</span>
+              {roleLimitsTotal.display && (
+                <Badge variant="secondary" className="text-xs font-medium text-primary bg-primary/10">
+                  {roleLimitsTotal.display}
+                </Badge>
+              )}
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="px-4 pb-4 sm:px-6 sm:pb-6 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {t("setMaximumTickets")}
               </p>
-            </div>
-          </div>
-        )}
-      </div>
-      </div>
-
-      {/* Ticket Limits */}
-      <div className="space-y-4 p-4 border rounded-lg">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold">{t("ticketAvailabilityLimits")}</h3>
-          {roleLimitsTotal.display && (
-            <div className="text-sm font-medium text-primary bg-primary/10 px-3 py-1.5 rounded-md">
-              {roleLimitsTotal.display}
-            </div>
-          )}
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          {t("setMaximumTickets")}
-        </p>
-        <div className="space-y-6">
+              <Separator />
+              <div className="space-y-6">
           <div className="space-y-3">
-            <h4 className="font-semibold">{t("standardTickets_plural")}</h4>
+            <h4 className="text-base sm:text-lg font-semibold">{t("standardTickets_plural")}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {standardRoles.map((role) => {
                 const remaining = remainingByRole[role.key];
                 return (
-                  <div key={role.key} className="space-y-3 p-3 rounded-lg border">
+                  <div key={role.key} className="space-y-3 p-4 rounded-lg border">
                     <div className="font-medium">{role.label} {t("limit")}</div>
                     <div className="space-y-1.5 mb-3">
                       <Label htmlFor={`${role.key}_limit_total`}>{t("totalAvailable")}</Label>
-                      {remaining !== undefined &&
-                        remaining.early !== null &&
-                        remaining.fastBunny !== null &&
-                        remaining.normal !== null && (
-                          <span className="text-xs font-medium text-primary block">
-                            {remaining.early + remaining.fastBunny + remaining.normal} {t("remaining")}
-                          </span>
-                        )}
+                      {remaining !== undefined && remaining.total !== null && (
+                        <Badge variant="secondary" className="text-xs font-medium block w-fit mt-1">
+                          {remaining.total} {t("remaining")}
+                        </Badge>
+                      )}
                       <Input
                         id={`${role.key}_limit_total`}
                         type="number"
@@ -4449,16 +4505,17 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                         value={getTotalForRole(role.key)}
                         onChange={(e) => handleTotalChange(role.key, e.target.value)}
                         placeholder={t("unlimited")}
+                        className="min-h-[44px] text-base"
                       />
                       <p className="text-xs text-muted-foreground">{t("totalAvailableDesc")}</p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="space-y-1.5 min-h-[4.5rem]">
                         <Label htmlFor={`${role.key}_limit_early`}>{t("earlyBird")}</Label>
                         {remaining !== undefined && remaining.early !== null && (
-                          <span className="text-xs font-medium text-primary block">
-                            {remaining.early} {t("remaining") ?? "remaining"}
-                          </span>
+                          <Badge variant="secondary" className="text-xs font-medium block w-fit">
+                            {remaining.early} {t("remaining")}
+                          </Badge>
                         )}
                         <Input
                           id={`${role.key}_limit_early`}
@@ -4469,14 +4526,15 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                             setLimitValuesEarly((prev) => ({ ...prev, [role.key]: e.target.value }))
                           }
                           placeholder={t("unlimited")}
+                          className="min-h-[44px] text-base"
                         />
                       </div>
                       <div className="space-y-1.5 min-h-[4.5rem]">
                         <Label htmlFor={`${role.key}_limit_fast_bunny`}>{t("fastBunny")}</Label>
                         {remaining !== undefined && remaining.fastBunny !== null && (
-                          <span className="text-xs font-medium text-primary block">
-                            {remaining.fastBunny} {t("remaining") ?? "remaining"}
-                          </span>
+                          <Badge variant="secondary" className="text-xs font-medium block w-fit">
+                            {remaining.fastBunny} {t("remaining")}
+                          </Badge>
                         )}
                         <Input
                           id={`${role.key}_limit_fast_bunny`}
@@ -4487,14 +4545,15 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                             setLimitValuesFastBunny((prev) => ({ ...prev, [role.key]: e.target.value }))
                           }
                           placeholder={t("unlimited")}
+                          className="min-h-[44px] text-base"
                         />
                       </div>
                       <div className="space-y-1.5 min-h-[4.5rem]">
                         <Label htmlFor={`${role.key}_limit_normal`}>{t("normal")}</Label>
                         {remaining !== undefined && remaining.normal !== null && (
-                          <span className="text-xs font-medium text-primary block">
-                            {remaining.normal} {t("remaining") ?? "remaining"}
-                          </span>
+                          <Badge variant="secondary" className="text-xs font-medium block w-fit">
+                            {remaining.normal} {t("remaining")}
+                          </Badge>
                         )}
                         <Input
                           id={`${role.key}_limit_normal`}
@@ -4505,6 +4564,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                             setLimitValuesNormal((prev) => ({ ...prev, [role.key]: e.target.value }))
                           }
                           placeholder={t("unlimited")}
+                          className="min-h-[44px] text-base"
                         />
                       </div>
                     </div>
@@ -4514,24 +4574,23 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
             </div>
           </div>
 
+          <Separator className="my-4" />
+
           <div className="space-y-3">
-            <h4 className="font-semibold">{t("reducedTickets_plural")}</h4>
+            <h4 className="text-base sm:text-lg font-semibold">{t("reducedTickets_plural")}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {reducedRoles.map((role) => {
                 const remaining = remainingByRole[role.key];
                 return (
-                  <div key={role.key} className="space-y-3 p-3 rounded-lg border">
+                  <div key={role.key} className="space-y-3 p-4 rounded-lg border">
                     <div className="font-medium">{role.label} {t("limit")}</div>
                     <div className="space-y-1.5 mb-3">
                       <Label htmlFor={`${role.key}_limit_total_reduced`}>{t("totalAvailable")}</Label>
-                      {remaining !== undefined &&
-                        remaining.early !== null &&
-                        remaining.fastBunny !== null &&
-                        remaining.normal !== null && (
-                          <span className="text-xs font-medium text-primary block">
-                            {remaining.early + remaining.fastBunny + remaining.normal} {t("remaining")}
-                          </span>
-                        )}
+                      {remaining !== undefined && remaining.total !== null && (
+                        <Badge variant="secondary" className="text-xs font-medium block w-fit mt-1">
+                          {remaining.total} {t("remaining")}
+                        </Badge>
+                      )}
                       <Input
                         id={`${role.key}_limit_total_reduced`}
                         type="number"
@@ -4539,16 +4598,17 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                         value={getTotalForRole(role.key)}
                         onChange={(e) => handleTotalChange(role.key, e.target.value)}
                         placeholder={t("unlimited")}
+                        className="min-h-[44px] text-base"
                       />
                       <p className="text-xs text-muted-foreground">{t("totalAvailableDesc")}</p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="space-y-1.5 min-h-[4.5rem]">
                         <Label htmlFor={`${role.key}_limit_early_reduced`}>{t("earlyBird")}</Label>
                         {remaining !== undefined && remaining.early !== null && (
-                          <span className="text-xs font-medium text-primary block">
-                            {remaining.early} {t("remaining") ?? "remaining"}
-                          </span>
+                          <Badge variant="secondary" className="text-xs font-medium block w-fit">
+                            {remaining.early} {t("remaining")}
+                          </Badge>
                         )}
                         <Input
                           id={`${role.key}_limit_early_reduced`}
@@ -4559,14 +4619,15 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                             setLimitValuesEarly((prev) => ({ ...prev, [role.key]: e.target.value }))
                           }
                           placeholder={t("unlimited")}
+                          className="min-h-[44px] text-base"
                         />
                       </div>
                       <div className="space-y-1.5 min-h-[4.5rem]">
                         <Label htmlFor={`${role.key}_limit_fast_bunny_reduced`}>{t("fastBunny")}</Label>
                         {remaining !== undefined && remaining.fastBunny !== null && (
-                          <span className="text-xs font-medium text-primary block">
-                            {remaining.fastBunny} {t("remaining") ?? "remaining"}
-                          </span>
+                          <Badge variant="secondary" className="text-xs font-medium block w-fit">
+                            {remaining.fastBunny} {t("remaining")}
+                          </Badge>
                         )}
                         <Input
                           id={`${role.key}_limit_fast_bunny_reduced`}
@@ -4577,14 +4638,15 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                             setLimitValuesFastBunny((prev) => ({ ...prev, [role.key]: e.target.value }))
                           }
                           placeholder={t("unlimited")}
+                          className="min-h-[44px] text-base"
                         />
                       </div>
                       <div className="space-y-1.5 min-h-[4.5rem]">
                         <Label htmlFor={`${role.key}_limit_normal_reduced`}>{t("normal")}</Label>
                         {remaining !== undefined && remaining.normal !== null && (
-                          <span className="text-xs font-medium text-primary block">
-                            {remaining.normal} {t("remaining") ?? "remaining"}
-                          </span>
+                          <Badge variant="secondary" className="text-xs font-medium block w-fit">
+                            {remaining.normal} {t("remaining")}
+                          </Badge>
                         )}
                         <Input
                           id={`${role.key}_limit_normal_reduced`}
@@ -4595,6 +4657,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                             setLimitValuesNormal((prev) => ({ ...prev, [role.key]: e.target.value }))
                           }
                           placeholder={t("unlimited")}
+                          className="min-h-[44px] text-base"
                         />
                       </div>
                     </div>
@@ -4604,23 +4667,29 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
             </div>
           </div>
         </div>
-      </div>
+          </div>
+        </AccordionContent>
+        </AccordionItem>
 
-      {/* Pricing Settings */}
-      <div className="space-y-4 p-4 border rounded-lg">
-        <h3 className="text-lg font-semibold">{t("ticketPricing")}</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          {t("setPricesForRoles")}
-        </p>
-
-        <div className="space-y-6">
+        {/* Pricing Settings */}
+        <AccordionItem value="pricing" className="border rounded-lg overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 sm:px-6 sm:py-4 hover:no-underline">
+            <span className="text-base sm:text-lg font-semibold">{t("ticketPricing")}</span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="px-4 pb-4 sm:px-6 sm:pb-6 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {t("setPricesForRoles")}
+              </p>
+              <Separator />
+              <div className="space-y-6">
           <div className="space-y-3">
-            <h4 className="font-semibold">{t("standardTickets_plural")}</h4>
+            <h4 className="text-base sm:text-lg font-semibold">{t("standardTickets_plural")}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {standardRoles.map((role) => (
-                <div key={role.key} className="space-y-3 p-3 rounded-lg border">
+                <div key={role.key} className="space-y-3 p-4 rounded-lg border">
                   <div className="font-medium">{role.label}</div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-2">
                       <Label htmlFor={`${role.key}_price_early`}>{t("earlyBirdPrice")}</Label>
                       <Input
@@ -4633,6 +4702,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                           setPriceValues((prev) => ({ ...prev, [`${role.key}_early`]: e.target.value }))
                         }
                         placeholder="100.00"
+                        className="min-h-[44px] text-base"
                       />
                     </div>
                     <div className="space-y-2">
@@ -4647,6 +4717,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                           setPriceValues((prev) => ({ ...prev, [`${role.key}_fast_bunny`]: e.target.value }))
                         }
                         placeholder="110.00"
+                        className="min-h-[44px] text-base"
                       />
                     </div>
                     <div className="space-y-2">
@@ -4661,6 +4732,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                           setPriceValues((prev) => ({ ...prev, [`${role.key}_normal`]: e.target.value }))
                         }
                         placeholder="120.00"
+                        className="min-h-[44px] text-base"
                       />
                     </div>
                   </div>
@@ -4669,13 +4741,15 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
             </div>
           </div>
 
+          <Separator className="my-4" />
+
           <div className="space-y-3">
-            <h4 className="font-semibold">{t("reducedTickets_plural")}</h4>
+            <h4 className="text-base sm:text-lg font-semibold">{t("reducedTickets_plural")}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {reducedRoles.map((role) => (
-                <div key={role.key} className="space-y-3 p-3 rounded-lg border">
+                <div key={role.key} className="space-y-3 p-4 rounded-lg border">
                   <div className="font-medium">{role.label}</div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-2">
                       <Label htmlFor={`${role.key}_price_early_reduced`}>{t("earlyBirdPrice")}</Label>
                       <Input
@@ -4688,6 +4762,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                           setPriceValues((prev) => ({ ...prev, [`${role.key}_early`]: e.target.value }))
                         }
                         placeholder="100.00"
+                        className="min-h-[44px] text-base"
                       />
                     </div>
                     <div className="space-y-2">
@@ -4702,6 +4777,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                           setPriceValues((prev) => ({ ...prev, [`${role.key}_fast_bunny`]: e.target.value }))
                         }
                         placeholder="110.00"
+                        className="min-h-[44px] text-base"
                       />
                     </div>
                     <div className="space-y-2">
@@ -4716,6 +4792,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
                           setPriceValues((prev) => ({ ...prev, [`${role.key}_normal`]: e.target.value }))
                         }
                         placeholder="120.00"
+                        className="min-h-[44px] text-base"
                       />
                     </div>
                   </div>
@@ -4724,27 +4801,43 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
             </div>
           </div>
         </div>
-      </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* PayPal Payment Link */}
-      <div className="space-y-4 p-4 border rounded-lg">
-        <h3 className="text-lg font-semibold">{t("paypalPaymentLink") || "PayPal Payment Link"}</h3>
-        <div className="space-y-2">
-          <Label htmlFor="paypal_payment_link">{t("paypalLink") || "PayPal Link"}</Label>
-          <Input
-            id="paypal_payment_link"
-            type="url"
-            value={paypalPaymentLink}
-            onChange={(e) => setPaypalPaymentLink(e.target.value)}
-            placeholder="https://paypal.me/kollektivspinnen"
-          />
-          <p className="text-xs text-muted-foreground">
-            {t("paypalLinkDescription") || "Enter the PayPal payment link URL. Must be from a trusted PayPal domain (paypal.com, paypal.me) and use HTTPS."}
-          </p>
-        </div>
-      </div>
+        {/* PayPal Payment Link */}
+        <AccordionItem value="paypal" className="border rounded-lg overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 sm:px-6 sm:py-4 hover:no-underline">
+            <span className="text-base sm:text-lg font-semibold">{t("paypalPaymentLink") || "PayPal Payment Link"}</span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-4 p-4 sm:p-6">
+              <div className="space-y-2">
+                <Label htmlFor="paypal_payment_link">{t("paypalLink") || "PayPal Link"}</Label>
+                <Input
+                  id="paypal_payment_link"
+                  type="url"
+                  value={paypalPaymentLink}
+                  onChange={(e) => setPaypalPaymentLink(e.target.value)}
+                  placeholder="https://paypal.me/kollektivspinnen"
+                  className="min-h-[44px] text-base"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t("paypalLinkDescription") || "Enter the PayPal payment link URL. Must be from a trusted PayPal domain (paypal.com, paypal.me) and use HTTPS."}
+                </p>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
-      <Button type="submit" className="w-full">
+      {/* Sticky Save on mobile, inline on desktop */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 p-3 bg-background/95 backdrop-blur border-t z-10">
+        <Button type="submit" className="w-full min-h-[44px]">
+          {t("saveTicketSettings")}
+        </Button>
+      </div>
+      <Button type="submit" className="w-full hidden md:flex min-h-[44px]">
         {t("saveTicketSettings")}
       </Button>
     </form>

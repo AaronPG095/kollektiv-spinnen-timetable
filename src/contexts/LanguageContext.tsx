@@ -285,6 +285,9 @@ const translations = {
     
     // Admin Page
     adminDashboard: 'Admin Dashboard',
+    dashboard: 'Dashboard',
+    quickLinks: 'Schnellzugriff',
+    pendingToCheck: 'Zu prüfen',
     aboutUs: 'Über uns',
     signOut: 'Abmelden',
     eventsManagement: 'Event-Verwaltung',
@@ -805,6 +808,9 @@ const translations = {
     
     // Admin Page
     adminDashboard: 'Admin Dashboard',
+    dashboard: 'Dashboard',
+    quickLinks: 'Quick Links',
+    pendingToCheck: 'Pending to check',
     aboutUs: 'About Us',
     signOut: 'Sign Out',
     eventsManagement: 'Events Management',
