@@ -3842,10 +3842,11 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
   >({});
 
   const [remainingUniversal, setRemainingUniversal] = useState<{
+    total: number | null;
     early: number | null;
     fastBunny: number | null;
     normal: number | null;
-  }>({ early: null, fastBunny: null, normal: null });
+  }>({ total: null, early: null, fastBunny: null, normal: null });
 
   const [earlyBirdEnabled, setEarlyBirdEnabled] = useState(initialSettings?.early_bird_enabled ?? false);
   const [earlyBirdCutoff, setEarlyBirdCutoff] = useState(
@@ -3868,6 +3869,11 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
   const [normalTotalLimit, setNormalTotalLimit] = useState(
     initialSettings?.normal_total_limit !== null && initialSettings?.normal_total_limit !== undefined
       ? initialSettings.normal_total_limit.toString()
+      : ""
+  );
+  const [totalSoliLimit, setTotalSoliLimit] = useState(
+    initialSettings?.total_soli_limit !== null && initialSettings?.total_soli_limit !== undefined
+      ? initialSettings.total_soli_limit.toString()
       : ""
   );
   const [paypalPaymentLink, setPaypalPaymentLink] = useState(
@@ -4026,27 +4032,30 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
       if (!initialSettings) return;
 
       const {
+        getRemainingTotalSoliTickets,
         getRemainingEarlyBirdTickets,
         getRemainingFastBunnyTickets,
         getRemainingNormalTickets,
       } = await import('@/lib/ticketPurchases');
 
+      const totalLimit = initialSettings.total_soli_limit ?? null;
       const earlyLimit = initialSettings.early_bird_total_limit ?? null;
       const fastBunnyLimit = initialSettings.fast_bunny_total_limit ?? null;
       const normalLimit = initialSettings.normal_total_limit ?? null;
 
       try {
-        const [early, fastBunny, normal] = await Promise.all([
+        const [total, early, fastBunny, normal] = await Promise.all([
+          getRemainingTotalSoliTickets(totalLimit),
           getRemainingEarlyBirdTickets(earlyLimit),
           getRemainingFastBunnyTickets(fastBunnyLimit, earlyLimit),
           getRemainingNormalTickets(normalLimit),
         ]);
 
         if (!isMounted) return;
-        setRemainingUniversal({ early, fastBunny, normal });
+        setRemainingUniversal({ total, early, fastBunny, normal });
       } catch {
         if (!isMounted) return;
-        setRemainingUniversal({ early: null, fastBunny: null, normal: null });
+        setRemainingUniversal({ total: null, early: null, fastBunny: null, normal: null });
       }
     }
 
@@ -4077,6 +4086,11 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
       setNormalTotalLimit(
         initialSettings.normal_total_limit !== null && initialSettings.normal_total_limit !== undefined
           ? initialSettings.normal_total_limit.toString()
+          : ""
+      );
+      setTotalSoliLimit(
+        initialSettings.total_soli_limit !== null && initialSettings.total_soli_limit !== undefined
+          ? initialSettings.total_soli_limit.toString()
           : ""
       );
 
@@ -4150,6 +4164,12 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
       normal_total_limit: normalTotalLimit.trim()
         ? (() => {
             const parsed = parseInt(normalTotalLimit.trim(), 10);
+            return !isNaN(parsed) && parsed >= 0 ? parsed : null;
+          })()
+        : null,
+      total_soli_limit: totalSoliLimit.trim()
+        ? (() => {
+            const parsed = parseInt(totalSoliLimit.trim(), 10);
             return !isNaN(parsed) && parsed >= 0 ? parsed : null;
           })()
         : null,
@@ -4306,6 +4326,29 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
               <p className="text-sm text-muted-foreground">
                 {t("universalTicketLimitsDesc")}
               </p>
+              {/* Total Soli-Contribution Limit (all types combined) */}
+              <div className="space-y-2 p-4 bg-background rounded-lg border">
+                <Label htmlFor="total_soli_limit" className="text-base font-semibold">
+                  {t("totalSoliLimit")}
+                </Label>
+                <Input
+                  id="total_soli_limit"
+                  type="number"
+                  min="0"
+                  value={totalSoliLimit}
+                  onChange={(e) => setTotalSoliLimit(e.target.value)}
+                  placeholder={t("unlimited")}
+                  className="text-base md:text-lg min-h-[44px]"
+                />
+                {remainingUniversal.total !== null && (
+                  <Badge variant="secondary" className="text-xs font-medium">
+                    {remainingUniversal.total} {t("remaining")}
+                  </Badge>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {t("totalSoliLimitDesc")}
+                </p>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Early-Bird Universal Limit */}
                 <div className="space-y-2 p-4 bg-background rounded-lg border">
@@ -4384,7 +4427,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         {/* Early Bird & Fast Bunny Settings */}
         <AccordionItem value="early-fast-bunny" className="border rounded-lg overflow-hidden">
           <AccordionTrigger className="px-4 py-3 sm:px-6 sm:py-4 hover:no-underline">
-            <span className="text-base sm:text-lg font-semibold">{t("earlyBirdTicketSettings")} & {t("fastBunnyTicketSettings")}</span>
+            <span className="text-base sm:text-lg font-semibold">{t("availabilityTogglesAndCutoffDates")}</span>
           </AccordionTrigger>
           <AccordionContent>
             <div className="px-4 pb-4 sm:px-6 sm:pb-6">
@@ -4468,7 +4511,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         <AccordionItem value="ticket-limits" className="border rounded-lg overflow-hidden">
           <AccordionTrigger className="px-4 py-3 sm:px-6 sm:py-4 hover:no-underline">
             <div className="flex flex-wrap items-center gap-2 text-left">
-              <span className="text-base sm:text-lg font-semibold">{t("ticketAvailabilityLimits")}</span>
+              <span className="text-base sm:text-lg font-semibold">{t("roleAvailabilityLimits")}</span>
               {roleLimitsTotal.display && (
                 <Badge variant="secondary" className="text-xs font-medium text-primary bg-primary/10">
                   {roleLimitsTotal.display}
@@ -4808,7 +4851,7 @@ const TicketSettingsForm = ({ onSave, initialSettings }: TicketSettingsFormProps
         {/* PayPal Payment Link */}
         <AccordionItem value="paypal" className="border rounded-lg overflow-hidden">
           <AccordionTrigger className="px-4 py-3 sm:px-6 sm:py-4 hover:no-underline">
-            <span className="text-base sm:text-lg font-semibold">{t("paypalPaymentLink") || "PayPal Payment Link"}</span>
+            <span className="text-base sm:text-lg font-semibold">{t("paypalLink")}</span>
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-4 p-4 sm:p-6">

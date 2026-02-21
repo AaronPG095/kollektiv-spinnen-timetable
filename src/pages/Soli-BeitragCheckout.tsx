@@ -17,7 +17,8 @@ import {
   getRemainingTickets,
   getRemainingEarlyBirdTickets,
   getRemainingNormalTickets,
-  getRemainingFastBunnyTickets 
+  getRemainingFastBunnyTickets,
+  getRemainingTotalSoliTickets,
 } from "@/lib/ticketPurchases";
 import { validateAndSanitizeName, validateAndSanitizeEmail, validateAndSanitizePhone, sanitizeString, validatePayPalUrl } from "@/lib/validation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -159,6 +160,20 @@ const TicketCheckout = () => {
         // Check availability
         const roleConfig = ROLE_CONFIG[role];
         if (settings && roleConfig) {
+          // Check total Soli-Contribution limit first (all types combined)
+          if (settings.total_soli_limit !== null && settings.total_soli_limit !== undefined) {
+            const remainingTotal = await getRemainingTotalSoliTickets(settings.total_soli_limit);
+            if (remainingTotal !== null && remainingTotal <= 0) {
+              toast({
+                title: t("soldOut"),
+                description: t("soldOutDesc"),
+                variant: "destructive",
+              });
+              navigate("/soli-beitrag");
+              return;
+            }
+          }
+
           // Check early bird total limit if this is an early bird ticket
           const isEarlyBird = type === "earlyBird" || type === "reducedEarlyBird";
           if (isEarlyBird && settings.early_bird_total_limit !== null && settings.early_bird_total_limit !== undefined) {

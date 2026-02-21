@@ -15,7 +15,7 @@ import {
 import { Footer } from "@/components/Footer";
 import { X } from "lucide-react";
 import { getTicketSettings, type TicketSettings } from "@/lib/ticketSettings";
-import { checkRoleAvailability, getRemainingTickets, getRemainingEarlyBirdTickets, getRemainingNormalTickets, getRemainingFastBunnyTickets } from "@/lib/ticketPurchases";
+import { checkRoleAvailability, getRemainingTickets, getRemainingEarlyBirdTickets, getRemainingNormalTickets, getRemainingFastBunnyTickets, getRemainingTotalSoliTickets } from "@/lib/ticketPurchases";
 
 const Tickets = () => {
   const { t } = useLanguage();
@@ -33,6 +33,7 @@ const Tickets = () => {
   const [remainingEarlyBirdTickets, setRemainingEarlyBirdTickets] = useState<number | null>(null);
   const [remainingFastBunnyTickets, setRemainingFastBunnyTickets] = useState<number | null>(null);
   const [remainingNormalTickets, setRemainingNormalTickets] = useState<number | null>(null);
+  const [remainingTotalSoliTickets, setRemainingTotalSoliTickets] = useState<number | null>(null);
 
   const limitFieldEarlyByRole: Record<string, keyof TicketSettings> = {
     bar: "bar_limit_early",
@@ -103,6 +104,14 @@ const Tickets = () => {
 
           setRoleAvailability(availability);
           setRemainingTickets(remaining);
+        }
+
+        // Load remaining total Soli-Contributions (all types combined)
+        if (settings?.total_soli_limit !== null && settings?.total_soli_limit !== undefined) {
+          const totalRemaining = await getRemainingTotalSoliTickets(settings.total_soli_limit);
+          setRemainingTotalSoliTickets(totalRemaining);
+        } else {
+          setRemainingTotalSoliTickets(null);
         }
 
         // Load remaining early-bird tickets (separate from role availability)
@@ -188,8 +197,16 @@ const Tickets = () => {
     .filter((line) => line.length > 0);
 
 
+  // Check if total Soli-Contributions are available (gates all types when total limit is set)
+  const isTotalLimitReached = (): boolean => {
+    if (ticketSettings?.total_soli_limit == null) return false;
+    if (remainingTotalSoliTickets !== null && remainingTotalSoliTickets <= 0) return true;
+    return false;
+  };
+
   // Check if early bird tickets are available
   const isEarlyBirdAvailable = (): boolean => {
+    if (isTotalLimitReached()) return false;
     if (!ticketSettings?.early_bird_enabled) return false;
     
     // Check cutoff date
@@ -214,6 +231,7 @@ const Tickets = () => {
 
   // Check if fast bunny tickets are available (includes shared pool with Early Bird when fast_bunny_total_limit is null)
   const isFastBunnyAvailable = (): boolean => {
+    if (isTotalLimitReached()) return false;
     if (!ticketSettings?.fast_bunny_enabled) return false;
 
     if (ticketSettings.fast_bunny_cutoff) {
@@ -234,6 +252,7 @@ const Tickets = () => {
 
   // Check if normal-bird tickets are available
   const isNormalAvailable = (): boolean => {
+    if (isTotalLimitReached()) return false;
     // Check total limit
     if (ticketSettings?.normal_total_limit !== null && ticketSettings?.normal_total_limit !== undefined) {
       // If we have the remaining count loaded, use it; otherwise return true (will be checked async)

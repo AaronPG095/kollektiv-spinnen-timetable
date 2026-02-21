@@ -11,6 +11,7 @@ export interface TicketSettings {
   fast_bunny_cutoff: string | null;
   fast_bunny_total_limit: number | null;
   normal_total_limit: number | null;
+  total_soli_limit: number | null;
   // Limits (legacy single limit kept for backward compat; enforcement uses _early/_normal)
   bar_limit: number | null;
   kuechenhilfe_limit: number | null;

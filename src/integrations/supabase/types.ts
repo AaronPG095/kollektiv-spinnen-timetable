@@ -184,6 +184,7 @@ export type Database = {
           fast_bunny_cutoff: string | null
           fast_bunny_total_limit: number | null
           normal_total_limit: number | null
+          total_soli_limit: number | null
           bar_limit: number | null
           kuechenhilfe_limit: number | null
           springer_runner_limit: number | null
@@ -259,6 +260,7 @@ export type Database = {
           fast_bunny_cutoff?: string | null
           fast_bunny_total_limit?: number | null
           normal_total_limit?: number | null
+          total_soli_limit?: number | null
           bar_limit?: number | null
           kuechenhilfe_limit?: number | null
           springer_runner_limit?: number | null
@@ -334,6 +336,7 @@ export type Database = {
           fast_bunny_cutoff?: string | null
           fast_bunny_total_limit?: number | null
           normal_total_limit?: number | null
+          total_soli_limit?: number | null
           bar_limit?: number | null
           kuechenhilfe_limit?: number | null
           springer_runner_limit?: number | null

@@ -414,6 +414,40 @@ export const getRemainingNormalTickets = async (
 };
 
 /**
+ * Get the number of confirmed Soli-Contributions (across all types: Early Bird, Fast Bunny, Normal Bird)
+ */
+export const getTotalSoliPurchaseCount = async (): Promise<number> => {
+  try {
+    const { count, error } = await supabase
+      .from('soli_contribution_purchases')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'confirmed');
+
+    if (error) {
+      logError('TicketPurchases', error, { operation: 'getTotalSoliPurchaseCount' });
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error) {
+    logError('TicketPurchases', error, { operation: 'getTotalSoliPurchaseCount' });
+    return 0;
+  }
+};
+
+/**
+ * Get remaining total Soli-Contributions (all types combined).
+ * Returns null when no limit is set (unlimited).
+ */
+export const getRemainingTotalSoliTickets = async (
+  totalLimit: number | null | undefined
+): Promise<number | null> => {
+  if (totalLimit === null || totalLimit === undefined) return null;
+  const purchaseCount = await getTotalSoliPurchaseCount();
+  return Math.max(0, totalLimit - purchaseCount);
+};
+
+/**
  * Validate that a Soli-Contribution can be created for a role without exceeding limits.
  * Uses per-role early/fast-bunny/normal limits and contribution type.
  */
@@ -468,11 +502,22 @@ export const createTicketPurchase = async (
   validateLimit: boolean = false
 ): Promise<{ success: boolean; purchase?: TicketPurchase; error?: string }> => {
   try {
-    // Always validate universal limits (early_bird_total_limit and normal_total_limit)
+    // Always validate universal limits (total_soli_limit, then early_bird_total_limit, fast_bunny_total_limit, normal_total_limit)
     const { getTicketSettings } = await import('@/lib/ticketSettings');
     const settings = await getTicketSettings();
-    
-    // Check universal limits based on ticket type
+
+    // 1. Check total limit first (all contribution types combined)
+    if (settings.total_soli_limit !== null && settings.total_soli_limit !== undefined) {
+      const remainingTotal = await getRemainingTotalSoliTickets(settings.total_soli_limit);
+      if (remainingTotal !== null && remainingTotal <= 0) {
+        return {
+          success: false,
+          error: 'Total Soli-Contribution limit reached. No more Soli-Contributions can be registered.',
+        };
+      }
+    }
+
+    // 2. Check per-type universal limits
     const isEarlyBird = purchaseData.contribution_type === 'earlyBird' || purchaseData.contribution_type === 'reducedEarlyBird';
     const isFastBunny = purchaseData.contribution_type === 'fastBunny' || purchaseData.contribution_type === 'reducedFastBunny';
     const isNormal = purchaseData.contribution_type === 'normal' || purchaseData.contribution_type === 'reducedNormal';
